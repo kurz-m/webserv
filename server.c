@@ -124,7 +124,20 @@ int main(void)
 
 		if (!fork()) { // this is the child process
 			close(sockfd); // child doesn't need the listener
-			if (send(new_fd, "Hello, world!\n", 14, 0) == -1)
+
+      char recvline[81];
+      int n = 0;
+
+      while ((n = read(new_fd, recvline, 80)) > 0) {
+        printf("%s", recvline);
+
+        if (recvline[n-1] == '\n') {
+          break;
+        }
+      }
+
+      char *buffer = "HTTP/1.0 200 OK\r\n\r\n<html>Hello</html>";
+			if (send(new_fd, buffer, strlen(buffer), 0) == -1)
 				perror("send");
 			close(new_fd);
 			exit(0);

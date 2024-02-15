@@ -2,9 +2,9 @@
 #include <cstring>
 #include <iostream>
 #include <netdb.h>
+#include <sys/poll.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-#include <sys/poll.h>
 #include <unistd.h>
 
 struct addrinfo *get_addrinfo(struct addrinfo &hints, struct addrinfo *res) {
@@ -35,37 +35,35 @@ struct addrinfo *get_addrinfo(struct addrinfo &hints, struct addrinfo *res) {
   }
 
   std::cout << "len = " << len << std::endl;
-  
+
   return res;
 }
 
-int get_sock_and_bind(struct addrinfo* res) {
-  
-  struct addrinfo* p;
+int get_sock_and_bind(struct addrinfo *res) {
+
+  struct addrinfo *p;
   int sockfd;
   int yes = 1;
 
-  for(p = res; p != NULL; p = p->ai_next) {
-		if ((sockfd = socket(p->ai_family, p->ai_socktype,
-				p->ai_protocol)) == -1) {
-			perror("server: socket");
-			continue;
-		}
+  for (p = res; p != NULL; p = p->ai_next) {
+    if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
+      perror("server: socket");
+      continue;
+    }
 
-		if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes,
-				sizeof(int)) == -1) {
-			perror("setsockopt");
-			exit(1);
-		}
+    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) {
+      perror("setsockopt");
+      exit(1);
+    }
 
-		if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
-			close(sockfd);
-			perror("server: bind");
-			continue;
-		}
+    if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
+      close(sockfd);
+      perror("server: bind");
+      continue;
+    }
 
-		break;
-	}
+    break;
+  }
   return sockfd;
 }
 
@@ -81,7 +79,7 @@ void handle_connection(int sockfd) {
     return;
   }
 
-  if (!fork()) { // this is the child process
+  if (!fork()) {   // this is the child process
     close(sockfd); // child doesn't need the listener
 
     char recvline[81];
@@ -98,7 +96,7 @@ void handle_connection(int sockfd) {
     close(new_fd);
     exit(0);
   }
-  close(new_fd);  // parent doesn't need this
+  close(new_fd); // parent doesn't need this
   return;
 }
 
@@ -117,14 +115,14 @@ int main(void) {
   servinfo = get_addrinfo(hints, servinfo);
 
   sockfd = get_sock_and_bind(servinfo);
-  
+
   freeaddrinfo(servinfo);
 
   if (listen(sockfd, 10) == -1) {
     perror("listen");
     exit(1);
   }
-  
+
   struct pollfd sockets[1];
 
   memset(&sockets, 0, sizeof(sockets));

@@ -1,6 +1,6 @@
 #include "Socket.hpp"
 
-Socket::Socket(struct addrinfo& info) : type_(LISTEN), info_(info) {
+Socket::Socket(addrinfo_t& info) : type_(LISTEN), info_(info) {
   int yes = 1;
   sockfd_ = socket(info.ai_family, info.ai_socktype, info.ai_protocol);
   if (sockfd_ == -1) {

@@ -25,7 +25,7 @@ private:
   addrinfo_t hints_;
   addrinfo_t* servinfo_;
   const std::string port_;
-  size_t sockfd_nb_;
+  size_t sockfd_nb_; // for later use
   int timeout_;
 
 };

@@ -1,20 +1,19 @@
 #include "Server.hpp"
 #include <iostream>
 
-Server::Server(const std::string& port) :hints_(), port_(port) {
+Server::Server(const std::string &port)
+    : hints_(), port_(port), sockfd_nb_(0), timeout_(2500) {
   hints_.ai_family = AF_UNSPEC;     // IPv4 and IPv6
   hints_.ai_socktype = SOCK_STREAM; // TCP not UDP
   hints_.ai_flags = AI_PASSIVE;     // Fill in my IP for me
-  timeout_ = 2500;
+  (void) sockfd_nb_;
 }
 
-Server::~Server() {
-  freeaddrinfo(servinfo_);
-}
+Server::~Server() { freeaddrinfo(servinfo_); }
 
 void Server::startup() {
   int status;
-  addrinfo_t* p;
+  addrinfo_t *p;
 
   // bind to all interfaces on port
   if ((status = getaddrinfo(NULL, port_.c_str(), &hints_, &servinfo_)) != 0) {
@@ -24,15 +23,15 @@ void Server::startup() {
   for (p = servinfo_; p != NULL; p = p->ai_next) {
     try {
       Socket sock(*p);
-      socket_map_[sock.sockfd_] = sock;
+      socket_map_.insert(std::pair<int, Socket>(sock.sockfd_, sock));
     } catch (std::exception &e) {
     }
   }
 
   for (std::map<int, Socket>::iterator it = socket_map_.begin();
        it != socket_map_.end(); it++) {
-    if (bind(it->first, it->second.get_sockinfo().ai_addr,
-             it->second.get_sockinfo().ai_addrlen) == -1) {
+    if (bind(it->first, it->second.info_.ai_addr,
+             it->second.info_.ai_addrlen) == -1) {
       perror("server: bind");
       close(it->first);
       socket_map_.erase(it);
@@ -40,8 +39,10 @@ void Server::startup() {
       perror("server: listen");
       close(it->first);
       socket_map_.erase(it);
+    } else {
+      it->second.events_ = POLLIN;
+      pollfds_.push_back(it->second.to_pollfd());
     }
-    pollfds_.push_back(it->second.to_pollfd());
   }
 
   // could not bind and listen to any socket.
@@ -74,16 +75,14 @@ void Server::run() {
         case Socket::CONNECT:
           handle_client(socket_map_[it->fd]);
           break;
+        default:
+          break;
         }
       }
     }
   }
 }
 
-void Server::accept_new_connection(Socket& socket) {
+void Server::accept_new_connection(Socket &socket) { (void)socket; }
 
-}
-
-void Server::handle_client(Socket& socket) {
-
-}
+void Server::handle_client(Socket &socket) { (void)socket; }

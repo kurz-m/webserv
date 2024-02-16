@@ -6,10 +6,26 @@ Server::Server(const std::string &port)
   hints_.ai_family = AF_UNSPEC;     // IPv4 and IPv6
   hints_.ai_socktype = SOCK_STREAM; // TCP not UDP
   hints_.ai_flags = AI_PASSIVE;     // Fill in my IP for me
-  (void) sockfd_nb_;
+  (void)sockfd_nb_;
 }
 
 Server::~Server() { freeaddrinfo(servinfo_); }
+
+void Server::bind_sock(std::map<int, Socket>::iterator &it) {
+  if (bind(it->first, it->second.info_.ai_addr, it->second.info_.ai_addrlen) ==
+      -1) {
+    perror("server: bind");
+    close(it->first);
+    socket_map_.erase(it);
+  } else if (listen(it->first, 10)) {
+    perror("server: listen");
+    close(it->first);
+    socket_map_.erase(it);
+  } else {
+    it->second.events_ = POLLIN;
+    pollfds_.push_back(it->second.to_pollfd());
+  }
+}
 
 void Server::startup() {
   int status;
@@ -28,20 +44,28 @@ void Server::startup() {
     }
   }
 
+  bool ipv6found = false;
+
   for (std::map<int, Socket>::iterator it = socket_map_.begin();
        it != socket_map_.end(); it++) {
-    if (bind(it->first, it->second.info_.ai_addr,
-             it->second.info_.ai_addrlen) == -1) {
-      perror("server: bind");
-      close(it->first);
-      socket_map_.erase(it);
-    } else if (listen(it->first, 10)) {
-      perror("server: listen");
-      close(it->first);
-      socket_map_.erase(it);
-    } else {
-      it->second.events_ = POLLIN;
-      pollfds_.push_back(it->second.to_pollfd());
+    if (it->second.info_.ai_family == PF_INET6) {
+      int no = 0;
+      if (setsockopt(it->first, IPPROTO_IPV6, IPV6_V6ONLY, &no, sizeof(no)) ==
+          -1) {
+        perror("Could not set IPV6_V6ONLY to false");
+      } else {
+        bind_sock(it);
+        ipv6found = true;
+        break;
+      }
+    }
+  }
+
+  if (!ipv6found) {
+    for (std::map<int, Socket>::iterator it = socket_map_.begin();
+         it != socket_map_.end(); it++) {
+      bind_sock(it);
+      break;
     }
   }
 

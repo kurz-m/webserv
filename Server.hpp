@@ -18,7 +18,7 @@ public:
 private:
   void accept_new_connection(Socket& socket);
   void handle_client(Socket& socket);
-
+  void bind_sock(std::map<int, Socket>::iterator& it);
 
   std::vector<pollfd_t> pollfds_;
   std::map<int, Socket> socket_map_;

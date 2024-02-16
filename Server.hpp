@@ -17,17 +17,16 @@ public:
 
 private:
   void accept_new_connection(Socket& socket);
-  void handle_client(Socket& socket);
-  void bind_sock(std::map<int, Socket>::iterator& it);
+  void handle_client(Socket& socket, int revents);
+  bool bind_sock(std::map<int, Socket>::iterator& it);
 
   std::vector<pollfd_t> pollfds_;
-  std::map<int, Socket> socket_map_;
+  std::map<int, Socket> client_map_;
   addrinfo_t hints_;
   addrinfo_t* servinfo_;
   const std::string port_;
   size_t sockfd_nb_; // for later use
   int timeout_;
-
 };
 
 #endif // __SERVER_HPP__

@@ -19,7 +19,7 @@ class Socket {
 public:
   Socket();
   Socket(addrinfo_t info);
-  Socket(int sockfd);
+  Socket(int sockfd, const Socket& listen_sock);
   Socket(const Socket &other);
   Socket &operator=(const Socket &other);
   ~Socket();
@@ -31,11 +31,14 @@ public:
 
 private:
 
+  std::string buffer_;
   int sockfd_;
   short events_;
   status status_;
   type type_;
   addrinfo_t info_;
+
+  const static size_t MAX_BUFFER = 1024;
 
   friend class Server;
 };

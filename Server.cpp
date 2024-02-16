@@ -11,20 +11,23 @@ Server::Server(const std::string &port)
 
 Server::~Server() { freeaddrinfo(servinfo_); }
 
-void Server::bind_sock(std::map<int, Socket>::iterator &it) {
+bool Server::bind_sock(std::map<int, Socket>::iterator &it) {
   if (bind(it->first, it->second.info_.ai_addr, it->second.info_.ai_addrlen) ==
       -1) {
     perror("server: bind");
     close(it->first);
-    socket_map_.erase(it);
-  } else if (listen(it->first, 10)) {
+    client_map_.erase(it);
+    return false;
+  }
+  if (listen(it->first, 10)) {
     perror("server: listen");
     close(it->first);
-    socket_map_.erase(it);
-  } else {
-    it->second.events_ = POLLIN;
-    pollfds_.push_back(it->second.to_pollfd());
+    client_map_.erase(it);
+    return false;
   }
+  it->second.events_ = POLLIN;
+  pollfds_.push_back(it->second.to_pollfd());
+  return true;
 }
 
 void Server::startup() {
@@ -39,38 +42,46 @@ void Server::startup() {
   for (p = servinfo_; p != NULL; p = p->ai_next) {
     try {
       Socket sock(*p);
-      socket_map_.insert(std::pair<int, Socket>(sock.sockfd_, sock));
+      client_map_.insert(std::pair<int, Socket>(sock.sockfd_, sock));
     } catch (std::exception &e) {
     }
   }
 
   bool ipv6found = false;
 
-  for (std::map<int, Socket>::iterator it = socket_map_.begin();
-       it != socket_map_.end(); it++) {
-    if (it->second.info_.ai_family == PF_INET6) {
+  for (std::map<int, Socket>::iterator it = client_map_.begin();
+       it != client_map_.end(); it++) {
+    if (!ipv6found && it->second.info_.ai_family == PF_INET6) {
       int no = 0;
       if (setsockopt(it->first, IPPROTO_IPV6, IPV6_V6ONLY, &no, sizeof(no)) ==
           -1) {
         perror("Could not set IPV6_V6ONLY to false");
-      } else {
-        bind_sock(it);
+        continue;
+      }
+      if (bind_sock(it)) {
         ipv6found = true;
+        Socket sock = it->second;
+        client_map_.clear();
+        client_map_[sock.sockfd_] = sock;
         break;
       }
     }
   }
 
   if (!ipv6found) {
-    for (std::map<int, Socket>::iterator it = socket_map_.begin();
-         it != socket_map_.end(); it++) {
-      bind_sock(it);
-      break;
+    for (std::map<int, Socket>::iterator it = client_map_.begin();
+         it != client_map_.end(); it++) {
+      if (bind_sock(it)) {
+        Socket sock = it->second;
+        client_map_.clear();
+        client_map_[sock.sockfd_] = sock;
+        break;
+      }
     }
   }
 
   // could not bind and listen to any socket.
-  if (socket_map_.size() < 1) {
+  if (client_map_.size() < 1) {
     throw std::exception();
   }
 }
@@ -84,20 +95,23 @@ void Server::run() {
       perror("server: poll");
       throw std::exception();
     }
-    std::vector<pollfd_t>::iterator it;
+    std::cout << "polled" << std::endl;
     if (num_events > 0) {
-      for (it = pollfds_.begin(); it != pollfds_.end(); it++) {
-        std::cout << "Fd: " << it->fd << " from polling" << std::endl;
-        if (!(it->events & it->revents)) {
+      for (size_t i = 0; i < pollfds_.size(); i++) {
+        std::cout << "Fd: " << pollfds_[i].fd << " from polling" << std::endl;
+        sleep(1);
+        if (!(pollfds_[i].events & pollfds_[i].revents)) {
           continue;
         }
-        switch (socket_map_[it->fd].type_) {
+        switch (client_map_[pollfds_[i].fd].type_) {
         case Socket::LISTEN:
-          accept_new_connection(socket_map_[it->fd]);
+          std::cout << "In switch LISTEN" << std::endl;
+          accept_new_connection(client_map_[pollfds_[i].fd]);
           break;
 
         case Socket::CONNECT:
-          handle_client(socket_map_[it->fd]);
+          std::cout << "In switch CONNECT" << std::endl;
+          handle_client(client_map_[pollfds_[i].fd], pollfds_[i].revents);
           break;
         default:
           break;
@@ -107,6 +121,43 @@ void Server::run() {
   }
 }
 
-void Server::accept_new_connection(Socket &socket) { (void)socket; }
+void Server::accept_new_connection(Socket &socket) {
+  try {
+    std::cout << "I am trying to establish a new connecion" << std::endl;
+    Socket new_sock(socket.sockfd_, socket);
+    client_map_[new_sock.sockfd_] = new_sock;
+    pollfds_.push_back(new_sock.to_pollfd());
+  } catch (const std::exception &e) {
+    std::cerr << e.what() << '\n';
+  }
+}
 
-void Server::handle_client(Socket &socket) { (void)socket; }
+void Server::handle_client(Socket &socket, int revents) {
+  std::cout << "handle client: " << socket.sockfd_ << std::endl;
+  ssize_t n;
+  char buf[Socket::MAX_BUFFER + 1] = {0};
+  switch (revents) {
+  case POLLIN:
+    n = recv(socket.sockfd_, &socket.buffer_[0], Socket::MAX_BUFFER - 1,
+             MSG_DONTWAIT);
+    socket.buffer_ += std::string(buf);
+    std::cout << socket.buffer_ << std::endl;
+    for (size_t i = 0; i < pollfds_.size(); i++) {
+      if (pollfds_[i].fd == socket.sockfd_) {
+        pollfds_[i].events = POLLOUT;
+      }
+    }
+    // std::vector<pollfd_t>::iterator it = std::find(pollfds_.begin(),
+    // pollfds_.end(), socket.sockfd_)
+    break;
+  case POLLOUT:
+    std::string buffer = "HTTP/1.1 200 OK\r\n\r\n<html>Hello, World!</html>";
+    send(socket.sockfd_, buffer.c_str(), buffer.size(), 0);
+    for (size_t i = 0; i < pollfds_.size(); i++) {
+      if (pollfds_[i].fd == socket.sockfd_) {
+        pollfds_[i].events = POLLIN;
+      }
+    }
+    break;
+  }
+}

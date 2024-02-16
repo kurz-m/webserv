@@ -1,8 +1,7 @@
 #include "Server.hpp"
 #include <iostream>
 
-Server::Server(const std::string &port) : port_(port) {
-  memset(&hints_, 0, sizeof(hints_));
+Server::Server(const std::string& port) :hints_(), port_(port) {
   hints_.ai_family = AF_UNSPEC;     // IPv4 and IPv6
   hints_.ai_socktype = SOCK_STREAM; // TCP not UDP
   hints_.ai_flags = AI_PASSIVE;     // Fill in my IP for me
@@ -15,7 +14,7 @@ Server::~Server() {
 
 void Server::startup() {
   int status;
-  struct addrinfo *p;
+  addrinfo_t* p;
 
   // bind to all interfaces on port
   if ((status = getaddrinfo(NULL, port_.c_str(), &hints_, &servinfo_)) != 0) {

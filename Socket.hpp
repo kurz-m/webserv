@@ -1,5 +1,5 @@
-#ifndef SOCKET_HPP
-#define SOCKET_HPP
+#ifndef __SOCKET_HPP__
+#define __SOCKET_HPP__
 
 #include <string>
 #include <sys/poll.h>
@@ -9,13 +9,15 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
+typedef struct addrinfo addrinfo_t;
+
 typedef struct pollfd pollfd_t;
 
 class Server;
 
 class Socket {
 public:
-  Socket(struct addrinfo& info);
+  Socket(addrinfo_t& info);
   Socket(int sockfd);
   Socket &operator=(const Socket &other);
   ~Socket();
@@ -26,7 +28,7 @@ public:
   short get_revents();
   void set_events();
   void set_revents();
-  struct addrinfo get_sockinfo();
+  addrinfo_t get_sockinfo();
 
   enum status {READY, URECV, USEND, CLOSED};
   enum type {LISTEN, CONNECT};
@@ -39,10 +41,12 @@ private:
   short revents_;
   status status_;
   type type_;
-  struct addrinfo info_;
+  addrinfo_t info_;
+
+  friend class Server;
 
   friend class Server;
 
 };
 
-#endif // SOCKET_HPP
+#endif // __SOCKET_HPP__

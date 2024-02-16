@@ -1,5 +1,5 @@
-#ifndef SERVER_HPP
-#define SERVER_HPP
+#ifndef __SERVER_HPP__
+#define __SERVER_HPP__
 
 #include "Socket.hpp"
 #include <map>
@@ -22,11 +22,12 @@ private:
 
   std::vector<pollfd_t> pollfds_;
   std::map<int, Socket> socket_map_;
-  struct addrinfo hints_;
-  struct addrinfo *servinfo_;
+  addrinfo_t hints_;
+  addrinfo_t* servinfo_;
   const std::string port_;
+  size_t sockfd_nb_;
   int timeout_;
 
 };
 
-#endif // SERVER_HPP
+#endif // __SERVER_HPP__

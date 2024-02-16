@@ -1,27 +1,32 @@
 #ifndef SERVER_HPP
 #define SERVER_HPP
 
-#include <vector>
+#include "Socket.hpp"
 #include <map>
 #include <sys/poll.h>
 #include <unistd.h>
-#include "Socket.hpp"
-
-typedef struct pollfd pollfd_t;
+#include <vector>
 
 class Server {
 public:
-  Server(const std::string& port);
+  Server(const std::string &port);
   ~Server();
 
   void startup();
+  void run();
 
 private:
-  std::vector<pollfd_t> sockets_;
+  void accept_new_connection(Socket& socket);
+  void handle_client(Socket& socket);
+
+
+  std::vector<pollfd_t> pollfds_;
   std::map<int, Socket> socket_map_;
   struct addrinfo hints_;
-  struct addrinfo* servinfo_;
+  struct addrinfo *servinfo_;
   const std::string port_;
+  int timeout_;
+
 };
 
 #endif // SERVER_HPP

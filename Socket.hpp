@@ -9,6 +9,10 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
+typedef struct pollfd pollfd_t;
+
+class Server;
+
 class Socket {
 public:
   Socket(struct addrinfo& info);
@@ -16,7 +20,7 @@ public:
   Socket &operator=(const Socket &other);
   ~Socket();
 
-  struct pollevent to_pollfd();
+  pollfd_t to_pollfd();
   int get_sockfd();
   short get_events();
   short get_revents();
@@ -36,6 +40,8 @@ private:
   status status_;
   type type_;
   struct addrinfo info_;
+
+  friend class Server;
 
 };
 

@@ -1,0 +1,26 @@
+#ifndef __HTTP_BASE__
+#define __HTTP_BASE__
+
+#include <string>
+#include <map>
+
+class Socket;
+
+class HTTPBase {
+public:
+  HTTPBase();
+  HTTPBase(const HTTPBase &cpy);
+  HTTPBase &operator=(const HTTPBase &other);
+  virtual ~HTTPBase();
+
+protected:
+  void parse_buffer();
+
+  std::string buffer_;
+  std::map<std::string, std::string> parsed_header_;
+  std::string body_;
+
+  friend class Socket;
+};
+
+#endif // __HTTP_BASE__

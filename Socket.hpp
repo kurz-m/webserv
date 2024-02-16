@@ -31,11 +31,14 @@ public:
 
 private:
 
+  std::string buffer_;
   int sockfd_;
   short events_;
   status status_;
   type type_;
   addrinfo_t info_;
+
+  const static size_t MAX_BUFFER = 1024;
 
   friend class Server;
 };

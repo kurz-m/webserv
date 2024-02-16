@@ -1,6 +1,8 @@
 #include "Socket.hpp"
 
-Socket::Socket() : status_(READY), type_(UNDEFINED) {}
+Socket::Socket() : status_(READY), type_(UNDEFINED) {
+  buffer_.resize(MAX_BUFFER);
+}
 
 Socket::Socket(addrinfo_t info) : status_(READY), type_(LISTEN), info_(info) {
   int yes = 1;
@@ -12,11 +14,14 @@ Socket::Socket(addrinfo_t info) : status_(READY), type_(LISTEN), info_(info) {
     perror("setsockopt");
     throw std::exception();
   }
+  buffer_.resize(MAX_BUFFER);
 }
 
 Socket::Socket(const Socket &other)
     : sockfd_(other.sockfd_), events_(other.events_), status_(other.status_),
-      type_(other.type_), info_(other.info_) {}
+      type_(other.type_), info_(other.info_) {
+  buffer_.resize(MAX_BUFFER);
+}
 
 Socket &Socket::operator=(const Socket &other) {
   if (this != &other) {

@@ -19,7 +19,7 @@ class Socket {
 public:
   Socket();
   Socket(addrinfo_t info);
-  Socket(int sockfd);
+  Socket(int sockfd, const Socket& listen_sock);
   Socket(const Socket &other);
   Socket &operator=(const Socket &other);
   ~Socket();

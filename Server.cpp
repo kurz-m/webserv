@@ -88,15 +88,18 @@ void Server::run() {
     if (num_events > 0) {
       for (it = pollfds_.begin(); it != pollfds_.end(); it++) {
         std::cout << "Fd: " << it->fd << " from polling" << std::endl;
+        sleep(1);
         if (!(it->events & it->revents)) {
           continue;
         }
         switch (socket_map_[it->fd].type_) {
         case Socket::LISTEN:
+          std::cout << "In switch CONNECT" << std::endl;
           accept_new_connection(socket_map_[it->fd]);
           break;
 
         case Socket::CONNECT:
+          std::cout << "In switch CONNECT" << std::endl;
           handle_client(socket_map_[it->fd]);
           break;
         default:
@@ -107,6 +110,15 @@ void Server::run() {
   }
 }
 
-void Server::accept_new_connection(Socket &socket) { (void)socket; }
+void Server::accept_new_connection(Socket &socket) {
+  try {
+    std::cout << "I am trying to establish a new connecion" << std::endl;
+    Socket new_sock(socket.sockfd_, socket);
+    socket_map_[new_sock.sockfd_] = new_sock;
+    pollfds_.push_back(new_sock.to_pollfd());
+  } catch (const std::exception &e) {
+    std::cerr << e.what() << '\n';
+  }
+}
 
 void Server::handle_client(Socket &socket) { (void)socket; }

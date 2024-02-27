@@ -20,7 +20,10 @@ protected:
   std::map<std::string, std::string> parsed_header_;
   std::string body_;
 
+  const static size_t MAX_BUFFER = 1024;
+
   friend class Socket;
+  friend class Server;
 };
 
 #endif // __HTTP_BASE__

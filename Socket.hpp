@@ -20,32 +20,27 @@ class Server;
 
 class Socket {
 public:
-  Socket();
-  Socket(addrinfo_t info);
-  Socket(int sockfd, const Socket& listen_sock);
+  enum status { READY, URECV, USEND, CLOSED };
+  enum type { LISTEN, CONNECT, UNDEFINED };
+
+  // Socket();
+  Socket(pollfd& pollfd, type type);
   Socket(const Socket &other);
   Socket &operator=(const Socket &other);
   ~Socket();
 
-  pollfd_t to_pollfd();
+  // pollfd_t to_pollfd();
   void receive();
   void send_response();
-
-  enum status { READY, URECV, USEND, CLOSED };
-  enum type { LISTEN, CONNECT, UNDEFINED };
 
 private:
   HTTPRequest request_;
   HTTPResponse response_;
-  int sockfd_;
-  short events_;
+  pollfd_t& pollfd_;
   status status_;
   type type_;
-  addrinfo_t info_;
 
   void check_recv_();
-
-  const static size_t MAX_BUFFER = 1024;
 
   friend class Server;
 };

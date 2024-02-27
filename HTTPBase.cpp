@@ -1,9 +1,12 @@
 #include "HTTPBase.hpp"
 
-HTTPBase::HTTPBase() {}
+HTTPBase::HTTPBase() {
+	buffer_.resize(MAX_BUFFER);
+}
 
 HTTPBase::HTTPBase(const HTTPBase& cpy)
 {
+	buffer_.resize(MAX_BUFFER);
 	*this = cpy;
 }
 

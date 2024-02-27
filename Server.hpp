@@ -3,6 +3,7 @@
 
 #include "Socket.hpp"
 #include <map>
+#include <list>
 #include <sys/poll.h>
 #include <unistd.h>
 #include <vector>
@@ -17,10 +18,13 @@ public:
 
 private:
   void accept_new_connection(Socket& socket);
-  void handle_client(Socket& socket, pollfd_t& pollfd);
+  void handle_client(Socket& socket);
   bool bind_sock(std::map<int, Socket>::iterator& it);
+  void prepare_poll_();
+  void copy_revents_();
 
   std::vector<pollfd_t> pollfds_;
+  std::list<pollfd_t> poll_list_;
   std::map<int, Socket> client_map_;
   addrinfo_t hints_;
   addrinfo_t* servinfo_;

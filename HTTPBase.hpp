@@ -14,7 +14,7 @@ public:
   virtual ~HTTPBase();
 
 protected:
-  void parse_buffer();
+  void parse_buffer_();
 
   std::string buffer_;
   std::map<std::string, std::string> parsed_header_;

@@ -1,4 +1,6 @@
 #include "Socket.hpp"
+#include <cstdio>
+#include <iostream>
 
 Socket::Socket() : status_(READY), type_(UNDEFINED) {
   buffer_.resize(MAX_BUFFER);
@@ -32,6 +34,25 @@ Socket &Socket::operator=(const Socket &other) {
     info_ = other.info_;
   }
   return *this;
+}
+
+void Socket::check_recv_() {
+  if (request_.buffer_.find("\r\n\r\n") == std::string::npos) {
+    status_ = URECV;
+  }
+  // TODO: check content length for finished body???
+}
+
+void Socket::receive() {
+  ssize_t n;
+  char buf[Socket::MAX_BUFFER + 1] = {0};
+  n = recv(sockfd_, buf, Socket::MAX_BUFFER, MSG_DONTWAIT);
+  if (n < 0) {
+    std::cerr << "recv failed!" << std::endl;
+    throw std::exception();
+  }
+  request_.buffer_ += std::string(buf);
+
 }
 
 Socket::~Socket() {}

@@ -1,5 +1,6 @@
 #include "Server.hpp"
 #include <iostream>
+#include <cstdio>
 
 Server::Server(const std::string &port)
     : hints_(), port_(port), sockfd_nb_(0), timeout_(2500) {
@@ -50,7 +51,7 @@ void Server::startup() {
   bool ipv6found = false;
 
   for (std::map<int, Socket>::iterator it = client_map_.begin();
-       it != client_map_.end(); it++) {
+      it != client_map_.end(); it++) {
     if (!ipv6found && it->second.info_.ai_family == PF_INET6) {
       int no = 0;
       if (setsockopt(it->first, IPPROTO_IPV6, IPV6_V6ONLY, &no, sizeof(no)) ==
@@ -70,7 +71,7 @@ void Server::startup() {
 
   if (!ipv6found) {
     for (std::map<int, Socket>::iterator it = client_map_.begin();
-         it != client_map_.end(); it++) {
+        it != client_map_.end(); it++) {
       if (bind_sock(it)) {
         Socket sock = it->second;
         client_map_.clear();
@@ -111,7 +112,7 @@ void Server::run() {
 
         case Socket::CONNECT:
           std::cout << "In switch CONNECT" << std::endl;
-          handle_client(client_map_[pollfds_[i].fd], pollfds_[i].revents);
+          handle_client(client_map_[pollfds_[i].fd], pollfds_[i]);
           break;
         default:
           break;
@@ -132,32 +133,23 @@ void Server::accept_new_connection(Socket &socket) {
   }
 }
 
-void Server::handle_client(Socket &socket, int revents) {
+void Server::handle_client(Socket &socket, pollfd_t& pollfd) {
   std::cout << "handle client: " << socket.sockfd_ << std::endl;
   ssize_t n;
   char buf[Socket::MAX_BUFFER + 1] = {0};
-  switch (revents) {
+  switch (pollfd.revents) {
   case POLLIN:
     n = recv(socket.sockfd_, &socket.buffer_[0], Socket::MAX_BUFFER - 1,
-             MSG_DONTWAIT);
+            MSG_DONTWAIT);
+		(void)n;
     socket.buffer_ += std::string(buf);
     std::cout << socket.buffer_ << std::endl;
-    for (size_t i = 0; i < pollfds_.size(); i++) {
-      if (pollfds_[i].fd == socket.sockfd_) {
-        pollfds_[i].events = POLLOUT;
-      }
-    }
-    // std::vector<pollfd_t>::iterator it = std::find(pollfds_.begin(),
-    // pollfds_.end(), socket.sockfd_)
+    pollfd.events = POLLOUT;
     break;
   case POLLOUT:
-    std::string buffer = "HTTP/1.1 200 OK\r\n\r\n<html>Hello, World!</html>";
+    std::string buffer = "HTTP/1.1 200 OK\r\nContent-Length: 26\r\n\r\n<html>Hello, World!</html>"; // 
     send(socket.sockfd_, buffer.c_str(), buffer.size(), 0);
-    for (size_t i = 0; i < pollfds_.size(); i++) {
-      if (pollfds_[i].fd == socket.sockfd_) {
-        pollfds_[i].events = POLLIN;
-      }
-    }
+    pollfd.events = POLLIN;
     break;
   }
 }

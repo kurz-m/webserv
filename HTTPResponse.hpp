@@ -1,5 +1,5 @@
-#ifndef __HTTPRESPONSE_HPP__
-#define __HTTPRESPONSE_HPP__
+#ifndef __HTTP_RESPONSE_HPP__
+#define __HTTP_RESPONSE_HPP__
 
 #include "HTTPBase.hpp"
 
@@ -10,9 +10,10 @@ public:
   HTTPResponse &operator=(const HTTPResponse &other);
   ~HTTPResponse();
 
+  void make_response();
+
 private:
   
-
 };
 
-#endif // __HTTPRESPONSE_HPP__
+#endif // __HTTP_RESPONSE_HPP__

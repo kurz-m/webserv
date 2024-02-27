@@ -9,6 +9,9 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
+#include "HTTPRequest.hpp"
+#include "HTTPResponse.hpp"
+
 typedef struct addrinfo addrinfo_t;
 
 typedef struct pollfd pollfd_t;
@@ -25,18 +28,22 @@ public:
   ~Socket();
 
   pollfd_t to_pollfd();
+  void receive();
+  void send_response();
 
   enum status { READY, URECV, USEND, CLOSED };
   enum type { LISTEN, CONNECT, UNDEFINED };
 
 private:
-
-  std::string buffer_;
+  HTTPRequest request_;
+  HTTPResponse response_;
   int sockfd_;
   short events_;
   status status_;
   type type_;
   addrinfo_t info_;
+
+  void check_recv_();
 
   const static size_t MAX_BUFFER = 1024;
 

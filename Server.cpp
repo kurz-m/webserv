@@ -128,7 +128,7 @@ void Server::run() {
       throw std::exception();
     }
     std::cout << "polled" << std::endl;
-    sleep(1);
+    // sleep(1);
     if (num_events > 0) {
       copy_revents_();
       std::list<pollfd_t>::iterator it;

@@ -4,17 +4,12 @@
 
 // Socket::Socket() : pollfd_((pollfd_t){}), status_(READY), type_(UNDEFINED) {}
 
-Socket::Socket(pollfd& pollfd, type type) : pollfd_(pollfd), status_(READY), type_(type) {
-  int yes = 1;
-  if (setsockopt(pollfd_.fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) {
-    perror("setsockopt");
-    throw std::exception();
-  }
+Socket::Socket(pollfd &pollfd, type type, int timeout /* = DEFAULT_TIMEOUT*/)
+    : pollfd_(pollfd), status_(READY), type_(type), timeout_(timeout) {
+  timestamp_ = std::time(NULL);
 }
 
-Socket::Socket(const Socket &other)
-    : request_(other.request_), response_(other.response_), pollfd_(other.pollfd_), status_(other.status_),
-      type_(other.type_) {}
+Socket::Socket(const Socket &other) : pollfd_(other.pollfd_) { *this = other; }
 
 Socket &Socket::operator=(const Socket &other) {
   if (this != &other) {
@@ -23,6 +18,8 @@ Socket &Socket::operator=(const Socket &other) {
     pollfd_ = other.pollfd_;
     status_ = other.status_;
     type_ = other.type_;
+    timeout_ = other.timeout_;
+    timestamp_ = other.timestamp_;
   }
   return *this;
 }
@@ -32,7 +29,10 @@ void Socket::check_recv_() {
     status_ = URECV;
   }
   // TODO: check content length for finished body???
-  else status_ = READY;
+  else {
+    request_.parse_header();
+    status_ = READY;
+  }
   // Set events_ according to status_
   if (status_ == READY) {
     pollfd_.events = POLLOUT;
@@ -48,6 +48,7 @@ void Socket::receive() {
     throw std::exception();
   }
   request_.buffer_ += std::string(buf);
+  timestamp_ = std::clock();
   check_recv_();
 }
 

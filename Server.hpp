@@ -8,6 +8,8 @@
 #include <unistd.h>
 #include <vector>
 
+#define RESET 0
+
 class Server {
 public:
   Server(const std::string &port);

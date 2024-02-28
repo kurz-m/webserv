@@ -13,17 +13,20 @@ public:
   HTTPBase &operator=(const HTTPBase &other);
   virtual ~HTTPBase();
 
+  enum method { GET, POST, DELETE, UNKNOWN };
+
 protected:
   void parse_buffer_();
 
   std::string buffer_;
   std::map<std::string, std::string> parsed_header_;
   std::string body_;
+  method method_;
 
   const static size_t MAX_BUFFER = 1024;
 
-  friend class Socket;
-  friend class Server;
+friend class Socket;
+friend class Server;
 };
 
 #endif // __HTTP_BASE__

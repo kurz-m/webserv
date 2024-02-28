@@ -8,9 +8,12 @@
 #include <sys/poll.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <ctime>
 
 #include "HTTPRequest.hpp"
 #include "HTTPResponse.hpp"
+
+#define DEFAULT_TIMEOUT 15
 
 typedef struct addrinfo addrinfo_t;
 
@@ -24,7 +27,7 @@ public:
   enum type { LISTEN, CONNECT, UNDEFINED };
 
   // Socket();
-  Socket(pollfd& pollfd, type type);
+  Socket(pollfd& pollfd, type type, int timeout = DEFAULT_TIMEOUT);
   Socket(const Socket &other);
   Socket &operator=(const Socket &other);
   ~Socket();
@@ -39,6 +42,8 @@ private:
   pollfd_t& pollfd_;
   status status_;
   type type_;
+  int timeout_;
+  std::time_t timestamp_;
 
   void check_recv_();
 

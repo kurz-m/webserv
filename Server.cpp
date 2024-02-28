@@ -26,6 +26,11 @@ void Server::startup() {
     if (sockfd == -1) {
       continue;
     }
+    int yes = 1;
+    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) {
+      perror("setsockopt");
+      throw std::exception();
+    }
     if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
       perror("server: bind");
       close(sockfd);
@@ -37,7 +42,7 @@ void Server::startup() {
     }
     pollfd_t pollfd = (pollfd_t){.fd = sockfd, .events = POLLIN, .revents = 0};
     poll_list_.push_back(pollfd);
-    Socket sock(poll_list_.back(), Socket::LISTEN);
+    Socket sock(poll_list_.back(), Socket::LISTEN, 0);
     client_map_.insert(std::pair<int, Socket>(sockfd, sock));
     break;
   }
@@ -71,9 +76,34 @@ int Server::do_poll_() {
 
 void Server::event_handler_() {
   std::list<pollfd_t>::iterator it;
-  for (it = poll_list_.begin(); it != poll_list_.end(); ++it) {
+  for (it = poll_list_.begin(); it != poll_list_.end();) {
     std::cout << "Fd: " << it->fd << " from polling" << std::endl;
+    if ((it->revents & POLLERR) | (it->revents & POLLNVAL)) {
+      std::cout << "client: " << it->fd << " connection error." << std::endl;
+      close(it->fd);
+      client_map_.erase(it->fd);
+      it = poll_list_.erase(it);
+      continue;
+    }
+    if (it->revents & POLLHUP) {
+      std::cout << "client: " << it->fd << " POLLHUP." << std::endl;
+      close(it->fd);
+      client_map_.erase(it->fd);
+      it = poll_list_.erase(it);
+      continue;
+    }
     if (!(it->events & it->revents)) {
+      if (client_map_.at(it->fd).type_ == Socket::CONNECT &&
+          std::difftime(std::time(NULL), client_map_.at(it->fd).timestamp_) >
+              client_map_.at(it->fd).timeout_) {
+        std::cout << "client: " << it->fd << " Timeout." << std::endl;
+        close(it->fd);
+        client_map_.erase(it->fd);
+        it = poll_list_.erase(it);
+      }
+      else {
+        ++it;
+      }
       continue;
     }
     switch (client_map_.at(it->fd).type_) {
@@ -81,7 +111,6 @@ void Server::event_handler_() {
       std::cout << "In switch LISTEN" << std::endl;
       accept_new_connection(client_map_.at(it->fd));
       break;
-
     case Socket::CONNECT:
       std::cout << "In switch CONNECT" << std::endl;
       handle_client(client_map_.at(it->fd));
@@ -89,16 +118,17 @@ void Server::event_handler_() {
     default:
       break;
     }
+    ++it;
   }
 }
 
 void Server::run() {
   while (true) {
-    int num_events = do_poll_();
+    do_poll_();
     std::cout << "polled" << std::endl;
-    if (num_events > 0) {
-      event_handler_();
-    }
+    // if (num_events > 0) {
+    event_handler_();
+    // }
   }
 }
 
@@ -107,6 +137,10 @@ void Server::accept_new_connection(Socket &socket) {
     std::cout << "I am trying to establish a new connecion" << std::endl;
     int sockfd =
         accept(socket.pollfd_.fd, servinfo_->ai_addr, &servinfo_->ai_addrlen);
+    if (sockfd < 0) {
+      perror("accept");
+      return;
+    }
     pollfd_t pollfd = (pollfd_t){.fd = sockfd, .events = POLLIN, .revents = 0};
     poll_list_.push_back(pollfd);
     Socket new_sock(poll_list_.back(), Socket::CONNECT);
@@ -120,16 +154,20 @@ void Server::handle_client(Socket &socket) {
   std::cout << "handle client: " << socket.pollfd_.fd << std::endl;
   switch (socket.pollfd_.revents) {
   case POLLIN:
+    std::cout << "POLLIN!!" << std::endl;
     socket.receive();
-    if (socket.status_ == Socket::READY) {
-      std::cout << socket.request_.buffer_ << std::endl;
-    }
+    // if (socket.status_ == Socket::READY) {
+    //   std::cout << socket.request_.buffer_ << std::endl;
+    // }
     break;
   case POLLOUT:
+    std::cout << "POLLOUT" << std::endl;
     std::string buffer = "HTTP/1.1 200 OK\r\nContent-Length: "
-                         "26\r\n\r\n<html>Hello, World!</html>"; //
+                         "26\r\n\r\n<html>Hello, World!</html>";
     send(socket.pollfd_.fd, buffer.c_str(), buffer.size(), 0);
     socket.pollfd_.events = POLLIN;
+    socket.timestamp_ = std::time(NULL);
     break;
   }
+  socket.pollfd_.revents = RESET;
 }

@@ -10,9 +10,12 @@ public:
   HTTPRequest &operator=(const HTTPRequest &other);
   ~HTTPRequest();
 
+  void parse_header();
+  void parse_body();
+
 private:
 
-
+friend class Socket;
 };
 
 #endif // __HTTPREQUEST_HPP__

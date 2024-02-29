@@ -1,6 +1,8 @@
 #include "Socket.hpp"
 #include <cstdio>
 #include <iostream>
+#include <fstream>
+#include <stdexcept>
 
 // Socket::Socket() : pollfd_((pollfd_t){}), status_(READY), type_(UNDEFINED) {}
 
@@ -26,15 +28,25 @@ Socket &Socket::operator=(const Socket &other) {
 
 void Socket::check_recv_() {
   if (request_.buffer_.find("\r\n\r\n") == std::string::npos) {
+#ifdef __verbose__
+  std::cout << __LINE__ << "server could not find the end of the header" << std::endl;
+#endif
     status_ = URECV;
+    pollfd_.events = POLLIN;
   }
   // TODO: check content length for finished body???
   else {
-    request_.parse_header();
+#ifdef __verbose__
+  std::cout << __LINE__ << "server is parsing the header" << std::endl;
+#endif
+    request_.parse_header(*this);
     status_ = READY;
   }
   // Set events_ according to status_
   if (status_ == READY) {
+#ifdef __verbose__
+  std::cout << __LINE__ << "server is ready to send the response" << std::endl;
+#endif
     pollfd_.events = POLLOUT;
   }
 }
@@ -50,6 +62,45 @@ void Socket::receive() {
   request_.buffer_ += std::string(buf);
   timestamp_ = std::clock();
   check_recv_();
+}
+
+void Socket::send_response() {
+  // try get location file and read and send.
+  // TODO: create function for getting the correct path to the file
+  // if the URI is '/' then we need to redirect it to the index.html
+  std::ifstream file( request_.parsed_header_.at("URI").c_str());
+  if (!file.is_open()) {
+#ifdef __verbose__
+  std::cout << "Could not open file. Fallback to 404 status-page" << std::endl;
+#endif
+    file.clear();
+    file.open("/home/florian/42/webserv/status-pages/404.html");
+  }
+  file >> response_.buffer_;
+  ssize_t num_bytes = send(pollfd_.fd, response_.buffer_.c_str(), response_.buffer_.size(), MSG_DONTWAIT);
+  if (num_bytes < 0) {
+    throw SendRecvError();
+    // throw an error message here and catch it in the server
+  }
+  if (static_cast<size_t>(num_bytes) < response_.buffer_.size()) {
+#ifdef __verbose__
+  std::cout << "server did not send the full message yet" << std::endl;
+#endif
+    status_ = USEND;
+    pollfd_.events = POLLOUT;
+  } else {
+#ifdef __verbose__
+  std::cout << "server did send the full message" << std::endl;
+#endif
+    status_ = READY;
+    pollfd_.events = POLLIN;
+  }
+  timestamp_ = std::clock();
+}
+
+const char* Socket::SendRecvError::what() const throw()
+{
+  return "Send or Recv returned -1!";
 }
 
 Socket::~Socket() {}

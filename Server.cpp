@@ -3,11 +3,10 @@
 #include <iostream>
 
 Server::Server(const std::string &port)
-    : hints_(), port_(port), sockfd_nb_(0), timeout_(2500) {
+    : hints_(), port_(port), timeout_(2500) {
   hints_.ai_family = AF_UNSPEC;     // IPv4 and IPv6
   hints_.ai_socktype = SOCK_STREAM; // TCP not UDP
   hints_.ai_flags = AI_PASSIVE;     // Fill in my IP for me
-  (void)sockfd_nb_;
 }
 
 Server::~Server() { freeaddrinfo(servinfo_); }
@@ -100,8 +99,7 @@ void Server::event_handler_() {
         close(it->fd);
         client_map_.erase(it->fd);
         it = poll_list_.erase(it);
-      }
-      else {
+      } else {
         ++it;
       }
       continue;
@@ -113,7 +111,16 @@ void Server::event_handler_() {
       break;
     case Socket::CONNECT:
       std::cout << "In switch CONNECT" << std::endl;
-      handle_client(client_map_.at(it->fd));
+      try {
+        handle_client(client_map_.at(it->fd));
+      } catch (Socket::SendRecvError &e) {
+        std::cerr << e.what() << '\n';
+        close(it->fd);
+        client_map_.erase(it->fd);
+        it = poll_list_.erase(it);
+        continue;
+      }
+
       break;
     default:
       break;
@@ -162,11 +169,12 @@ void Server::handle_client(Socket &socket) {
     break;
   case POLLOUT:
     std::cout << "POLLOUT" << std::endl;
-    std::string buffer = "HTTP/1.1 200 OK\r\nContent-Length: "
-                         "26\r\n\r\n<html>Hello, World!</html>";
-    send(socket.pollfd_.fd, buffer.c_str(), buffer.size(), 0);
-    socket.pollfd_.events = POLLIN;
-    socket.timestamp_ = std::time(NULL);
+    socket.send_response();
+    // std::string buffer = "HTTP/1.1 200 OK\r\nContent-Length: "
+    //                      "26\r\n\r\n<html>Hello, World!</html>";
+    // send(socket.pollfd_.fd, buffer.c_str(), buffer.size(), 0);
+    // socket.pollfd_.events = POLLIN;
+    // socket.timestamp_ = std::time(NULL);
     break;
   }
   socket.pollfd_.revents = RESET;

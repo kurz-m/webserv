@@ -3,6 +3,8 @@
 
 #include "HTTPBase.hpp"
 
+class Socket;
+
 class HTTPRequest : public HTTPBase {
 public:
   HTTPRequest();
@@ -10,7 +12,7 @@ public:
   HTTPRequest &operator=(const HTTPRequest &other);
   ~HTTPRequest();
 
-  void parse_header();
+  void parse_header(Socket &sock);
   void parse_body();
 
 private:

@@ -32,9 +32,13 @@ public:
   Socket &operator=(const Socket &other);
   ~Socket();
 
-  // pollfd_t to_pollfd();
   void receive();
   void send_response();
+
+  class SendRecvError : public std::exception {
+  public:
+    const char *what() const throw();
+  };
 
 private:
   HTTPRequest request_;
@@ -48,6 +52,7 @@ private:
   void check_recv_();
 
   friend class Server;
+  friend class HTTPRequest;
 };
 
 #endif // __SOCKET_HPP__

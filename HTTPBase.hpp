@@ -13,6 +13,7 @@ public:
   HTTPBase &operator=(const HTTPBase &other);
   virtual ~HTTPBase();
 
+  static const char* status_code[];
   enum method { GET, POST, DELETE, UNKNOWN };
 
 protected:
@@ -23,6 +24,8 @@ protected:
   std::string body_;
   method method_;
 
+  static std::map<int, std::string> create_map_();
+  const static std::map<int, std::string> status_map_;
   const static size_t MAX_BUFFER = 1024;
 
 friend class Socket;

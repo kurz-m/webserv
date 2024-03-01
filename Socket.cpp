@@ -64,28 +64,26 @@ void Socket::receive() {
   check_recv_();
 }
 
-void Socket::resolve_uri_()
-{
-  if (request_.parsed_header_.at("URI") == "/") {
-    request_.parsed_header_.at("URI") = "./status-pages/404.html";
-  }
-}
+
 
 void Socket::send_response() {
   // try get location file and read and send.
   // TODO: create function for getting the correct path to the file
   // if the URI is '/' then we need to redirect it to the index.html
-  resolve_uri_();
-  std::ifstream file( request_.parsed_header_.at("URI").c_str());
-  if (!file.is_open()) {
-#ifdef __verbose__
-  std::cout << "Could not open file. Fallback to 404 status-page" << std::endl;
-#endif
-    file.clear();
-    file.open("/home/florian/42/webserv/status-pages/404.html");
-  }
-  response_.buffer_.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
+  // resolve_uri_();
+  response_.parsed_header_.insert(std::make_pair("URI", request_.parsed_header_.at("URI")));
+//   std::ifstream file( request_.parsed_header_.at("URI").c_str());
+//   if (!file.is_open()) {
+// #ifdef __verbose__
+//   std::cout << "Could not open file. Fallback to 404 status-page" << std::endl;
+// #endif
+//     file.clear();
+//     file.open("/home/florian/42/webserv/status-pages/404.html");
+//   }
+//   response_.body_.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
   //file >> response_.buffer_;
+  // response prepare for send;
+  response_.prepare_for_send();
   ssize_t num_bytes = send(pollfd_.fd, response_.buffer_.c_str(), response_.buffer_.size(), MSG_DONTWAIT);
   if (num_bytes < 0) {
     throw SendRecvError();

@@ -10,9 +10,13 @@ public:
   HTTPResponse &operator=(const HTTPResponse &other);
   ~HTTPResponse();
 
-  void make_response();
+  void prepare_for_send();
 
 private:
+  void make_header_();
+  void resolve_uri_();
+
+  int status_code_;
   
 };
 

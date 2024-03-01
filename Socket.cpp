@@ -4,8 +4,6 @@
 #include <fstream>
 #include <stdexcept>
 
-// Socket::Socket() : pollfd_((pollfd_t){}), status_(READY), type_(UNDEFINED) {}
-
 Socket::Socket(pollfd &pollfd, type type, int timeout /* = DEFAULT_TIMEOUT*/)
     : pollfd_(pollfd), status_(READY), type_(type), timeout_(timeout) {
   timestamp_ = std::time(NULL);
@@ -64,30 +62,20 @@ void Socket::receive() {
   check_recv_();
 }
 
-
-
-void Socket::send_response() {
+void Socket::interpret_request_headers_() {
   // try get location file and read and send.
   // TODO: create function for getting the correct path to the file
   // if the URI is '/' then we need to redirect it to the index.html
-  // resolve_uri_();
+  // also check permission for the specified URI
   response_.parsed_header_.insert(std::make_pair("URI", request_.parsed_header_.at("URI")));
-//   std::ifstream file( request_.parsed_header_.at("URI").c_str());
-//   if (!file.is_open()) {
-// #ifdef __verbose__
-//   std::cout << "Could not open file. Fallback to 404 status-page" << std::endl;
-// #endif
-//     file.clear();
-//     file.open("/home/florian/42/webserv/status-pages/404.html");
-//   }
-//   response_.body_.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
-  //file >> response_.buffer_;
-  // response prepare for send;
+}
+
+void Socket::send_response() {
+  interpret_request_headers_();
   response_.prepare_for_send();
   ssize_t num_bytes = send(pollfd_.fd, response_.buffer_.c_str(), response_.buffer_.size(), MSG_DONTWAIT);
   if (num_bytes < 0) {
     throw SendRecvError();
-    // throw an error message here and catch it in the server
   }
   if (static_cast<size_t>(num_bytes) < response_.buffer_.size()) {
 #ifdef __verbose__
@@ -111,20 +99,3 @@ const char* Socket::SendRecvError::what() const throw()
 }
 
 Socket::~Socket() {}
-
-// Socket::Socket(int sockfd, const Socket &listen_sock)
-//     : type_(CONNECT), info_() {
-//   socklen_t socklen = listen_sock.info_.ai_addrlen;
-
-//   sockfd_ = accept(sockfd, listen_sock.info_.ai_addr, &socklen);
-//   if (sockfd_ == -1) {
-//     perror("server: accept");
-//     throw std::exception();
-//   }
-//   events_ = POLLIN;
-//   status_ = READY;
-// }
-
-// pollfd_t Socket::to_pollfd() {
-//   return (pollfd_t){.fd = sockfd_, .events = events_, .revents = 0};
-// }

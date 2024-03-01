@@ -51,6 +51,7 @@ private:
 
   void check_recv_();
   void resolve_uri_();
+  void interpret_request_headers_();
 
   friend class Server;
   friend class HTTPRequest;

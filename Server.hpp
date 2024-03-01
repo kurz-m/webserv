@@ -26,6 +26,7 @@ private:
 
   std::list<pollfd_t> poll_list_;
   std::map<int, Socket> client_map_;
+  std::map<std::string, std::string> config_map_;
   addrinfo_t hints_;
   addrinfo_t* servinfo_;
   const std::string port_;

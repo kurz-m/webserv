@@ -178,20 +178,12 @@ void Server::handle_client(Socket &socket) {
     std::cout << "POLLIN!!" << std::endl;
 #endif
     socket.receive();
-    // if (socket.status_ == Socket::READY) {
-    //   std::cout << socket.request_.buffer_ << std::endl;
-    // }
     break;
   case POLLOUT:
 #ifdef __verbose__
     std::cout << "POLLOUT" << std::endl;
 #endif
     socket.send_response();
-    // std::string buffer = "HTTP/1.1 200 OK\r\nContent-Length: "
-    //                      "26\r\n\r\n<html>Hello, World!</html>";
-    // send(socket.pollfd_.fd, buffer.c_str(), buffer.size(), 0);
-    // socket.pollfd_.events = POLLIN;
-    // socket.timestamp_ = std::time(NULL);
     break;
   }
   socket.pollfd_.revents = RESET;

@@ -12,6 +12,9 @@ Server::Server(const std::string &port)
 Server::~Server() { freeaddrinfo(servinfo_); }
 
 void Server::startup() {
+#ifdef __verbose__
+  std::cout << "starting the server in __verbose__ mode" << std::endl;
+#endif
   int status;
   addrinfo_t *p;
 
@@ -106,11 +109,15 @@ void Server::event_handler_() {
     }
     switch (client_map_.at(it->fd).type_) {
     case Socket::LISTEN:
+#ifdef __verbose__
       std::cout << "In switch LISTEN" << std::endl;
+#endif
       accept_new_connection(client_map_.at(it->fd));
       break;
     case Socket::CONNECT:
+#ifdef __verbose__
       std::cout << "In switch CONNECT" << std::endl;
+#endif
       try {
         handle_client(client_map_.at(it->fd));
       } catch (Socket::SendRecvError &e) {
@@ -132,7 +139,9 @@ void Server::event_handler_() {
 void Server::run() {
   while (true) {
     do_poll_();
+#ifdef __verbose__
     std::cout << "polled" << std::endl;
+#endif
     // if (num_events > 0) {
     event_handler_();
     // }
@@ -141,7 +150,9 @@ void Server::run() {
 
 void Server::accept_new_connection(Socket &socket) {
   try {
+#ifdef __verbose__
     std::cout << "I am trying to establish a new connecion" << std::endl;
+#endif
     int sockfd =
         accept(socket.pollfd_.fd, servinfo_->ai_addr, &servinfo_->ai_addrlen);
     if (sockfd < 0) {
@@ -158,17 +169,23 @@ void Server::accept_new_connection(Socket &socket) {
 }
 
 void Server::handle_client(Socket &socket) {
+#ifdef __verbose__
   std::cout << "handle client: " << socket.pollfd_.fd << std::endl;
+#endif
   switch (socket.pollfd_.revents) {
   case POLLIN:
+#ifdef __verbose__
     std::cout << "POLLIN!!" << std::endl;
+#endif
     socket.receive();
     // if (socket.status_ == Socket::READY) {
     //   std::cout << socket.request_.buffer_ << std::endl;
     // }
     break;
   case POLLOUT:
+#ifdef __verbose__
     std::cout << "POLLOUT" << std::endl;
+#endif
     socket.send_response();
     // std::string buffer = "HTTP/1.1 200 OK\r\nContent-Length: "
     //                      "26\r\n\r\n<html>Hello, World!</html>";

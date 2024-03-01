@@ -17,7 +17,7 @@ TEST := printf "[$(BO)$(M)ⓘ TEST$(X)] %s\n"
 ###############                  DIRECTORIES                      ##############
 ################################################################################
 
-OBJ_DIR := _obj
+OBJ_DIR := obj-cache
 INC_DIRS := .
 SRC_DIRS := .
 
@@ -40,10 +40,10 @@ CXXFLAGS ?= -Wextra -Wall -Werror -std=c++98 -MMD -MP $(addprefix -I, $(INC_DIRS
 LDFLAGS := 
 
 ifeq ($(DEBUG), 1)
-	CXXFLAGS += -D__debug__
+	CXXFLAGS += -g
 endif
 
-ifeq ($(VERBOSE),)
+ifeq ($(VERBOSE), 1)
 	CXXFLAGS += -D__verbose__
 endif
 

@@ -50,6 +50,7 @@ private:
   std::time_t timestamp_;
 
   void check_recv_();
+  void resolve_uri_();
 
   friend class Server;
   friend class HTTPRequest;

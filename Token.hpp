@@ -46,13 +46,11 @@ public:
   token_type_t type;
   std::string literal;
 
-  bool operator==(const Token &tok);
+  bool operator==(const token_type_t &rhs);
+  bool operator!=(const token_type_t &rhs);
 
   static std::map<std::string, token_type_t> create_keywords();
   const static std::map<std::string, token_type_t> keyword_map;
-
-  static std::map<std::string, token_type_t> create_directive();
-  const static std::map<std::string, token_type_t> directive_map;
 
   static token_type_t lookup_ident(std::string &);
 

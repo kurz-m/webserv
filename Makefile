@@ -37,7 +37,7 @@ OBJS := $(addprefix $(OBJ_DIR)/, $(SRCS:%.cpp=%.o))
 ################################################################################
 
 CXXFLAGS ?= -Wextra -Wall -Werror -std=c++98 -MMD -MP $(addprefix -I, $(INC_DIRS))
-LDFLAGS := 
+LDFLAGS :=
 
 ifeq ($(DEBUG), 1)
 	CXXFLAGS += -g
@@ -89,3 +89,6 @@ re: fclean all
 -include $(OBJS:$(OBJ_DIR)/%.o=$(OBJ_DIR)/%.d)
 
 .PHONY: all fclean clean re debug
+
+test:
+	$(CXX) $(CXXFLAGS) -g Token.cpp Lexer.cpp test_lexer.cpp -o lexer.test

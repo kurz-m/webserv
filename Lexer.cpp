@@ -1,5 +1,6 @@
 #include "Lexer.hpp"
 #include "Token.hpp"
+#include <cctype>
 
 Lexer::Lexer(const std::string &input)
     : input_(input), position_(0), read_position_(0), ch_(0) {
@@ -49,7 +50,7 @@ Token Lexer::next_token() {
       tok.literal = read_ident_();
       tok.type = Token::lookup_ident(tok.literal);
       return tok;
-    } else if (is_number_(ch_)) {
+    } else if (std::isdigit(ch_)) {
       tok = (Token){
           .type = Token::NUMBER,
           .literal = read_number_(),
@@ -87,16 +88,21 @@ void Lexer::skip_whitespace_() {
 }
 
 bool Lexer::is_letter_(const char &ch) {
-  return ('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z') || ch == '.' ||
-         ch == '/';
+  return std::isalpha(ch) || ch == '.' || ch == '/' || ch == '_' || ch == '-';
 }
 
 std::string Lexer::read_ident_() {
   int position = position_;
-  while (is_letter_(ch_)) {
+  while (is_letter_(ch_) || std::isdigit(ch_)) {
     read_char_();
   }
-  return input_.substr(position, position_);
+  return input_.substr(position, position_ - position);
 }
 
-bool Lexer::is_number_(const char &ch) { return '0' <= ch && ch <= '9'; }
+std::string Lexer::read_number_() {
+  int position = position_;
+  while (std::isdigit(ch_)) {
+    read_char_();
+  }
+  return input_.substr(position, position_ - position);
+}

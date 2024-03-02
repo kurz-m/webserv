@@ -2,6 +2,7 @@
 #define __LEXER_HPP__
 
 #include "Token.hpp"
+#include <cstddef>
 #include <string>
 
 class Lexer {
@@ -20,12 +21,11 @@ private:
   void skip_whitespace_();
   bool is_letter_(const char &ch);
   std::string read_ident_();
-  bool is_number_(const char &ch);
   std::string read_number_();
 
   std::string input_;
-  int position_;
-  int read_position_;
+  size_t position_;
+  size_t read_position_;
   char ch_;
 };
 

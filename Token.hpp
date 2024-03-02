@@ -35,7 +35,7 @@ public:
     LBRACE,
     RBRACE,
     SEMICOLON,
-    HASH
+    COMMENT
   };
 
   struct token_t {

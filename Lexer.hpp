@@ -22,6 +22,7 @@ private:
   bool is_letter_(const char &ch);
   std::string read_ident_();
   std::string read_number_();
+  std::string read_comment_();
 
   std::string input_;
   size_t position_;

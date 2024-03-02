@@ -1,6 +1,7 @@
 #include "Lexer.hpp"
 #include "Token.hpp"
 #include <cctype>
+#include <cstddef>
 
 Lexer::Lexer(const std::string &input)
     : input_(input), position_(0), read_position_(0), ch_(0) {
@@ -37,13 +38,12 @@ Token Lexer::next_token() {
     tok = new_token_(Token::SEMICOLON, ch_);
     break;
   case '#':
-    tok = new_token_(Token::HASH, ch_);
+    tok.type = Token::COMMENT;
+    tok.literal = read_comment_();
     break;
   case 0:
-    tok = (Token){
-        .type = Token::EF,
-        .literal = "",
-    };
+    tok.type = Token::EF;
+    tok.literal = "";
     break;
   default:
     if (is_letter_(ch_)) {
@@ -62,6 +62,14 @@ Token Lexer::next_token() {
   }
   read_char_();
   return tok;
+}
+
+std::string Lexer::read_comment_() {
+  size_t position = position_;
+  while (ch_ != '\n') {
+    read_char_();
+  }
+  return input_.substr(position, position_ - position);
 }
 
 void Lexer::read_char_() {

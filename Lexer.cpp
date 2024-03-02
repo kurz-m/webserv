@@ -20,8 +20,10 @@ Lexer &Lexer::operator=(const Lexer &rhs) {
 
 Lexer::~Lexer() {}
 
-Token::token_t Lexer::next_token() {
-  Token::token_t tok;
+Token Lexer::next_token() {
+  Token tok;
+
+  skip_whitespace_();
 
   switch (ch_) {
   case '{':
@@ -36,6 +38,26 @@ Token::token_t Lexer::next_token() {
   case '#':
     tok = new_token_(Token::HASH, ch_);
     break;
+  case 0:
+    tok = (Token){
+        .type = Token::EF,
+        .literal = "",
+    };
+    break;
+  default:
+    if (is_letter_(ch_)) {
+      tok.literal = read_ident_();
+      tok.type = Token::lookup_ident(tok.literal);
+      return tok;
+    } else if (is_number_(ch_)) {
+      tok = (Token){
+          .type = Token::NUMBER,
+          .literal = read_number_(),
+      };
+      return tok;
+    } else {
+      tok = new_token_(Token::ILLEGAL, ch_);
+    }
   }
   read_char_();
   return tok;
@@ -51,23 +73,30 @@ void Lexer::read_char_() {
   ++read_position_;
 }
 
-char Lexer::peek_char_() {
-  if (read_position_ >= input_.size()) {
-    return 0;
-  } else {
-    return input_.at(read_position_);
-  }
-}
-
-Token::token_t Lexer::new_token_(Token::token_type_t tok_type, char ch) {
-  return (Token::token_t){
+Token Lexer::new_token_(Token::token_type_t tok_type, const char &ch) {
+  return (Token){
       .type = tok_type,
       .literal = std::string(1, ch),
   };
 }
 
 void Lexer::skip_whitespace_() {
-  while (ch_ == 32 || (ch_ > 8 && ch < 14)) {
+  while (ch_ == 32 || (ch_ > 8 && ch_ < 14)) {
     read_char_();
   }
 }
+
+bool Lexer::is_letter_(const char &ch) {
+  return ('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z') || ch == '.' ||
+         ch == '/';
+}
+
+std::string Lexer::read_ident_() {
+  int position = position_;
+  while (is_letter_(ch_)) {
+    read_char_();
+  }
+  return input_.substr(position, position_);
+}
+
+bool Lexer::is_number_(const char &ch) { return '0' <= ch && ch <= '9'; }

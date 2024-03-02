@@ -15,6 +15,7 @@ const std::map<std::string, Token::token_type_t> Token::directive_map =
 std::map<std::string, Token::token_type_t> Token::create_keywords() {
   std::map<std::string, token_type_t> loc_map;
   loc_map.insert(std::make_pair("server_name", SERVER_NAME));
+  loc_map.insert(std::make_pair("default_type", DEFAULT_TYPE));
   loc_map.insert(std::make_pair("keepalive_timeout", KEEPALIVE_TIMEOUT));
   loc_map.insert(std::make_pair("listen", LISTEN));
   loc_map.insert(std::make_pair("client_max_body_size", CLIENT_MAX_BODY_SIZE));
@@ -30,7 +31,7 @@ std::map<std::string, Token::token_type_t> Token::create_keywords() {
 const std::map<std::string, Token::token_type_t> Token::keyword_map =
     create_keywords();
 
-const Token::token_type_t Token::lookup_ident(std::string &ident) {
+Token::token_type_t Token::lookup_ident(std::string &ident) {
   try {
     token_type_t tok = directive_map.at(ident);
     return tok;
@@ -42,4 +43,8 @@ const Token::token_type_t Token::lookup_ident(std::string &ident) {
     }
   }
   return STRING;
+}
+
+bool Token::operator==(const Token &tok) {
+  return (type == tok.type) && (literal == tok.literal);
 }

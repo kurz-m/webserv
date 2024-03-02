@@ -4,7 +4,7 @@
 #include <map>
 #include <string>
 
-class Token {
+struct Token {
 public:
   enum token_type_t {
     ILLEGAL,
@@ -19,6 +19,7 @@ public:
 
     // Keywords
     SERVER_NAME,
+    DEFAULT_TYPE,
     KEEPALIVE_TIMEOUT,
     LISTEN,
     CLIENT_MAX_BODY_SIZE,
@@ -41,6 +42,11 @@ public:
     token_type_t type;
     std::string literal;
   };
+
+  token_type_t type;
+  std::string literal;
+
+  bool operator==(const Token &tok);
 
   static std::map<std::string, token_type_t> create_keywords();
   const static std::map<std::string, token_type_t> keyword_map;

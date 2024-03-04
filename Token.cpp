@@ -4,7 +4,7 @@
 std::map<std::string, Token::token_type_t> Token::create_keywords() {
   std::map<std::string, token_type_t> loc_map;
   loc_map.insert(std::make_pair("http", HTTP));
-  loc_map.insert(std::make_pair("setting", SETTING));
+  loc_map.insert(std::make_pair("server", SERVER));
   loc_map.insert(std::make_pair("location", LOCATION));
   loc_map.insert(std::make_pair("server_name", SERVER_NAME));
   loc_map.insert(std::make_pair("default_type", DEFAULT_TYPE));

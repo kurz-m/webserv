@@ -48,6 +48,7 @@ void Parser::parse_config() {
     } else {
       throw std::invalid_argument("wrong syntax for config file");
     }
+    next_token_();
   }
   if (expect_current_(Token::RBRACE)) {
     --block_depth_;
@@ -95,6 +96,7 @@ RouteBlock Parser::parse_routeblock_() {
     while (~current_token_.type & (Token::RBRACE | Token::EF)) {
       http_.servers[server_count_].routes[route_count_].settings.push_back(
           parse_setting_());
+      next_token_();
     }
   }
   if (expect_current_(Token::RBRACE)) {

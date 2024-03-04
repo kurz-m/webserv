@@ -54,7 +54,7 @@ public:
   static std::map<std::string, token_type_t> create_keywords();
   const static std::map<std::string, token_type_t> keyword_map;
 
-    static token_type_t lookup_ident(std::string &);
+  static token_type_t lookup_ident(std::string &);
 };
 
 #endif //__TOKEN_HPP__

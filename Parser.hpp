@@ -6,17 +6,11 @@
 
 class Lexer;
 
-struct Value {
-  enum Type {STRING, INT} type;
-  union {
-    std::string str_val;
-    int int_val;
-  };
-};
-
 struct Setting {
+  enum Type {STRING, INT} type;
   std::string name;
-  Value value;
+  std::string str_val;
+  int inv_val;
 };
 
 struct RouteBlock {
@@ -46,9 +40,9 @@ private:
   Parser& operator=(const Parser&);
 
   void next_token_();
-  void parse_serverblock_();
-  void parse_routeblock_();
-  void parse_setting_();
+  ServerBlock parse_serverblock_();
+  RouteBlock parse_routeblock_();
+  Setting parse_setting_();
   bool expect_current_(const Token::token_type_t) const;
   bool expect_peek_(const Token::token_type_t) const;
 
@@ -58,6 +52,8 @@ private:
   Token peek_token_;
   ssize_t block_depth_;
   HttpBlock http_;
+  size_t  server_count_;
+  size_t  route_count_;
 
 };
 

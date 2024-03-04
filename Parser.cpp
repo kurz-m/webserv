@@ -73,12 +73,18 @@ RouteBlock Parser::parse_routeblock_()
 {
   next_token_();
   if (expect_current_(Token::STRING) && expect_peek_(Token::LBRACE)) {
+    ++block_depth_;
     // implement path check here and everything else here
     next_token_();
     next_token_();
     while (~current_token_.type & (Token::RBRACE | Token::EF)) {
       http_.servers[server_count_].routes[route_count_].settings.push_back(parse_setting_());
     }
+  }
+  if (expect_current_(Token::RBRACE)) {
+    --block_depth_;
+  } else if (expect_current_(Token::EF)) {
+    throw std::invalid_argument("missing closing block");
   }
   ++route_count_;
 }

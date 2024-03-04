@@ -1,4 +1,5 @@
 #include "Token.hpp"
+
 #include <stdexcept>
 
 std::map<std::string, Token::token_type_t> Token::create_keywords() {

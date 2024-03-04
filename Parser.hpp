@@ -1,13 +1,14 @@
 #ifndef __PARSER_HPP__
 #define __PARSER_HPP__
 
-#include "Token.hpp"
 #include <vector>
+
+#include "Token.hpp"
 
 class Lexer;
 
 struct Setting {
-  enum Type {STRING, INT} type;
+  enum Type { STRING, INT } type;
   std::string name;
   std::string str_val;
   int inv_val;
@@ -30,14 +31,14 @@ struct HttpBlock {
 
 class Parser {
 public:
-  Parser(Lexer&);
+  Parser(Lexer &);
   ~Parser();
 
   void parse_config();
 
 private:
-  Parser(const Parser&);
-  Parser& operator=(const Parser&);
+  Parser(const Parser &);
+  Parser &operator=(const Parser &);
 
   void next_token_();
   ServerBlock parse_serverblock_();
@@ -46,15 +47,13 @@ private:
   bool expect_current_(const Token::token_type_t) const;
   bool expect_peek_(const Token::token_type_t) const;
 
-
-  Lexer& lexer_;
+  Lexer &lexer_;
   Token current_token_;
   Token peek_token_;
   ssize_t block_depth_;
   HttpBlock http_;
-  size_t  server_count_;
-  size_t  route_count_;
-
+  size_t server_count_;
+  size_t route_count_;
 };
 
 #endif

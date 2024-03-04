@@ -55,8 +55,6 @@ public:
   const static std::map<std::string, token_type_t> keyword_map;
 
   static token_type_t lookup_ident(std::string &);
-
-  friend class Lexer;
 };
 
 #endif //__TOKEN_HPP__

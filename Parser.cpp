@@ -44,6 +44,7 @@ void Parser::parse_config() {
   while (!expect_peek_(Token::EF)) {
     if (expect_current_(Token::SERVER)) {
       http_.servers.push_back(parse_serverblock_());
+      ++server_count_;
     } else if (current_token_.type & S_BITS) {
       http_.settings.push_back(parse_setting_());
     } else {
@@ -61,6 +62,8 @@ void Parser::parse_config() {
   }
 }
 
+// FIX: remove the http_ because we just have to return the server
+// this also fixes the problem for tracking on which server we are
 ServerBlock Parser::parse_serverblock_() {
   route_count_ = 0;
   next_token_();
@@ -69,11 +72,12 @@ ServerBlock Parser::parse_serverblock_() {
   }
   ++block_depth_;
   next_token_();
+  ServerBlock server;
   while (~current_token_.type & (Token::RBRACE | Token::EF)) {
     if (expect_current_(Token::LOCATION)) {
-      http_.servers[server_count_].routes.push_back(parse_routeblock_());
+      server.routes.push_back(parse_routeblock_());
     } else if (current_token_.type & S_BITS) {
-      http_.servers[server_count_].settings.push_back(parse_setting_());
+      server.settings.push_back(parse_setting_());
     } else {
       throw std::invalid_argument("wrong syntax for config file");
     }
@@ -84,7 +88,7 @@ ServerBlock Parser::parse_serverblock_() {
   } else if (expect_current_(Token::EF)) {
     throw std::invalid_argument("missing closing block");
   }
-  ++server_count_;
+  return server;
 }
 
 RouteBlock Parser::parse_routeblock_() {
@@ -92,17 +96,17 @@ RouteBlock Parser::parse_routeblock_() {
     check_file_(current_token_.literal);
   }
   next_token_();
+  RouteBlock route;
   if (expect_peek_(Token::LBRACE)) {
     ++block_depth_;
     next_token_();
     next_token_();
     while (~current_token_.type & (Token::RBRACE | Token::EF)) {
-      http_.servers[server_count_].routes[route_count_].settings.push_back(
+      route.settings.push_back(
           parse_setting_());
       next_token_();
     }
-  }
-  else {
+  } else {
     throw std::invalid_argument("invalid syntax for config file");
   }
   if (expect_current_(Token::RBRACE)) {
@@ -110,7 +114,7 @@ RouteBlock Parser::parse_routeblock_() {
   } else if (expect_current_(Token::EF)) {
     throw std::invalid_argument("missing closing block");
   }
-  ++route_count_;
+  return route;
 }
 
 Setting Parser::parse_setting_() {
@@ -138,8 +142,7 @@ Setting Parser::parse_setting_() {
   };
 }
 
-bool Parser::check_file_(const std::string& file) const
-{
+bool Parser::check_file_(const std::string &file) const {
   struct stat sb;
 
   if (stat(file.c_str(), &sb) < 0) {
@@ -147,18 +150,18 @@ bool Parser::check_file_(const std::string& file) const
   }
 
   switch (sb.st_mode & S_IFMT) {
-    case S_IFREG:
-      if (expect_current_(Token::LOCATION)) {
-        throw std::invalid_argument("file cannot be passed as route option");
-        return false;
-      }
-      return true;
-      case S_IFDIR:
-      if (expect_current_(Token::STRING)) {
-        throw std::invalid_argument("got a directory, wanted a file");
-        return false;
-      }
-      return true;
+  case S_IFREG:
+    if (expect_current_(Token::LOCATION)) {
+      throw std::invalid_argument("file cannot be passed as route option");
+      return false;
+    }
+    return true;
+  case S_IFDIR:
+    if (expect_current_(Token::STRING)) {
+      throw std::invalid_argument("got a directory, wanted a file");
+      return false;
+    }
+    return true;
   }
   return false;
 }

@@ -47,6 +47,8 @@ private:
   bool expect_current_(const Token::token_type_t) const;
   bool expect_peek_(const Token::token_type_t) const;
 
+  bool check_file_(const std::string&) const;
+
   Lexer &lexer_;
   Token current_token_;
   Token peek_token_;

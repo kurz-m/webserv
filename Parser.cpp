@@ -26,8 +26,8 @@ Parser &Parser::operator=(const Parser &rhs) {
 Parser::~Parser() {}
 
 void Parser::next_token_() {
-  peek_token_ = current_token_;
-  current_token_ = lexer_.next_token();
+  current_token_ = peek_token_;
+  peek_token_ = lexer_.next_token();
 }
 
 void Parser::parse_config() {
@@ -62,8 +62,6 @@ void Parser::parse_config() {
   }
 }
 
-// FIX: remove the http_ because we just have to return the server
-// this also fixes the problem for tracking on which server we are
 ServerBlock Parser::parse_serverblock_() {
   route_count_ = 0;
   next_token_();
@@ -157,7 +155,7 @@ bool Parser::check_file_(const std::string &file) const {
     }
     return true;
   case S_IFDIR:
-    if (expect_current_(Token::STRING)) {
+    if (current_token_.type & S_BITS) {
       throw std::invalid_argument("got a directory, wanted a file");
       return false;
     }

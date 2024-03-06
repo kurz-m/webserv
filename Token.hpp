@@ -29,6 +29,7 @@ public:
     ALLOW = (1 << 14),
     DENY = (1 << 15),
     SERVER_NAME = (1 << 16),
+    INDEX = (1 << 17),
 
     // Bool
     TRUE = (1 << 20),
@@ -38,11 +39,6 @@ public:
     RBRACE = (1 << 23),
     SEMICOLON = (1 << 24),
     COMMENT = (1 << 25)
-  };
-
-  struct token_t {
-    token_type_t type;
-    std::string literal;
   };
 
   token_type_t type;

@@ -7,12 +7,14 @@
 #include <sys/poll.h>
 #include <unistd.h>
 #include <vector>
+#include "Settings.hpp"
+#include "Parser.hpp"
 
 #define RESET 0
 
 class Server {
 public:
-  Server(const std::string &port);
+  Server(const ServerBlock &config);
   ~Server();
 
   void startup();
@@ -26,12 +28,13 @@ private:
 
   std::list<pollfd_t> poll_list_;
   std::map<int, Socket> client_map_;
-  std::map<std::string, std::string> config_map_;
+  // std::map<std::string, std::string> config_map_;
   addrinfo_t hints_;
   addrinfo_t* servinfo_;
-  const std::string port_;
   int timeout_;
+  std::string port_;
   std::string webroot_; // root directory for webserver
+  const ServerBlock& config_;  // all settings from config
 
 friend class Socket;
 };

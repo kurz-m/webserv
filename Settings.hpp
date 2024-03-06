@@ -5,6 +5,12 @@
 
 #include <string>
 #include <vector>
+#include "Token.hpp"
+
+class NotFoundError : public std::exception {
+public:
+  const char *what() const throw();
+};
 
 struct Setting {
   enum Type { UNSET, STRING, INT } type;
@@ -17,21 +23,21 @@ struct RouteBlock {
   std::string path;
   std::vector<Setting> settings;
 
-  Setting find(const std::string&);
+  const Setting find(Token::token_type_t) const;
 };
 
 struct ServerBlock {
   std::vector<Setting> settings;
   std::vector<RouteBlock> routes;
 
-  Setting find(const std::string&);
+  const Setting find(Token::token_type_t) const;
 };
 
 struct HttpBlock {
   std::vector<Setting> settings;
   std::vector<ServerBlock> servers;
 
-  Setting find(const std::string&);
+  const Setting find(Token::token_type_t) const;
 };
 
 #endif // !__SETTINGS_HPP__

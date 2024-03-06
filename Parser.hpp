@@ -8,13 +8,12 @@
 
 class Lexer;
 
-
 class Parser {
 public:
   Parser(Lexer &);
   ~Parser();
 
-  void parse_config();
+  HttpBlock parse_config();
 
 private:
   Parser(const Parser &);

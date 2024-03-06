@@ -1,11 +1,12 @@
-#include "HTTPResponse.hpp"
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include "HTTPResponse.hpp"
+#include "Settings.hpp"
 
 static const std::string proto_ = "HTTP/1.1";
 
-HTTPResponse::HTTPResponse() {}
+HTTPResponse::HTTPResponse(const ServerBlock& config) : HTTPBase(config) {}
 
 HTTPResponse::~HTTPResponse() {}
 

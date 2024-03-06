@@ -3,12 +3,13 @@
 
 #include <string>
 #include <map>
+#include "Settings.hpp"
 
 class Socket;
 
 class HTTPBase {
 public:
-  HTTPBase();
+  HTTPBase(const ServerBlock&);
   HTTPBase(const HTTPBase &cpy);
   HTTPBase &operator=(const HTTPBase &other);
   virtual ~HTTPBase();
@@ -27,6 +28,7 @@ protected:
   static std::map<int, std::string> create_map_();
   const static std::map<int, std::string> status_map_;
   const static size_t MAX_BUFFER = 1024;
+  const ServerBlock& config_;  // all settings from config
 
 friend class Socket;
 friend class Server;

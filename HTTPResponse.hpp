@@ -5,7 +5,7 @@
 
 class HTTPResponse : public HTTPBase {
 public:
-  HTTPResponse();
+  HTTPResponse(const ServerBlock&);
   HTTPResponse(const HTTPResponse &cpy);
   HTTPResponse &operator=(const HTTPResponse &other);
   ~HTTPResponse();
@@ -16,8 +16,9 @@ private:
   void make_header_();
   void resolve_uri_();
 
+
   int status_code_;
-  
+
 };
 
 #endif // __HTTP_RESPONSE_HPP__

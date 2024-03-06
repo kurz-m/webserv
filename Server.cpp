@@ -8,7 +8,7 @@ Server::Server(const ServerBlock &config)
   hints_.ai_family = AF_UNSPEC;     // IPv4 and IPv6
   hints_.ai_socktype = SOCK_STREAM; // TCP not UDP
   hints_.ai_flags = AI_PASSIVE;     // Fill in my IP for me
-  port_ = config.find(Token::LISTEN).inv_val;
+  port_ = config.find(Token::LISTEN).int_val;
   webroot_ = config.find(Token::ROOT).str_val;
 }
 
@@ -47,7 +47,7 @@ void Server::startup() {
     }
     pollfd_t pollfd = (pollfd_t){.fd = sockfd, .events = POLLIN, .revents = 0};
     poll_list_.push_back(pollfd);
-    Socket sock(poll_list_.back(), Socket::LISTEN, 0);
+    Socket sock(poll_list_.back(), Socket::LISTEN, config_, 0);
     client_map_.insert(std::pair<int, Socket>(sockfd, sock));
     break;
   }
@@ -164,7 +164,7 @@ void Server::accept_new_connection(Socket &socket) {
     }
     pollfd_t pollfd = (pollfd_t){.fd = sockfd, .events = POLLIN, .revents = 0};
     poll_list_.push_back(pollfd);
-    Socket new_sock(poll_list_.back(), Socket::CONNECT);
+    Socket new_sock(poll_list_.back(), Socket::CONNECT, config_);
     client_map_.insert(std::make_pair(sockfd, new_sock));
   } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';

@@ -15,10 +15,10 @@ std::map<int, std::string> HTTPBase::create_map_() {
 
 const std::map<int, std::string> HTTPBase::status_map_ = HTTPBase::create_map_();
 
-HTTPBase::HTTPBase() {
+HTTPBase::HTTPBase(const ServerBlock& config) : config_(config) {
 }
 
-HTTPBase::HTTPBase(const HTTPBase& cpy)
+HTTPBase::HTTPBase(const HTTPBase& cpy) : config_(cpy.config_)
 {
 	*this = cpy;
 }

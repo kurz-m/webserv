@@ -2,12 +2,13 @@
 #define __HTTPREQUEST_HPP__
 
 #include "HTTPBase.hpp"
+#include "Settings.hpp"
 
 class Socket;
 
 class HTTPRequest : public HTTPBase {
 public:
-  HTTPRequest();
+  HTTPRequest(const ServerBlock&);
   HTTPRequest(const HTTPRequest &cpy);
   HTTPRequest &operator=(const HTTPRequest &other);
   ~HTTPRequest();

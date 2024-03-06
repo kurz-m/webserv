@@ -1,12 +1,12 @@
-#include <fstream>
-#include <sstream>
-#include <iostream>
 #include "HTTPResponse.hpp"
 #include "Settings.hpp"
+#include <fstream>
+#include <iostream>
+#include <sstream>
 
 static const std::string proto_ = "HTTP/1.1";
 
-HTTPResponse::HTTPResponse(const ServerBlock& config) : HTTPBase(config) {}
+HTTPResponse::HTTPResponse(const ServerBlock &config) : HTTPBase(config) {}
 
 HTTPResponse::~HTTPResponse() {}
 
@@ -18,8 +18,17 @@ HTTPResponse &HTTPResponse::operator=(const HTTPResponse &other) {
 }
 
 void HTTPResponse::resolve_uri_() {
+  try {
+    
+  } catch (NotFoundError &e) {
+
+  }
   if (parsed_header_.at("URI") == "/") {
-    parsed_header_.at("URI") = "./status-pages/index.html"; // TODO: use webroot
+    parsed_header_.at("URI") =
+        config_.find(Token::ROOT).str_val + config_.find(Token::INDEX).str_val;
+  } else {
+    parsed_header_.at("URI") =
+        config_.find(Token::ROOT).str_val + parsed_header_.at("URI");
   }
 }
 
@@ -28,8 +37,10 @@ void HTTPResponse::make_header_() {
   if (file.is_open()) {
     status_code_ = 200;
   } else {
-    file.open("./status-pages/404.html");
     status_code_ = 404;
+    std::ostringstream oss;
+    oss << ".status-pages/" << status_code_ << ".html";
+    file.open(oss.str());
   }
   body_.assign(std::istreambuf_iterator<char>(file),
                std::istreambuf_iterator<char>());

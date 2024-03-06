@@ -4,30 +4,10 @@
 #include <vector>
 
 #include "Token.hpp"
+#include "Settings.hpp"
 
 class Lexer;
 
-struct Setting {
-  enum Type { STRING, INT } type;
-  std::string name;
-  std::string str_val;
-  int inv_val;
-};
-
-struct RouteBlock {
-  std::string path;
-  std::vector<Setting> settings;
-};
-
-struct ServerBlock {
-  std::vector<Setting> settings;
-  std::vector<RouteBlock> routes;
-};
-
-struct HttpBlock {
-  std::vector<Setting> settings;
-  std::vector<ServerBlock> servers;
-};
 
 class Parser {
 public:

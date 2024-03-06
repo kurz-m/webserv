@@ -12,6 +12,7 @@
 
 #include "HTTPRequest.hpp"
 #include "HTTPResponse.hpp"
+#include "Settings.hpp"
 
 #define DEFAULT_TIMEOUT 15
 
@@ -27,7 +28,7 @@ public:
   enum type { LISTEN, CONNECT, UNDEFINED };
 
   // Socket();
-  Socket(pollfd& pollfd, type type, int timeout = DEFAULT_TIMEOUT);
+  Socket(pollfd& pollfd, type type, const ServerBlock& config, int timeout = DEFAULT_TIMEOUT);
   Socket(const Socket &other);
   Socket &operator=(const Socket &other);
   ~Socket();
@@ -41,6 +42,7 @@ public:
   };
 
 private:
+  const ServerBlock& config_;
   HTTPRequest request_;
   HTTPResponse response_;
   pollfd_t& pollfd_;

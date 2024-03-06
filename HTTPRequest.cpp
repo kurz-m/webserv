@@ -5,7 +5,7 @@
 #include <iostream>
 #include <cstdlib>
 
-HTTPRequest::HTTPRequest() {}
+HTTPRequest::HTTPRequest(const ServerBlock& config) : HTTPBase(config) {}
 
 HTTPRequest::~HTTPRequest() {}
 

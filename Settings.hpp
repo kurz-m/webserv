@@ -1,14 +1,16 @@
 #ifndef __SETTINGS_HPP__
 #define __SETTINGS_HPP__
 
+#include "Token.hpp"
+
 #include <string>
 #include <vector>
 
 struct Setting {
-  enum Type { STRING, INT } type;
-  std::string name;
+  enum Type { UNSET, STRING, INT } type;
+  Token::token_type_t name;
   std::string str_val;
-  int inv_val;
+  int int_val;
 };
 
 struct RouteBlock {

@@ -1,12 +1,15 @@
 #include "Server.hpp"
 #include <cstdio>
 #include <iostream>
+#include "Token.hpp"
 
-Server::Server(const std::string &port)
-    : hints_(), port_(port), timeout_(2500) {
+Server::Server(const ServerBlock &config)
+    : hints_(), timeout_(2500), config_(config) {
   hints_.ai_family = AF_UNSPEC;     // IPv4 and IPv6
   hints_.ai_socktype = SOCK_STREAM; // TCP not UDP
   hints_.ai_flags = AI_PASSIVE;     // Fill in my IP for me
+  port_ = config.find(Token::LISTEN).inv_val;
+  webroot_ = config.find(Token::ROOT).str_val;
 }
 
 Server::~Server() { freeaddrinfo(servinfo_); }

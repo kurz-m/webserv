@@ -8,6 +8,12 @@
 #include <sys/poll.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <ctime>
+
+#include "HTTPRequest.hpp"
+#include "HTTPResponse.hpp"
+
+#define DEFAULT_TIMEOUT 15
 
 typedef struct addrinfo addrinfo_t;
 
@@ -17,30 +23,38 @@ class Server;
 
 class Socket {
 public:
-  Socket();
-  Socket(addrinfo_t info);
-  Socket(int sockfd, const Socket& listen_sock);
+  enum status { READY, URECV, USEND, CLOSED };
+  enum type { LISTEN, CONNECT, UNDEFINED };
+
+  // Socket();
+  Socket(pollfd& pollfd, type type, int timeout = DEFAULT_TIMEOUT);
   Socket(const Socket &other);
   Socket &operator=(const Socket &other);
   ~Socket();
 
-  pollfd_t to_pollfd();
+  void receive();
+  void send_response();
 
-  enum status { READY, URECV, USEND, CLOSED };
-  enum type { LISTEN, CONNECT, UNDEFINED };
+  class SendRecvError : public std::exception {
+  public:
+    const char *what() const throw();
+  };
 
 private:
-
-  std::string buffer_;
-  int sockfd_;
-  short events_;
+  HTTPRequest request_;
+  HTTPResponse response_;
+  pollfd_t& pollfd_;
   status status_;
   type type_;
-  addrinfo_t info_;
+  int timeout_;
+  std::time_t timestamp_;
 
-  const static size_t MAX_BUFFER = 1024;
+  void check_recv_();
+  void resolve_uri_();
+  void interpret_request_headers_();
 
   friend class Server;
+  friend class HTTPRequest;
 };
 
 #endif // __SOCKET_HPP__

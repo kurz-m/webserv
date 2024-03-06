@@ -34,3 +34,5 @@
 # vscode
 .vscode/
 webserv
+.ccls-cache
+.ccls

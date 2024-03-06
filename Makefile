@@ -17,7 +17,7 @@ TEST := printf "[$(BO)$(M)ⓘ TEST$(X)] %s\n"
 ###############                  DIRECTORIES                      ##############
 ################################################################################
 
-OBJ_DIR := _obj
+OBJ_DIR := obj-cache
 INC_DIRS := .
 SRC_DIRS := .
 
@@ -30,15 +30,26 @@ vpath %.cpp $(SRC_DIRS)
 ################################################################################
 
 SRCS := $(wildcard *.cpp)
-
 OBJS := $(addprefix $(OBJ_DIR)/, $(SRCS:%.cpp=%.o))
+
+################################################################################
+########                           FLAGS                        ################
+################################################################################
+
+CXXFLAGS ?= -Wextra -Wall -Werror -std=c++98 -MMD -MP $(addprefix -I, $(INC_DIRS))
+LDFLAGS :=
+
+ifeq ($(DEBUG), 1)
+	CXXFLAGS += -g
+endif
+
+ifeq ($(VERBOSE), 1)
+	CXXFLAGS += -D__verbose__
+endif
 
 ################################################################################
 ########                         COMPILING                      ################
 ################################################################################
-
-CXXFLAGS ?= -Wextra -Wall -Werror -std=c++98 -MMD -MP $(addprefix -I, $(INC_DIRS))
-LDFLAGS := 
 
 all: $(NAME)
 
@@ -78,3 +89,6 @@ re: fclean all
 -include $(OBJS:$(OBJ_DIR)/%.o=$(OBJ_DIR)/%.d)
 
 .PHONY: all fclean clean re debug
+
+test:
+	$(CXX) $(CXXFLAGS) -g Token.cpp Lexer.cpp test_lexer.cpp -o lexer.test

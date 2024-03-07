@@ -152,7 +152,6 @@ Setting Parser::parse_setting_() {
       setting.type = Setting::INT;
       setting.name = tok.type;
       setting.int_val = parse_auto_index_();
-      // implement check for on/off;
       break;
     default:
       throw std::invalid_argument("unknown setting provided");

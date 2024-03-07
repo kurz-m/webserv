@@ -28,6 +28,9 @@ private:
   bool expect_peek_(const Token::token_type_t) const;
 
   bool check_file_(const std::string&) const;
+  std::string parse_str_value_();
+  int parse_int_value_();
+  int parse_http_method_();
 
   Lexer &lexer_;
   Token current_token_;

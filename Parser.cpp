@@ -93,7 +93,7 @@ ServerBlock Parser::parse_serverblock_() {
 
 RouteBlock Parser::parse_routeblock_() {
   if (expect_current_(Token::LOCATION) && expect_peek_(Token::STRING)) {
-    check_file_(current_token_.literal);
+    check_file_(peek_token_.literal);
   }
   next_token_();
   RouteBlock route;
@@ -130,6 +130,7 @@ Setting Parser::parse_setting_() {
     case Token::SERVER_NAME:
     case Token::DEFAULT_TYPE:
     case Token::ROOT:
+    case Token::INDEX:
       setting.type = Setting::STRING;
       setting.name = tok.type;
       setting.str_val = current_token_.literal;
@@ -145,12 +146,12 @@ Setting Parser::parse_setting_() {
     case Token::DENY:
       setting.type = Setting::INT;
       setting.name = tok.type;
-      setting.int_val &= parse_http_method_();
+      setting.int_val |= parse_http_method_();
       break;
     case Token::AUTOINDEX:
       setting.type = Setting::INT;
       setting.name = tok.type;
-      setting.int_val &= parse_http_method_();
+      setting.int_val = parse_auto_index_();
       // implement check for on/off;
       break;
     default:

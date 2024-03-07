@@ -1,9 +1,9 @@
 #include "Parser.hpp"
-#include "HTTP.hpp"
 #include "Lexer.hpp"
 
 #include <stdexcept>
 #include <sys/stat.h>
+#include <sstream>
 
 Parser::Parser(Lexer &lexer)
     : lexer_(lexer), block_depth_(0), server_count_(0), route_count_(0) {
@@ -121,8 +121,10 @@ RouteBlock Parser::parse_routeblock_() {
 Setting Parser::parse_setting_() {
   Setting setting = (Setting){
       .type = Setting::UNSET,
+      .int_val = 0,
   };
   Token tok = current_token_;
+  next_token_();
   while (!expect_current_(Token::SEMICOLON)) {
     switch (tok.type) {
     case Token::SERVER_NAME:
@@ -130,8 +132,7 @@ Setting Parser::parse_setting_() {
     case Token::ROOT:
       setting.type = Setting::STRING;
       setting.name = tok.type;
-      setting.str_val = parse_str_value_();
-      // implement Token::STRING;
+      setting.str_val = current_token_.literal;
       break;
     case Token::KEEPALIVE_TIMEOUT:
     case Token::CLIENT_MAX_BODY_SIZE:
@@ -139,20 +140,21 @@ Setting Parser::parse_setting_() {
       setting.type = Setting::INT;
       setting.name = tok.type;
       setting.int_val = parse_int_value_();
-      // implement Token::NUMBER;
       break;
     case Token::ALLOW:
     case Token::DENY:
       setting.type = Setting::INT;
       setting.name = tok.type;
-      setting.int_val = parse_http_methods_();
-      // check for valid methods GET, POST, DEL
+      setting.int_val &= parse_http_method_();
       break;
     case Token::AUTOINDEX:
+      setting.type = Setting::INT;
+      setting.name = tok.type;
+      setting.int_val &= parse_http_method_();
       // implement check for on/off;
       break;
     default:
-      // Error because of unknown setting
+      throw std::invalid_argument("unknown setting provided");
       break;
     };
     next_token_();
@@ -192,14 +194,29 @@ inline bool Parser::expect_peek_(const Token::token_type_t tok) const {
   return peek_token_.type == tok;
 }
 
-std::string Parser::parse_str_value_() {
-  next_token_();
+inline int Parser::parse_auto_index_() {
+  if (expect_current_(Token::TRUE)) {
+    return 1;
+  } else if (expect_current_(Token::FALSE)) {
+    return 0;
+  }
+  throw std::invalid_argument("invalid option for auto indexing");
 }
 
-std::string Parser::parse_int_value_() {
-
+inline int Parser::parse_int_value_() {
+  std::istringstream stream(current_token_.literal);
+  int tmp;
+  stream >> tmp;
+  if (stream.fail()) {
+    throw std::invalid_argument("expected a number, got a string");
+  }
+  return tmp;
 }
 
-std::string Parser::parse_http_method_() {
-
+inline method_e Parser::parse_http_method_() {
+  method_e method = method_to_enum(current_token_.literal);
+  if (method == UNKNOWN) {
+    throw std::invalid_argument("no valid http method provided");
+  }
+  return method;
 }

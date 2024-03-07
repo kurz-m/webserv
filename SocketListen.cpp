@@ -40,9 +40,4 @@ SocketListen::new_connection(std::list<pollfd_t> &poll_list,
   }
 }
 
-// void SocketListen::handle(std::list<pollfd_t> &poll_list,
-//                           std::map<int, Socket> &client_map) {
-//   new_connection_(poll_list, client_map);
-// }
-
 bool SocketListen::check_timeout() const { return true; }

@@ -50,6 +50,9 @@ public:
   static std::map<std::string, token_type_t> create_keywords();
   const static std::map<std::string, token_type_t> keyword_map;
 
+  static std::map<token_type_t, std::string> create_reverse();
+  const static std::map<token_type_t, std::string> reverse_map;
+
   static token_type_t lookup_ident(std::string &);
 };
 

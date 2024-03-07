@@ -2,10 +2,11 @@
 #define __PARSER_HPP__
 
 #include <vector>
+#include <sys/types.h>
 
-#include "Token.hpp"
-#include "Settings.hpp"
 #include "HTTP.hpp"
+#include "Settings.hpp"
+#include "Token.hpp"
 
 class Lexer;
 
@@ -27,7 +28,7 @@ private:
   bool expect_current_(const Token::token_type_t) const;
   bool expect_peek_(const Token::token_type_t) const;
 
-  bool check_file_(const std::string&) const;
+  bool check_file_(const std::string &) const;
   int parse_auto_index_();
   int parse_int_value_();
   method_e parse_http_method_();

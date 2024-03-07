@@ -1,9 +1,17 @@
 #include "Parser.hpp"
 #include "Lexer.hpp"
+#include "Token.hpp"
 
+#include <iostream>
+#include <sstream>
 #include <stdexcept>
 #include <sys/stat.h>
-#include <sstream>
+
+#ifndef __verbose__
+#define __verbose__
+#endif
+
+#define RUN_LOOP 0
 
 Parser::Parser(Lexer &lexer)
     : lexer_(lexer), block_depth_(0), server_count_(0), route_count_(0) {
@@ -62,6 +70,42 @@ void Parser::parse_config() {
   if (block_depth_ != 0) {
     throw std::invalid_argument("http block is not fully closed");
   }
+#ifdef __verbose__
+  std::cout << "-----Printing out the server settings-----" << std::endl;
+  std::vector<ServerBlock>::iterator it;
+  for (it = http_.servers.begin(); it != http_.servers.end(); ++it) {
+    std::vector<Setting>::iterator sit;
+    std::cout << "Server settings:" << std::endl;
+    for (sit = it->settings.begin(); sit != it->settings.end(); ++sit) {
+      if (sit->type == Setting::STRING) {
+        std::cout << Token::reverse_map.at(sit->name) << ": " << sit->str_val
+                  << std::endl;
+      } else {
+        std::cout << Token::reverse_map.at(sit->name) << ": " << sit->int_val
+                  << std::endl;
+      }
+    }
+    std::vector<RouteBlock>::iterator rit;
+    for (rit = it->routes.begin(); rit != it->routes.end(); ++rit) {
+      std::cout << "Route settings: path -> " << rit->path << std::endl;
+      std::vector<Setting>::iterator rsit;
+      for (rsit = rit->settings.begin(); rsit != rit->settings.end(); ++rsit) {
+        if (rsit->type == Setting::STRING) {
+          std::cout << Token::reverse_map.at(rsit->name) << ": "
+                    << rsit->str_val << std::endl;
+        } else {
+          std::cout << Token::reverse_map.at(rsit->name) << ": ";
+          if (rsit->name & (Token::ALLOW | Token::DENY)) {
+            print_method(rsit->int_val);
+            std::cout << std::endl;
+          } else {
+            std::cout << rsit->int_val << std::endl;
+          }
+        }
+      }
+    }
+  }
+#endif
 }
 
 ServerBlock Parser::parse_serverblock_() {
@@ -73,7 +117,13 @@ ServerBlock Parser::parse_serverblock_() {
   ++block_depth_;
   next_token_();
   ServerBlock server;
-  while (~current_token_.type & (Token::RBRACE | Token::EF)) {
+  if (http_.settings.size() != 0) {
+    std::vector<Setting>::iterator it;
+    for (it = http_.settings.begin(); it != http_.settings.end(); ++it) {
+      server.settings.push_back(*it);
+    }
+  }
+  while ((current_token_.type & (Token::RBRACE | Token::EF)) == RUN_LOOP) {
     if (expect_current_(Token::LOCATION)) {
       server.routes.push_back(parse_routeblock_());
     } else if (current_token_.type & S_BITS) {
@@ -97,11 +147,12 @@ RouteBlock Parser::parse_routeblock_() {
   }
   next_token_();
   RouteBlock route;
+  route.path = current_token_.literal;
   if (expect_peek_(Token::LBRACE)) {
     ++block_depth_;
     next_token_();
     next_token_();
-    while (~current_token_.type & (Token::RBRACE | Token::EF)) {
+    while ((current_token_.type & (Token::RBRACE | Token::EF)) == RUN_LOOP) {
       route.settings.push_back(parse_setting_());
       next_token_();
     }
@@ -116,11 +167,11 @@ RouteBlock Parser::parse_routeblock_() {
   return route;
 }
 
-// TODO: copy all settings from the http block into the server block
-
 Setting Parser::parse_setting_() {
   Setting setting = (Setting){
       .type = Setting::UNSET,
+      .name = Token::ILLEGAL,
+      .str_val = "",
       .int_val = 0,
   };
   Token tok = current_token_;

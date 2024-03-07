@@ -1,32 +1,50 @@
 #include "Server.hpp"
+#include "SocketListen.hpp"
+#include "Token.hpp"
 #include <cstdio>
 #include <iostream>
-#include "Token.hpp"
 
-Server::Server(const ServerBlock &config)
-    : hints_(), timeout_(2500), config_(config) {
-  hints_.ai_family = AF_UNSPEC;     // IPv4 and IPv6
-  hints_.ai_socktype = SOCK_STREAM; // TCP not UDP
-  hints_.ai_flags = AI_PASSIVE;     // Fill in my IP for me
-  port_ = config.find(Token::LISTEN).int_val;
-  webroot_ = config.find(Token::ROOT).str_val;
-}
+Server::Server(const HttpBlock &config)
+    : config_(config), poll_timeout_(2500) {}
 
-Server::~Server() { freeaddrinfo(servinfo_); }
+Server::~Server() {}
 
 void Server::startup() {
 #ifdef __verbose__
   std::cout << "starting the server in __verbose__ mode" << std::endl;
 #endif
+  std::vector<ServerBlock>::const_iterator it;
+  for (it = config_.servers.begin(); it != config_.servers.end(); ++it) {
+    try {
+      create_listen_socket_(*it);
+    } catch (std::exception &e) {
+      continue;
+    }
+  }
+
+  // could not bind and listen to any socket.
+  if (client_map_.size() < 1) {
+    throw std::exception();
+  }
+}
+
+void Server::create_listen_socket_(const ServerBlock &config) {
   int status;
+  addrinfo_t hints;
+  addrinfo_t *servinfo;
   addrinfo_t *p;
 
+  hints.ai_family = AF_UNSPEC;     // IPv4 and IPv6
+  hints.ai_socktype = SOCK_STREAM; // TCP not UDP
+  hints.ai_flags = AI_PASSIVE;     // Fill in my IP for me
+
   // bind to all interfaces on port
-  if ((status = getaddrinfo(NULL, port_.c_str(), &hints_, &servinfo_)) != 0) {
+  if ((status = getaddrinfo(NULL, config.find(Token::LISTEN).str_val.c_str(),
+                            &hints, &servinfo)) != 0) {
     throw std::exception();
   }
 
-  for (p = servinfo_; p != NULL; p = p->ai_next) {
+  for (p = servinfo; p != NULL; p = p->ai_next) {
     int sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
     if (sockfd == -1) {
       continue;
@@ -47,15 +65,12 @@ void Server::startup() {
     }
     pollfd_t pollfd = (pollfd_t){.fd = sockfd, .events = POLLIN, .revents = 0};
     poll_list_.push_back(pollfd);
-    Socket sock(poll_list_.back(), Socket::LISTEN, config_, 0);
+    SocketListen sock(poll_list_.back(), config, *p);
     client_map_.insert(std::pair<int, Socket>(sockfd, sock));
     break;
   }
 
-  // could not bind and listen to any socket.
-  if (client_map_.size() < 1) {
-    throw std::exception();
-  }
+  freeaddrinfo(servinfo);
 }
 
 int Server::do_poll_() {
@@ -64,7 +79,7 @@ int Server::do_poll_() {
   for (it = poll_list_.begin(); it != poll_list_.end(); ++it) {
     pollfds.push_back(*it);
   }
-  int num_events = poll(&pollfds[0], pollfds.size(), timeout_);
+  int num_events = poll(&pollfds[0], pollfds.size(), poll_timeout_);
   if (num_events < 0) {
     perror("server: poll");
     throw std::exception();
@@ -98,9 +113,7 @@ void Server::event_handler_() {
       continue;
     }
     if (!(it->events & it->revents)) {
-      if (client_map_.at(it->fd).type_ == Socket::CONNECT &&
-          std::difftime(std::time(NULL), client_map_.at(it->fd).timestamp_) >
-              client_map_.at(it->fd).timeout_) {
+      if (client_map_.at(it->fd).check_timeout()) {
         std::cout << "client: " << it->fd << " Timeout." << std::endl;
         close(it->fd);
         client_map_.erase(it->fd);
@@ -110,30 +123,21 @@ void Server::event_handler_() {
       }
       continue;
     }
-    switch (client_map_.at(it->fd).type_) {
-    case Socket::LISTEN:
-#ifdef __verbose__
-      std::cout << "In switch LISTEN" << std::endl;
-#endif
-      accept_new_connection(client_map_.at(it->fd));
-      break;
-    case Socket::CONNECT:
-#ifdef __verbose__
-      std::cout << "In switch CONNECT" << std::endl;
-#endif
+    try {
+      SocketListen &sock = dynamic_cast<SocketListen &>(client_map_.at(it->fd));
+      sock.new_connection(poll_list_, client_map_);
+    } catch (std::exception &e) {
+      SocketConnect &sock =
+          dynamic_cast<SocketConnect &>(client_map_.at(it->fd));
       try {
-        handle_client(client_map_.at(it->fd));
-      } catch (Socket::SendRecvError &e) {
+        sock.handle();
+      } catch (std::exception &e) {
         std::cerr << e.what() << '\n';
         close(it->fd);
         client_map_.erase(it->fd);
         it = poll_list_.erase(it);
         continue;
       }
-
-      break;
-    default:
-      break;
     }
     ++it;
   }
@@ -151,43 +155,44 @@ void Server::run() {
   }
 }
 
-void Server::accept_new_connection(Socket &socket) {
-  try {
-#ifdef __verbose__
-    std::cout << "I am trying to establish a new connecion" << std::endl;
-#endif
-    int sockfd =
-        accept(socket.pollfd_.fd, servinfo_->ai_addr, &servinfo_->ai_addrlen);
-    if (sockfd < 0) {
-      perror("accept");
-      return;
-    }
-    pollfd_t pollfd = (pollfd_t){.fd = sockfd, .events = POLLIN, .revents = 0};
-    poll_list_.push_back(pollfd);
-    Socket new_sock(poll_list_.back(), Socket::CONNECT, config_);
-    client_map_.insert(std::make_pair(sockfd, new_sock));
-  } catch (const std::exception &e) {
-    std::cerr << e.what() << '\n';
-  }
-}
+// void Server::accept_new_connection(Socket &socket) {
+//   try {
+// #ifdef __verbose__
+//     std::cout << "I am trying to establish a new connecion" << std::endl;
+// #endif
+//     int sockfd =
+//         accept(socket.pollfd_.fd, servinfo_->ai_addr,
+//         &servinfo_->ai_addrlen);
+//     if (sockfd < 0) {
+//       perror("accept");
+//       return;
+//     }
+//     pollfd_t pollfd = (pollfd_t){.fd = sockfd, .events = POLLIN, .revents =
+//     0}; poll_list_.push_back(pollfd); Socket new_sock(poll_list_.back(),
+//     Socket::CONNECT, config_); client_map_.insert(std::make_pair(sockfd,
+//     new_sock));
+//   } catch (const std::exception &e) {
+//     std::cerr << e.what() << '\n';
+//   }
+// }
 
-void Server::handle_client(Socket &socket) {
-#ifdef __verbose__
-  std::cout << "handle client: " << socket.pollfd_.fd << std::endl;
-#endif
-  switch (socket.pollfd_.revents) {
-  case POLLIN:
-#ifdef __verbose__
-    std::cout << "POLLIN!!" << std::endl;
-#endif
-    socket.receive();
-    break;
-  case POLLOUT:
-#ifdef __verbose__
-    std::cout << "POLLOUT" << std::endl;
-#endif
-    socket.send_response();
-    break;
-  }
-  socket.pollfd_.revents = RESET;
-}
+// void Server::handle_client(Socket &socket) {
+// #ifdef __verbose__
+//   std::cout << "handle client: " << socket.pollfd_.fd << std::endl;
+// #endif
+//   switch (socket.pollfd_.revents) {
+//   case POLLIN:
+// #ifdef __verbose__
+//     std::cout << "POLLIN!!" << std::endl;
+// #endif
+//     socket.receive();
+//     break;
+//   case POLLOUT:
+// #ifdef __verbose__
+//     std::cout << "POLLOUT" << std::endl;
+// #endif
+//     socket.send_response();
+//     break;
+// }
+// socket.pollfd_.revents = RESET;
+// }

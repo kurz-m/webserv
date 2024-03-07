@@ -30,7 +30,7 @@ protected:
   const static size_t MAX_BUFFER = 1024;
   const ServerBlock& config_;  // all settings from config
 
-friend class Socket;
+friend class SocketConnect;
 friend class Server;
 };
 

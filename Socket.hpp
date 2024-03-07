@@ -2,19 +2,20 @@
 #define __SOCKET_HPP__
 
 #include <arpa/inet.h>
+#include <ctime>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <string>
 #include <sys/poll.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-#include <ctime>
 
 #include "HTTPRequest.hpp"
 #include "HTTPResponse.hpp"
 #include "Settings.hpp"
 
 #define DEFAULT_TIMEOUT 15
+#define RESET 0
 
 typedef struct addrinfo addrinfo_t;
 
@@ -25,35 +26,19 @@ class Server;
 class Socket {
 public:
   enum status { READY, URECV, USEND, CLOSED };
-  enum type { LISTEN, CONNECT, UNDEFINED };
 
-  // Socket();
-  Socket(pollfd& pollfd, type type, const ServerBlock& config, int timeout = DEFAULT_TIMEOUT);
+  Socket(pollfd_t &pollfd, const ServerBlock &config);
   Socket(const Socket &other);
   Socket &operator=(const Socket &other);
-  ~Socket();
+  virtual ~Socket() = 0;
 
-  void receive();
-  void send_response();
+  // virtual bool handle() = 0;
+  virtual bool check_timeout() const = 0;
 
-  class SendRecvError : public std::exception {
-  public:
-    const char *what() const throw();
-  };
-
-private:
-  const ServerBlock& config_;
-  HTTPRequest request_;
-  HTTPResponse response_;
-  pollfd_t& pollfd_;
+protected:
+  const ServerBlock &config_;
+  pollfd_t &pollfd_;
   status status_;
-  type type_;
-  int timeout_;
-  std::time_t timestamp_;
-
-  void check_recv_();
-  void resolve_uri_();
-  void interpret_request_headers_();
 
   friend class Server;
   friend class HTTPRequest;

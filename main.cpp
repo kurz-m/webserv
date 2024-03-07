@@ -22,15 +22,17 @@ int main(int argc, char **argv) {
     Lexer lexer(config_path);
     Parser parser(lexer);
     HttpBlock settings = parser.parse_config();
-
-    std::vector<Server> serv_vec;
-    std::vector<ServerBlock>::iterator it;
-    for (it = settings.servers.begin(); it != settings.servers.end(); ++it) {
-      Server serv = Server(*it);
-      serv.startup();
-      serv.run();
-      serv_vec.push_back(serv);
-    }
+    Server server(settings);
+    server.startup();
+    server.run();
+    // std::vector<Server> serv_vec;
+    // std::vector<ServerBlock>::iterator it;
+    // for (it = settings.servers.begin(); it != settings.servers.end(); ++it) {
+    //   Server serv = Server(*it);
+    //   serv.startup();
+    //   serv.run();
+    //   serv_vec.push_back(serv);
+    // }
   } catch (std::exception &e) {
     std::cerr << e.what() << std::endl;
   }

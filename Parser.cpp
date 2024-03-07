@@ -1,6 +1,6 @@
 #include "Parser.hpp"
-#include "Lexer.hpp"
 #include "HTTP.hpp"
+#include "Lexer.hpp"
 
 #include <stdexcept>
 #include <sys/stat.h>
@@ -102,8 +102,7 @@ RouteBlock Parser::parse_routeblock_() {
     next_token_();
     next_token_();
     while (~current_token_.type & (Token::RBRACE | Token::EF)) {
-      route.settings.push_back(
-          parse_setting_());
+      route.settings.push_back(parse_setting_());
       next_token_();
     }
   } else {
@@ -120,43 +119,43 @@ RouteBlock Parser::parse_routeblock_() {
 // TODO: copy all settings from the http block into the server block
 
 Setting Parser::parse_setting_() {
-  Setting setting = (Setting) {
-    .type = Setting::UNSET,
+  Setting setting = (Setting){
+      .type = Setting::UNSET,
   };
   Token tok = current_token_;
   while (!expect_current_(Token::SEMICOLON)) {
     switch (tok.type) {
-      case Token::SERVER_NAME:
-      case Token::DEFAULT_TYPE:
-      case Token::ROOT:
-        setting.type = Setting::STRING;
-        setting.name = tok.type;
-        setting.str_val = parse_str_value();
-        // implement Token::STRING;
-        break;
-      case Token::KEEPALIVE_TIMEOUT:
-      case Token::CLIENT_MAX_BODY_SIZE:
-      case Token::LISTEN:
-        setting.type = Setting::INT;
-        setting.name = tok.type;
-        setting.int_val = parse_int_value();
-        // implement Token::NUMBER;
-        break;
-      case Token::ALLOW:
-      case Token::DENY:
-        setting.type = Setting::INT;
-        setting.name = tok.type;
-        setting.int_val = parse_http_methods(tok.type);
-        // check for valid methods GET, POST, DEL
-        break;
-      case Token::AUTOINDEX:
-        // implement check for on/off;
-        break;
-      default:
-        // Error because of unknown setting
-        break;
+    case Token::SERVER_NAME:
+    case Token::DEFAULT_TYPE:
+    case Token::ROOT:
+      setting.type = Setting::STRING;
+      setting.name = tok.type;
+      setting.str_val = parse_str_value_();
+      // implement Token::STRING;
+      break;
+    case Token::KEEPALIVE_TIMEOUT:
+    case Token::CLIENT_MAX_BODY_SIZE:
+    case Token::LISTEN:
+      setting.type = Setting::INT;
+      setting.name = tok.type;
+      setting.int_val = parse_int_value_();
+      // implement Token::NUMBER;
+      break;
+    case Token::ALLOW:
+    case Token::DENY:
+      setting.type = Setting::INT;
+      setting.name = tok.type;
+      setting.int_val = parse_http_methods_();
+      // check for valid methods GET, POST, DEL
+      break;
+    case Token::AUTOINDEX:
+      // implement check for on/off;
+      break;
+    default:
+      // Error because of unknown setting
+      break;
     };
-  next_token_();
+    next_token_();
   }
   return setting;
 }
@@ -191,4 +190,16 @@ inline bool Parser::expect_current_(const Token::token_type_t tok) const {
 
 inline bool Parser::expect_peek_(const Token::token_type_t tok) const {
   return peek_token_.type == tok;
+}
+
+std::string Parser::parse_str_value_() {
+  next_token_();
+}
+
+std::string Parser::parse_int_value_() {
+
+}
+
+std::string Parser::parse_http_method_() {
+
 }

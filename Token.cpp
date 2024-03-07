@@ -18,7 +18,7 @@ std::map<std::string, Token::token_type_t> Token::create_keywords() {
   loc_map.insert(std::make_pair("deny", DENY));
   loc_map.insert(std::make_pair("on", TRUE));
   loc_map.insert(std::make_pair("off", FALSE));
-  loc_map.insert(std::make_pair("idnex", INDEX));
+  loc_map.insert(std::make_pair("index", INDEX));
   return loc_map;
 }
 

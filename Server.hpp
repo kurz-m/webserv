@@ -20,8 +20,6 @@ public:
   void run();
 
 private:
-  // void accept_new_connection(Socket& socket);
-  // void handle_client(Socket& socket);
   int  do_poll_();
   void event_handler_();
   void create_listen_socket_(const ServerBlock& config);
@@ -30,10 +28,6 @@ private:
   std::map<int, Socket> client_map_;
   const HttpBlock& config_;  // all settings from config
   int poll_timeout_;
-  // addrinfo_t hints_;
-  // addrinfo_t* servinfo_;
-  // std::string port_;
-  // std::string webroot_; // root directory for webserver
 
 friend class Socket;
 };

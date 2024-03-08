@@ -1,5 +1,6 @@
 #include "SocketListen.hpp"
 #include "Token.hpp"
+#include <cstdio>
 #include <iostream>
 
 SocketListen::SocketListen(pollfd &pollfd, const ServerBlock &config,
@@ -35,7 +36,7 @@ void SocketListen::new_connection(std::list<pollfd_t> &poll_list,
 
     pollfd_t pollfd = (pollfd_t){.fd = sockfd, .events = POLLIN, .revents = 0};
     poll_list.push_back(pollfd);
-    SocketConnect new_sock(poll_list.back(), config_);
+    SocketConnect *new_sock = new SocketConnect(poll_list.back(), config_);
     client_map.insert(std::make_pair(sockfd, new_sock));
   } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';

@@ -3,6 +3,7 @@
 #include "Token.hpp"
 #include <cstdio>
 #include <iostream>
+#include <sstream>
 
 Server::Server(const HttpBlock &config)
     : config_(config), poll_timeout_(2500) {}
@@ -44,7 +45,10 @@ void Server::create_listen_socket_(const ServerBlock &config) {
   hints.ai_flags = AI_PASSIVE;     // Fill in my IP for me
 
   // bind to all interfaces on port
-  if ((status = getaddrinfo(NULL, config.find(Token::LISTEN).str_val.c_str(),
+  std::ostringstream oss;
+  oss << config.find(Token::LISTEN).int_val;
+  std::string port = oss.str();
+  if ((status = getaddrinfo(NULL, port.c_str(),
                             &hints, &servinfo)) != 0) {
     perror("getaddrinfo");
     throw std::exception();

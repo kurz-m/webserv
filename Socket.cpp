@@ -5,8 +5,7 @@
 #include <stdexcept>
 
 Socket::Socket(pollfd &pollfd, const ServerBlock &config)
-    : config_(config), pollfd_(pollfd),
-      status_(READY) {}
+    : config_(config), pollfd_(pollfd), status_(READY) {}
 
 Socket::Socket(const Socket &other)
     : config_(other.config_), pollfd_(other.pollfd_) {

@@ -16,11 +16,13 @@ SocketListen &SocketListen::operator=(const SocketListen &other) {
     Socket::operator=(other);
     servinfo_ = other.servinfo_;
   }
+  return *this;
 }
 
-SocketConnect
-SocketListen::new_connection(std::list<pollfd_t> &poll_list,
-                                    std::map<int, Socket> &client_map) {
+SocketListen::~SocketListen() {}
+
+void SocketListen::new_connection(std::list<pollfd_t> &poll_list,
+                                  std::map<int, Socket *> &client_map) {
   try {
 #ifdef __verbose__
     std::cout << "I am trying to establish a new connecion" << std::endl;

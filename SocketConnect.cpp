@@ -26,7 +26,7 @@ SocketConnect::~SocketConnect() {}
 
 void SocketConnect::handle() {
 #ifdef __verbose__
-  std::cout << "handle client: " << socket.pollfd_.fd << std::endl;
+  std::cout << "handle client: " << pollfd_.fd << std::endl;
 #endif
   switch (pollfd_.revents) {
   case POLLIN:
@@ -43,7 +43,6 @@ void SocketConnect::handle() {
     break;
   }
   pollfd_.revents = RESET;
-
 }
 
 bool SocketConnect::check_timeout() const {

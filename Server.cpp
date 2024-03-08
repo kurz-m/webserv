@@ -77,6 +77,11 @@ void Server::create_listen_socket_(const ServerBlock &config) {
   }
 
   freeaddrinfo(servinfo);
+
+  if (client_map_.size() < 1) {
+    std::cerr << "could not bind and listen to any port!" << std::endl;
+    throw std::exception();
+  }
 }
 
 int Server::do_poll_() {

@@ -46,7 +46,7 @@ void SocketConnect::handle() {
 }
 
 bool SocketConnect::check_timeout() const {
-  return std::difftime(std::time(NULL), timestamp_) < timeout_;
+  return std::difftime(std::time(NULL), timestamp_) > timeout_;
 }
 
 void SocketConnect::receive_() {

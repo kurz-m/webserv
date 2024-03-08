@@ -18,17 +18,21 @@ HTTPResponse &HTTPResponse::operator=(const HTTPResponse &other) {
 }
 
 void HTTPResponse::resolve_uri_() {
+  // loop all route blocks and check if the URI is part of them.
+  // have some sort of route hierarchy, e.g. /pictures/ has a higher hierarchy
+  // than '/'. a URI of /pictures/xy.jpg is part of both we need to find the one
+  // with the highest hierarchy
   try {
-    // find location block matching the URI
-  } catch (NotFoundError &e) {
-    // fallback to '/'
-  }
-  if (parsed_header_.at("URI") == "/") {
-    parsed_header_.at("URI") =
-        config_.find(Token::ROOT).str_val + config_.find(Token::INDEX).str_val;
-  } else {
-    parsed_header_.at("URI") =
-        config_.find(Token::ROOT).str_val + parsed_header_.at("URI");
+    if (parsed_header_.at("URI") == "/") {
+      const RouteBlock& route = config_.find("/");
+
+      parsed_header_.at("URI") = config_.find(Token::ROOT).str_val + "/" +
+                                 route.find(Token::INDEX).str_val;
+    } else {
+      parsed_header_.at("URI") =
+          config_.find(Token::ROOT).str_val + parsed_header_.at("URI");
+    }
+  } catch (std::exception &e) {
   }
 }
 

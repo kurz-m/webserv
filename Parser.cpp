@@ -40,7 +40,7 @@ inline void Parser::next_token_() {
   peek_token_ = lexer_.next_token();
 }
 
-HttpBlock& Parser::parse_config() {
+HttpBlock &Parser::parse_config() {
   if (!expect_current_(Token::HTTP)) {
     throw std::invalid_argument("provided config file has no http block");
   }
@@ -57,6 +57,9 @@ HttpBlock& Parser::parse_config() {
       ++server_count_;
     } else if (current_token_.type & S_BITS) {
       http_.settings.push_back(parse_setting_());
+    } else if (expect_current_(Token::COMMENT)) {
+      next_token_();
+      continue;
     } else {
       throw std::invalid_argument("wrong syntax for config file");
     }
@@ -129,6 +132,9 @@ ServerBlock Parser::parse_serverblock_() {
       server.routes.push_back(parse_routeblock_());
     } else if (current_token_.type & S_BITS) {
       server.settings.push_back(parse_setting_());
+    } else if (expect_current_(Token::COMMENT)) {
+      next_token_();
+      continue;
     } else {
       throw std::invalid_argument("wrong syntax for config file");
     }
@@ -154,6 +160,10 @@ RouteBlock Parser::parse_routeblock_() {
     next_token_();
     next_token_();
     while ((current_token_.type & (Token::RBRACE | Token::EF)) == RUN_LOOP) {
+      if (expect_current_(Token::COMMENT)) {
+        next_token_();
+        continue;
+      }
       route.settings.push_back(parse_setting_());
       next_token_();
     }
@@ -185,6 +195,9 @@ Setting Parser::parse_setting_() {
     case Token::INDEX:
       setting.type = Setting::STRING;
       setting.name = tok.type;
+      if (std::isdigit(current_token_.literal[0])) {
+        setting.int_val = parse_int_value_();
+      }
       setting.str_val = current_token_.literal;
       break;
     case Token::KEEPALIVE_TIMEOUT:
@@ -192,6 +205,7 @@ Setting Parser::parse_setting_() {
     case Token::LISTEN:
       setting.type = Setting::INT;
       setting.name = tok.type;
+      setting.str_val = current_token_.literal;
       setting.int_val = parse_int_value_();
       break;
     case Token::ALLOW:
@@ -203,6 +217,7 @@ Setting Parser::parse_setting_() {
     case Token::AUTOINDEX:
       setting.type = Setting::INT;
       setting.name = tok.type;
+      setting.str_val = current_token_.literal,
       setting.int_val = parse_auto_index_();
       break;
     default:

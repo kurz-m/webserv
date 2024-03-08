@@ -15,7 +15,7 @@ public:
   Parser(Lexer &);
   ~Parser();
 
-  HttpBlock parse_config();
+  HttpBlock& parse_config();
 
 private:
   Parser(const Parser &);

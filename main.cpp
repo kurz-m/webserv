@@ -1,38 +1,39 @@
+#include "Lexer.hpp"
+#include "Parser.hpp"
 #include "Server.hpp"
+#include "Settings.hpp"
+#include <fstream>
 #include <iostream>
 #include <vector>
-#include "Settings.hpp"
-#include "Parser.hpp"
-#include "Lexer.hpp"
 
 void print_usage() {
   std::cout << "Usage: \n\t./webserv [path/to/config]" << std::endl;
 }
 
 int main(int argc, char **argv) {
-  std::string config_path = "./config";
+  std::string buffer;
+  const char *config_path = "./config/default.conf";
   if (argc > 2) {
     print_usage();
     return 1;
   }
   if (argc == 2) {
-    config_path = std::string(argv[1]);
+    config_path = argv[1];
+  }
+  std::ifstream file(config_path);
+  if (!file.is_open()) {
+    std::cerr << "could not open config file!" << std::endl;
+    return 1;
   }
   try {
-    Lexer lexer(config_path);
+    buffer.assign(std::istreambuf_iterator<char>(file),
+                  std::istreambuf_iterator<char>());
+    Lexer lexer(buffer);
     Parser parser(lexer);
     HttpBlock settings = parser.parse_config();
     Server server(settings);
     server.startup();
     server.run();
-    // std::vector<Server> serv_vec;
-    // std::vector<ServerBlock>::iterator it;
-    // for (it = settings.servers.begin(); it != settings.servers.end(); ++it) {
-    //   Server serv = Server(*it);
-    //   serv.startup();
-    //   serv.run();
-    //   serv_vec.push_back(serv);
-    // }
   } catch (std::exception &e) {
     std::cerr << e.what() << std::endl;
   }

@@ -19,9 +19,9 @@ HTTPResponse &HTTPResponse::operator=(const HTTPResponse &other) {
 
 void HTTPResponse::resolve_uri_() {
   try {
-    
+    // find location block matching the URI
   } catch (NotFoundError &e) {
-
+    // fallback to '/'
   }
   if (parsed_header_.at("URI") == "/") {
     parsed_header_.at("URI") =
@@ -40,7 +40,7 @@ void HTTPResponse::make_header_() {
     status_code_ = 404;
     std::ostringstream oss;
     oss << ".status-pages/" << status_code_ << ".html";
-    file.open(oss.str());
+    file.open(oss.str().c_str());
   }
   body_.assign(std::istreambuf_iterator<char>(file),
                std::istreambuf_iterator<char>());

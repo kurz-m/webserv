@@ -16,7 +16,7 @@ public:
   SocketConnect(pollfd_t &pollfd, const ServerBlock &config,
                 int timeout = DEFAULT_TIMEOUT);
   SocketConnect(const SocketConnect &cpy);
-  SocketConnect &SocketConnect::operator=(const SocketConnect &other);
+  SocketConnect &operator=(const SocketConnect &other);
   ~SocketConnect();
 
   void handle();

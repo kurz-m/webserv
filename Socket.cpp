@@ -20,3 +20,5 @@ Socket &Socket::operator=(const Socket &other) {
   }
   return *this;
 }
+
+Socket::~Socket() {}

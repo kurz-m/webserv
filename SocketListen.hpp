@@ -10,7 +10,7 @@ public:
   SocketListen(pollfd &pollfd, const ServerBlock &config,
                const addrinfo_t &info);
   SocketListen(const SocketListen &cpy);
-  SocketListen &SocketListen::operator=(const SocketListen &other);
+  SocketListen &operator=(const SocketListen &other);
   ~SocketListen();
 
   SocketConnect new_connection(std::list<pollfd_t> &poll_list,

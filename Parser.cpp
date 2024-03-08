@@ -40,7 +40,7 @@ inline void Parser::next_token_() {
   peek_token_ = lexer_.next_token();
 }
 
-void Parser::parse_config() {
+HttpBlock& Parser::parse_config() {
   if (!expect_current_(Token::HTTP)) {
     throw std::invalid_argument("provided config file has no http block");
   }
@@ -106,6 +106,7 @@ void Parser::parse_config() {
     }
   }
 #endif
+  return http_;
 }
 
 ServerBlock Parser::parse_serverblock_() {

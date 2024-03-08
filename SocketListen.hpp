@@ -13,8 +13,8 @@ public:
   SocketListen &operator=(const SocketListen &other);
   ~SocketListen();
 
-  SocketConnect new_connection(std::list<pollfd_t> &poll_list,
-                                      std::map<int, Socket> &client_map);
+  void new_connection(std::list<pollfd_t> &poll_list,
+                                      std::map<int, Socket*> &client_map);
   bool check_timeout() const;
 
 private:

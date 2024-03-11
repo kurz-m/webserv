@@ -108,12 +108,14 @@ void Server::event_handler_() {
     std::cout << "Fd: " << it->fd << " from polling" << std::endl;
     if ((it->revents & POLLERR) | (it->revents & POLLNVAL)) {
       std::cout << "client: " << it->fd << " connection error." << std::endl;
+      close(it->fd);
       client_map_.erase(it->fd);
       it = poll_list_.erase(it);
       continue;
     }
     if (it->revents & POLLHUP) {
       std::cout << "client: " << it->fd << " POLLHUP." << std::endl;
+      close(it->fd);
       client_map_.erase(it->fd);
       it = poll_list_.erase(it);
       continue;
@@ -121,6 +123,7 @@ void Server::event_handler_() {
     if (!(it->events & it->revents)) {
       if (client_map_.at(it->fd).check_timeout()) {
         std::cout << "client: " << it->fd << " Timeout." << std::endl;
+        close(it->fd);
         client_map_.erase(it->fd);
         it = poll_list_.erase(it);
       } else {

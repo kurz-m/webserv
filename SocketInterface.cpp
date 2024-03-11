@@ -25,7 +25,6 @@ SocketInterface &SocketInterface::operator=(const SocketInterface &obj) {
   return *this;
 }
 SocketInterface::~SocketInterface() {
-  close(sock_->pollfd_.fd);
   delete sock_;
 }
 

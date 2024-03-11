@@ -22,8 +22,8 @@ SocketListen &SocketListen::operator=(const SocketListen &other) {
 
 SocketListen::~SocketListen() {}
 
-void SocketListen::new_connection(std::list<pollfd_t> &poll_list,
-                                  std::map<int, Socket *> &client_map) {
+void SocketListen::handle(std::map<int, SocketInterface> &client_map,
+                          std::list<pollfd_t> &poll_list) {
   try {
 #ifdef __verbose__
     std::cout << "I am trying to establish a new connecion" << std::endl;
@@ -36,11 +36,12 @@ void SocketListen::new_connection(std::list<pollfd_t> &poll_list,
 
     pollfd_t pollfd = (pollfd_t){.fd = sockfd, .events = POLLIN, .revents = 0};
     poll_list.push_back(pollfd);
-    SocketConnect *new_sock = new SocketConnect(poll_list.back(), config_);
-    client_map.insert(std::make_pair(sockfd, new_sock));
+    client_map.insert(std::make_pair(sockfd, SocketInterface(poll_list.back(), config_)));
   } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
   }
 }
 
 bool SocketListen::check_timeout() const { return false; }
+
+SocketListen *SocketListen::clone() const { return new SocketListen(*this); }

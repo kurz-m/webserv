@@ -5,6 +5,7 @@
 #include <map>
 #include "Settings.hpp"
 #include "Socket.hpp"
+#include "HTTP.hpp"
 
 class HTTPBase {
 public:
@@ -14,7 +15,6 @@ public:
   virtual ~HTTPBase();
 
   static const char* status_code[];
-  enum method { GET, POST, DELETE, UNKNOWN };
 
   void reset();
 
@@ -24,7 +24,7 @@ protected:
   std::string buffer_;
   std::map<std::string, std::string> parsed_header_;
   std::string body_;
-  method method_;
+  method_e method_;
 
   static std::map<int, std::string> create_map_();
   const static std::map<int, std::string> status_map_;

@@ -26,18 +26,7 @@ Socket::status HTTPRequest::parse_header() {
   line.erase(line.find("\r"));
   std::string method;
   new_iss >> method;
-  if (method == "GET") {
-    method_ = GET;
-  }
-  else if ( method == "POST") {
-    method_ = POST;
-  }
-  else if (method == "DELETE") {
-    method_ = DELETE;
-  }
-  else {
-    method_ = UNKNOWN;
-  }
+  method_ = method_to_enum(method);
   new_iss >> parsed_header_["URI"] >> parsed_header_["PROTOCOL"];
   while (std::getline(iss, line)) {
     size_t pos = line.find(":");

@@ -68,8 +68,8 @@ void Server::create_listen_socket_(const ServerBlock &config) {
     pollfd_t pollfd = (pollfd_t){.fd = sockfd, .events = POLLIN, .revents = 0};
     poll_list_.push_back(pollfd);
     // SocketListen *sock = new SocketListen(poll_list_.back(), config, *p);
-    client_map_.insert(std::pair<int, SocketInterface>(
-        sockfd, SocketInterface(poll_list_.back(), config, *p)));
+    client_map_.insert(
+        std::make_pair(sockfd, SocketInterface(poll_list_.back(), config, *p)));
     break;
   }
 

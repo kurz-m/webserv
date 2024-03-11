@@ -53,9 +53,11 @@ int main(int argc, char **argv) {
     server.startup();
     server.run();
   } catch (std::exception &e) {
-    std::cerr << e.what() << std::endl;
-    return 1;
+    if (g_signal == 0) {
+      std::cerr << e.what() << std::endl;
+      return 1;
+    }
   }
-  file.close();
+  std::cout << "Goodbye!" << std::endl;
   return 0;
 }

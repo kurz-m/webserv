@@ -2,6 +2,7 @@
 #define __SOCKET_CONNECT_HPP__
 
 #include <list>
+
 #include "HTTPRequest.hpp"
 #include "HTTPResponse.hpp"
 #include "Socket.hpp"
@@ -23,7 +24,7 @@ public:
               std::list<pollfd_t> &poll_list);
   bool check_timeout() const;
 
-  SocketConnect* clone() const;
+  SocketConnect *clone() const;
 
 private:
   void receive_();

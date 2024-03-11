@@ -1,10 +1,9 @@
 #ifndef __HTTPREQUEST_HPP__
 #define __HTTPREQUEST_HPP__
 
-#include "HTTPBase.hpp"
 #include "Settings.hpp"
-
-class Socket;
+#include "Socket.hpp"
+#include "HTTPBase.hpp"
 
 class HTTPRequest : public HTTPBase {
 public:
@@ -13,7 +12,7 @@ public:
   HTTPRequest &operator=(const HTTPRequest &other);
   ~HTTPRequest();
 
-  void parse_header(Socket &sock);
+  Socket::status parse_header();
   void parse_body();
 
 private:

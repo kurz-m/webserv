@@ -16,6 +16,8 @@ public:
   static const char* status_code[];
   enum method { GET, POST, DELETE, UNKNOWN };
 
+  void reset();
+
 protected:
   void parse_buffer_();
 

@@ -1,7 +1,10 @@
 #include <csignal>
 #include <cstdio>
+#include <cstring>
 #include <iostream>
 #include <sstream>
+#include <cerrno>
+#include <stdexcept>
 
 #include "Server.hpp"
 #include "SocketListen.hpp"
@@ -20,16 +23,7 @@ void Server::startup() {
 #endif
   std::vector<ServerBlock>::const_iterator it;
   for (it = config_.servers.begin(); it != config_.servers.end(); ++it) {
-    try {
-      create_listen_socket_(*it);
-    } catch (std::exception &e) {
-      continue;
-    }
-  }
-
-  // could not bind and listen to any socket.
-  if (client_map_.size() < 1) {
-    throw std::exception();
+    create_listen_socket_(*it);
   }
 }
 
@@ -46,32 +40,33 @@ void Server::create_listen_socket_(const ServerBlock &config) {
   // bind to all interfaces on port
   if ((status = getaddrinfo(NULL, config.find(Token::LISTEN).str_val.c_str(),
                             &hints, &servinfo)) != 0) {
-    perror("getaddrinfo");
-    throw std::exception();
+    throw std::runtime_error(std::string("server: getaddrinfo: ") + std::strerror(errno));
   }
 
   for (p = servinfo; p != NULL; p = p->ai_next) {
     int sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
     if (sockfd == -1) {
+      std::cerr << "server: socket: " << std::strerror(errno) << std::endl;
       continue;
     }
     int yes = 1;
     if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) {
-      perror("setsockopt");
-      throw std::exception();
+      std::cerr << "server: setsockopt: " << std::strerror(errno) << std::endl;
+      continue;
     }
     if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
-      perror("server: bind");
+      std::cerr << "server: bind: " << std::strerror(errno) << std::endl;
       close(sockfd);
       continue;
     }
     if (listen(sockfd, 10)) {
       perror("server: listen");
+      std::cerr << "server: listen: " << std::strerror(errno) << std::endl;
       close(sockfd);
+      continue;
     }
     pollfd_t pollfd = (pollfd_t){.fd = sockfd, .events = POLLIN, .revents = 0};
     poll_list_.push_back(pollfd);
-    // SocketListen *sock = new SocketListen(poll_list_.back(), config, *p);
     client_map_.insert(
         std::make_pair(sockfd, SocketInterface(poll_list_.back(), config, *p)));
     break;
@@ -80,8 +75,7 @@ void Server::create_listen_socket_(const ServerBlock &config) {
   freeaddrinfo(servinfo);
 
   if (client_map_.size() < 1) {
-    std::cerr << "could not bind and listen to any port!" << std::endl;
-    throw std::exception();
+    throw std::runtime_error("could not bind and listen to any port!");
   }
 }
 
@@ -94,7 +88,7 @@ int Server::do_poll_() {
   int num_events = poll(&pollfds[0], pollfds.size(), poll_timeout_);
   if (num_events < 0) {
     perror("server: poll");
-    throw std::exception();
+    throw std::runtime_error(std::string(std::strerror(errno)));
   }
   if (num_events > 0) {
     int i = 0;

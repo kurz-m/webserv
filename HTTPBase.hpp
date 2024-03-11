@@ -4,8 +4,7 @@
 #include <string>
 #include <map>
 #include "Settings.hpp"
-
-class Socket;
+#include "Socket.hpp"
 
 class HTTPBase {
 public:

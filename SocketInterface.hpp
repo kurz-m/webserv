@@ -3,8 +3,6 @@
 
 #include <list>
 
-#include "HTTPRequest.hpp"
-#include "HTTPResponse.hpp"
 #include "Settings.hpp"
 
 typedef struct addrinfo addrinfo_t;

@@ -61,7 +61,7 @@ void SocketConnect::receive_() {
     throw std::exception();
   }
   request_.buffer_ += std::string(buf);
-  timestamp_ = std::clock();
+  timestamp_ = std::time(NULL);
   check_recv_();
 }
 
@@ -86,7 +86,7 @@ void SocketConnect::send_response_() {
     status_ = READY;
     pollfd_.events = POLLIN;
   }
-  timestamp_ = std::clock();
+  timestamp_ = std::time(NULL);
 }
 
 void SocketConnect::check_recv_() {
@@ -96,23 +96,23 @@ void SocketConnect::check_recv_() {
               << std::endl;
 #endif
     status_ = URECV;
-    pollfd_.events = POLLIN;
   }
   // TODO: check content length for finished body???
   else {
 #ifdef __verbose__
     std::cout << __LINE__ << "server is parsing the header" << std::endl;
 #endif
-    request_.parse_header(*this);
-    status_ = READY;
+    status_ = request_.parse_header();
   }
-  // Set events_ according to status_
-  if (status_ == READY) {
-#ifdef __verbose__
-    std::cout << __LINE__ << "server is ready to send the response"
-              << std::endl;
-#endif
+  switch (status_) {
+  case READY:
     pollfd_.events = POLLOUT;
+    break;
+  case URECV:
+    pollfd_.events = POLLIN;
+    break;
+  default:
+    break;
   }
 }
 

@@ -16,7 +16,7 @@ HTTPRequest &HTTPRequest::operator=(const HTTPRequest &other) {
   return *this;
 }
 
-void HTTPRequest::parse_header(Socket &sock) {
+Socket::status HTTPRequest::parse_header() {
   body_ = buffer_.substr(buffer_.find("\r\n\r\n") + 4);
   buffer_ = buffer_.substr(0, buffer_.find("\r\n\r\n"));
   std::istringstream iss(buffer_);
@@ -57,14 +57,16 @@ void HTTPRequest::parse_header(Socket &sock) {
 #ifdef __verbose__
   std::cout << __LINE__ << "Client did not send the complete content yet" << std::endl;
 #endif
-      sock.status_ = Socket::URECV;
-      sock.pollfd_.events = POLLIN;
+      return Socket::URECV;
     }
   }
+#ifdef __verbose__
   std::map<std::string, std::string>::iterator it;
   for (it = parsed_header_.begin(); it != parsed_header_.end(); ++it) {
     std::cout << it->first << ": " << it->second << std::endl;
   }
+#endif
+  return Socket::READY;
 }
 
 void HTTPRequest::parse_body() {}

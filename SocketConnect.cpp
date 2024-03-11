@@ -83,6 +83,8 @@ void SocketConnect::send_response_() {
 #ifdef __verbose__
     std::cout << "server did send the full message" << std::endl;
 #endif
+    request_.reset();
+    response_.reset();
     status_ = READY;
     pollfd_.events = POLLIN;
   }

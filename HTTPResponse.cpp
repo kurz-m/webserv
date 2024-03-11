@@ -38,17 +38,17 @@ void HTTPResponse::resolve_uri_() {
 
 void HTTPResponse::make_header_() {
   std::ifstream file(parsed_header_.at("URI").c_str());
+  std::ostringstream oss;
   if (file.is_open()) {
     status_code_ = 200;
   } else {
     status_code_ = 404;
-    std::ostringstream oss;
-    oss << ".status-pages/" << status_code_ << ".html";
+    oss << "./status-pages/" << status_code_ << ".html";
     file.open(oss.str().c_str());
+    oss.str("");
   }
   body_.assign(std::istreambuf_iterator<char>(file),
                std::istreambuf_iterator<char>());
-  std::ostringstream oss;
   oss << proto_ << " " << status_code_ << " " << status_map_.at(status_code_)
       << "\r\n";
   oss << "Content-Type: text/html\r\n";

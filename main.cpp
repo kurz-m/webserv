@@ -1,16 +1,34 @@
+#include <csignal>
+#include <cstdlib>
+#include <fstream>
+#include <iostream>
+#include <vector>
+
 #include "Lexer.hpp"
 #include "Parser.hpp"
 #include "Server.hpp"
 #include "Settings.hpp"
-#include <fstream>
-#include <iostream>
-#include <vector>
+
+sig_atomic_t g_signal = 0;
 
 void print_usage() {
   std::cout << "Usage: \n\t./webserv [path/to/config]" << std::endl;
 }
 
+void signal_handler(int signo) {
+  g_signal = signo;
+}
+
+void setup_signal_handler() {
+  sigaction_t act;
+
+  sigemptyset(&act.sa_mask);
+  act.sa_handler = signal_handler;
+  sigaction(SIGINT, &act, NULL);
+}
+
 int main(int argc, char **argv) {
+  setup_signal_handler();
   std::string buffer;
   const char *config_path = "./config/default.conf";
   if (argc > 2) {
@@ -36,6 +54,7 @@ int main(int argc, char **argv) {
     server.run();
   } catch (std::exception &e) {
     std::cerr << e.what() << std::endl;
+    return 1;
   }
   file.close();
   return 0;

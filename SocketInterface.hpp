@@ -16,7 +16,7 @@ class Socket;
 
 class SocketInterface {
 public:
-  SocketInterface();
+  // SocketInterface();
   SocketInterface(pollfd &pollfd, const ServerBlock &config,
                   const addrinfo_t &info);
   SocketInterface(pollfd_t &pollfd, const ServerBlock &config,

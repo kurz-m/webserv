@@ -2,7 +2,7 @@
 #include "SocketConnect.hpp"
 #include "SocketListen.hpp"
 
-SocketInterface::SocketInterface() : sock_(NULL) {}
+// SocketInterface::SocketInterface() : sock_(NULL) {}
 
 SocketInterface::SocketInterface(pollfd &pollfd, const ServerBlock &config,
                                  const addrinfo_t &info) {
@@ -13,7 +13,7 @@ SocketInterface::SocketInterface(pollfd_t &pollfd, const ServerBlock &config,
   sock_ = new SocketConnect(pollfd, config, timeout);
 }
 
-SocketInterface::SocketInterface(const SocketInterface &obj) { *this = obj; }
+SocketInterface::SocketInterface(const SocketInterface &obj) : sock_(NULL) { *this = obj; }
 
 SocketInterface &SocketInterface::operator=(const SocketInterface &obj) {
   if (this != &obj) {

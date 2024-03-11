@@ -11,6 +11,8 @@
 #include <unistd.h>
 #include <vector>
 
+typedef struct sigaction sigaction_t;
+
 class Server {
 public:
   Server(const HttpBlock &config);
@@ -18,6 +20,7 @@ public:
 
   void startup();
   void run();
+  void stop();
 
 private:
   int do_poll_();

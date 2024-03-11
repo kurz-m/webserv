@@ -1,9 +1,13 @@
-#include "Server.hpp"
-#include "SocketListen.hpp"
-#include "Token.hpp"
+#include <csignal>
 #include <cstdio>
 #include <iostream>
 #include <sstream>
+
+#include "Server.hpp"
+#include "SocketListen.hpp"
+#include "Token.hpp"
+
+extern sig_atomic_t g_signal;
 
 Server::Server(const HttpBlock &config)
     : config_(config), poll_timeout_(2500) {}
@@ -137,7 +141,7 @@ void Server::event_handler_() {
 }
 
 void Server::run() {
-  while (true) {
+  while (g_signal == 0) {
     do_poll_();
 #ifdef __verbose__
     std::cout << "polled" << std::endl;

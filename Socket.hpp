@@ -9,19 +9,15 @@
 #include <sys/poll.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <list>
 
-#include "HTTPRequest.hpp"
-#include "HTTPResponse.hpp"
-#include "Settings.hpp"
+#include "SocketInterface.hpp"
 
-#define DEFAULT_TIMEOUT 15
 #define RESET 0
 
-typedef struct addrinfo addrinfo_t;
-
-typedef struct pollfd pollfd_t;
 
 class Server;
+class SocketInterface;
 
 class Socket {
 public:
@@ -34,6 +30,9 @@ public:
 
   // virtual bool handle() = 0;
   virtual bool check_timeout() const = 0;
+  virtual Socket *clone() const = 0;
+  virtual void handle(std::map<int, SocketInterface> &sock_map,
+                      std::list<pollfd_t> &poll_list) = 0;
 
 protected:
   const ServerBlock &config_;
@@ -42,6 +41,7 @@ protected:
 
   friend class Server;
   friend class HTTPRequest;
+  friend class SocketInterface;
 };
 
 #endif // __SOCKET_HPP__

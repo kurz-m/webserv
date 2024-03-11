@@ -24,7 +24,10 @@ SocketConnect &SocketConnect::operator=(const SocketConnect &other) {
 
 SocketConnect::~SocketConnect() {}
 
-void SocketConnect::handle() {
+void SocketConnect::handle(std::map<int, SocketInterface> &client_map,
+                           std::list<pollfd_t> &poll_list) {
+  (void)client_map;
+  (void)poll_list;
 #ifdef __verbose__
   std::cout << "handle client: " << pollfd_.fd << std::endl;
 #endif
@@ -127,3 +130,5 @@ void SocketConnect::interpret_request_headers_() {
 const char *SocketConnect::SendRecvError::what() const throw() {
   return "Send or Recv returned -1!";
 }
+
+SocketConnect *SocketConnect::clone() const { return new SocketConnect(*this); }

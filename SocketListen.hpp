@@ -4,6 +4,7 @@
 #include "Server.hpp"
 #include "Socket.hpp"
 #include "SocketConnect.hpp"
+#include "SocketInterface.hpp"
 
 class SocketListen : public Socket {
 public:
@@ -13,9 +14,10 @@ public:
   SocketListen &operator=(const SocketListen &other);
   ~SocketListen();
 
-  void new_connection(std::list<pollfd_t> &poll_list,
-                                      std::map<int, Socket*> &client_map);
+  void handle(std::map<int, SocketInterface> &client_map,
+              std::list<pollfd_t> &poll_list);
   bool check_timeout() const;
+  SocketListen *clone() const;
 
 private:
   addrinfo_t servinfo_;

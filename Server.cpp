@@ -8,12 +8,7 @@
 Server::Server(const HttpBlock &config)
     : config_(config), poll_timeout_(2500) {}
 
-Server::~Server() {
-  std::map<int, Socket*>::iterator it;
-  for(it = client_map_.begin(); it != client_map_.end(); ++it) {
-    delete it->second;
-  }
-}
+Server::~Server() {}
 
 void Server::startup() {
 #ifdef __verbose__
@@ -72,8 +67,9 @@ void Server::create_listen_socket_(const ServerBlock &config) {
     }
     pollfd_t pollfd = (pollfd_t){.fd = sockfd, .events = POLLIN, .revents = 0};
     poll_list_.push_back(pollfd);
-    SocketListen* sock = new SocketListen(poll_list_.back(), config, *p);
-    client_map_.insert(std::pair<int, Socket*>(sockfd, sock));
+    // SocketListen *sock = new SocketListen(poll_list_.back(), config, *p);
+    client_map_.insert(std::pair<int, SocketInterface>(
+        sockfd, SocketInterface(poll_list_.back(), config, *p)));
     break;
   }
 
@@ -112,25 +108,19 @@ void Server::event_handler_() {
     std::cout << "Fd: " << it->fd << " from polling" << std::endl;
     if ((it->revents & POLLERR) | (it->revents & POLLNVAL)) {
       std::cout << "client: " << it->fd << " connection error." << std::endl;
-      close(it->fd);
-      delete client_map_.at(it->fd);
       client_map_.erase(it->fd);
       it = poll_list_.erase(it);
       continue;
     }
     if (it->revents & POLLHUP) {
       std::cout << "client: " << it->fd << " POLLHUP." << std::endl;
-      close(it->fd);
-      delete client_map_.at(it->fd);
       client_map_.erase(it->fd);
       it = poll_list_.erase(it);
       continue;
     }
     if (!(it->events & it->revents)) {
-      if (client_map_.at(it->fd)->check_timeout()) {
+      if (client_map_.at(it->fd).check_timeout()) {
         std::cout << "client: " << it->fd << " Timeout." << std::endl;
-        close(it->fd);
-        delete client_map_.at(it->fd);
         client_map_.erase(it->fd);
         it = poll_list_.erase(it);
       } else {
@@ -138,20 +128,7 @@ void Server::event_handler_() {
       }
       continue;
     }
-    SocketListen *sock_listen = dynamic_cast<SocketListen *>(client_map_.at(it->fd));
-    SocketConnect *sock_connect = dynamic_cast<SocketConnect *>(client_map_.at(it->fd));
-    if (sock_listen != NULL) {
-      sock_listen->new_connection(poll_list_, client_map_);
-    } else if (sock_connect != NULL) {
-      sock_connect->handle();
-    } else {
-        std::cerr << "Fatal: Invalid Socket Object!" << '\n';
-        close(it->fd);
-        delete client_map_.at(it->fd);
-        client_map_.erase(it->fd);
-        it = poll_list_.erase(it);
-        continue;
-    }
+    client_map_.at(it->fd).handle(client_map_, poll_list_);
     ++it;
   }
 }

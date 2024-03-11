@@ -19,8 +19,11 @@ public:
   SocketConnect &operator=(const SocketConnect &other);
   ~SocketConnect();
 
-  void handle();
+  void handle(std::map<int, SocketInterface> &client_map,
+              std::list<pollfd_t> &poll_list);
   bool check_timeout() const;
+
+  SocketConnect* clone() const;
 
 private:
   void receive_();

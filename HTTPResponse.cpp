@@ -157,6 +157,19 @@ void HTTPResponse::prepare_for_send() {
 
 std::string HTTPResponse::create_list_dir_() {
   std::string tmp;
-  Dir *dir = opendir;
+  DIR *dir = opendir(".");
+  if (dir == NULL) {
+    return tmp;
+  }
+  struct dirent *dp = NULL;
+  while ((dp = readdir(dir))) {
+    if (strcmp(dp->d_name, ".") == 0) {
+      continue;
+    } else if (strcmp(dp->d_name, "..") == 0) {
+
+    } else {
+
+    }
+  }
   return tmp;
 }

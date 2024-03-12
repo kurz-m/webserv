@@ -10,21 +10,17 @@
 
 static const std::string proto_ = "HTTP/1.1";
 
-HTTPResponse::HTTPResponse(const ServerBlock &config) : HTTPBase(config) {}
+HTTPResponse::HTTPResponse(const ServerBlock &config,
+                           const HTTPRequest &request)
+    : HTTPBase(config), request_(request) {}
 
 HTTPResponse::~HTTPResponse() {}
 
-HTTPResponse::HTTPResponse(const HTTPResponse &cpy) : HTTPBase(cpy) {}
+HTTPResponse::HTTPResponse(const HTTPResponse &cpy)
+    : HTTPBase(cpy), request_(cpy.request_) {}
 
 HTTPResponse &HTTPResponse::operator=(const HTTPResponse &other) {
   HTTPBase::operator=(other);
-  return *this;
-}
-
-HTTPResponse &HTTPResponse::operator=(const HTTPRequest &other) {
-  HTTPBase::operator=(other);
-  buffer_.clear();
-  body_.clear();
   return *this;
 }
 
@@ -66,7 +62,7 @@ bool ends_with(const std::string &str, const std::string &extension) {
 
 uint8_t HTTPResponse::check_uri_(const std::string &uri) {
   struct stat sb;
-  std::string uri_ = parsed_header_.at("URI");
+  std::string uri_ = request_.parsed_header_.at("URI");
   const RouteBlock *route = config_.find(uri_);
 
   if (ends_with(uri_, ".py")) {
@@ -94,9 +90,7 @@ uint8_t HTTPResponse::check_uri_(const std::string &uri) {
   return FAIL;
 }
 
-std::string HTTPResponse::call_cgi_() {
-  
-}
+std::string HTTPResponse::call_cgi_() {}
 
 void HTTPResponse::make_header_(std::ifstream &file) {
 
@@ -123,7 +117,7 @@ void HTTPResponse::make_header_(std::ifstream &file) {
 }
 
 void HTTPResponse::prepare_for_send() {
-  uint8_t mask = check_uri_(parsed_header_.at("URI"));
+  uint8_t mask = check_uri_(request_.parsed_header_.at("URI"));
   std::ifstream file;
   switch (mask) {
   case CGI:
@@ -139,7 +133,7 @@ void HTTPResponse::prepare_for_send() {
   case (DIRECTORY | INDEX): // -> index.html file
   case (FIL):               // -> send file
     // check if file exists
-    file.open(parsed_header_.at("URI").c_str());
+    file.open(request_.parsed_header_.at("URI").c_str());
     if (file.is_open()) {
       status_code_ = 200;
     } else {

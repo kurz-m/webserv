@@ -8,10 +8,11 @@
 
 class CGI {
 public:
-  static std::string call_cgi(const std::string &uri, const HTTPResponse& response);
+  static std::string call_cgi(const std::string &uri,
+                              const HTTPResponse &response);
 
 private:
-  CGI(const std::string &uri, const HTTPResponse& response);
+  CGI(const std::string &uri, const HTTPResponse &response);
   CGI(const CGI &cpy);
   CGI &operator=(const CGI &other);
   ~CGI();
@@ -22,7 +23,7 @@ private:
   void prepare_env_();
 
   const std::string &uri_;
-  const HTTPResponse& response_; 
+  const HTTPResponse &response_;
   std::string exec_;
   std::string query_str_;
   std::string env_str_[4];

@@ -2,12 +2,14 @@
 #define __HTTP_RESPONSE_HPP__
 
 #include "HTTPBase.hpp"
+#include "HTTPRequest.hpp"
 
 class HTTPResponse : public HTTPBase {
 public:
   HTTPResponse(const ServerBlock&);
   HTTPResponse(const HTTPResponse &cpy);
   HTTPResponse &operator=(const HTTPResponse &other);
+  HTTPResponse &operator=(const HTTPRequest &other);
   ~HTTPResponse();
 
   void prepare_for_send();

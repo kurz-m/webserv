@@ -14,7 +14,6 @@ public:
 
 private:
   void make_header_(std::ifstream& file);
-  const RouteBlock* find_route_block_() const;
   uint8_t check_uri_(const std::string &uri);
 
   template <typename T>

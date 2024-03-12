@@ -31,7 +31,7 @@ struct ServerBlock {
   std::vector<RouteBlock> routes;
 
   const Setting find(Token::token_type_t) const;
-  const RouteBlock& find(const std::string &) const;
+  const RouteBlock *find(const std::string& uri) const;
 };
 
 struct HttpBlock {

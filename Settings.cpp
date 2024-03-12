@@ -24,14 +24,19 @@ const Setting ServerBlock::find(Token::token_type_t name) const {
   throw NotFoundError();
 }
 
-const RouteBlock& ServerBlock::find(const std::string &path) const {
+const RouteBlock *ServerBlock::find(const std::string& uri) const {
+  const RouteBlock *ret = NULL;
   std::vector<RouteBlock>::const_iterator it;
   for (it = routes.begin(); it != routes.end(); ++it) {
-    if (it->path == path) {
-      return *it;
+    if (uri.find(it->path) != std::string::npos) {
+      if (!ret) {
+        ret = &(*it);
+      } else if (it->path.length() > ret->path.length()) {
+        ret = &(*it);
+      }
     }
   }
-  throw NotFoundError();
+  return ret;
 }
 
 const Setting HttpBlock::find(Token::token_type_t name) const {

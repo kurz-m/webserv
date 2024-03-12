@@ -1,4 +1,5 @@
 #include "HTTPBase.hpp"
+#include <sstream>
 
 std::map<int, std::string> HTTPBase::create_map_() {
   std::map<int, std::string> map;
@@ -44,4 +45,18 @@ void HTTPBase::reset() {
   parsed_header_.clear();
   body_.clear();
   method_ = UNKNOWN;
+}
+
+std::string HTTPBase::create_status_html(int status_code) const {
+  std::ostringstream oss;
+
+  oss << status_code << " " << status_map_.at(status_code);
+  return
+    "<html>"
+    "<head><title>" + oss.str() + "</title></head>"
+    "<body>"
+    "<center><h1>" + oss.str() + "</h1></center>"
+    "<hr><center>webserv by makurz and flauer</center>"
+    "</body>"
+    "</html>";
 }

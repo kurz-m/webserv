@@ -17,6 +17,7 @@ public:
   static const char* status_code[];
 
   void reset();
+  std::string create_status_html(int status_code) const;
 
 protected:
   void parse_buffer_();

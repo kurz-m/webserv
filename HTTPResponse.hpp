@@ -13,8 +13,12 @@ public:
   void prepare_for_send();
 
 private:
-  void make_header_();
-  void resolve_uri_();
+  void make_header_(std::ifstream& file);
+  const RouteBlock* find_route_block_() const;
+  uint8_t check_uri_(const std::string &uri);
+
+  template <typename T>
+  uint8_t check_list_dir_(const T& curr_conf);
 
 
   int status_code_;

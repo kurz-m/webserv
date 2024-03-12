@@ -21,6 +21,8 @@ private:
   template <typename T>
   uint8_t check_list_dir_(const T& curr_conf);
 
+  std::string call_cgi_();
+
 
   int status_code_;
 

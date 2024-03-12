@@ -31,7 +31,8 @@ template <typename T>
 uint8_t HTTPResponse::check_list_dir_(const T &curr_conf) {
   try {
     std::string g_index = curr_conf.find(Token::INDEX).str_val;
-    parsed_header_.at("URI") = curr_conf.find(Token::ROOT).str_val + "/" + g_index;
+    parsed_header_.at("URI") =
+        curr_conf.find(Token::ROOT).str_val + "/" + g_index;
     return (DIRECTORY | INDEX);
   } catch (NotFoundError &e) {
     try {
@@ -49,7 +50,7 @@ uint8_t HTTPResponse::check_list_dir_(const T &curr_conf) {
 
 uint8_t HTTPResponse::check_uri_(const std::string &uri) {
   struct stat sb;
-  const RouteBlock *route = find_route_block_();
+  const RouteBlock *route = config_.find(parsed_header_.at("URI"));
   std::string uri_;
 
   if (route) {
@@ -57,11 +58,9 @@ uint8_t HTTPResponse::check_uri_(const std::string &uri) {
   } else {
     uri_ = config_.find(Token::ROOT).str_val + "/" + uri;
   }
-
   if (stat(uri_.c_str(), &sb) < 0) {
     return FAIL;
   }
-
   switch (sb.st_mode & S_IFMT) {
   case S_IFREG:
     return FIL;
@@ -73,22 +72,6 @@ uint8_t HTTPResponse::check_uri_(const std::string &uri) {
     }
   }
   return FAIL;
-}
-
-const RouteBlock *HTTPResponse::find_route_block_() const {
-  const std::string &uri = parsed_header_.at("URI");
-  const RouteBlock *ret = NULL;
-  std::vector<RouteBlock>::const_iterator it;
-  for (it = config_.routes.begin(); it != config_.routes.end(); ++it) {
-    if (uri.find(it->path) != std::string::npos) {
-      if (!ret) {
-        ret = &(*it);
-      } else if (it->path.length() > ret->path.length()) {
-        ret = &(*it);
-      }
-    }
-  }
-  return ret;
 }
 
 void HTTPResponse::make_header_(std::ifstream &file) {

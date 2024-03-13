@@ -19,6 +19,13 @@ HTTPResponse &HTTPResponse::operator=(const HTTPResponse &other) {
   return *this;
 }
 
+HTTPResponse &HTTPResponse::operator=(const HTTPRequest &other) {
+  HTTPBase::operator=(other);
+  buffer_ = "";
+  body_ = "";
+  return *this;
+}
+
 enum uri_state {
   DIRECTORY = (1 << 0),
   FIL = (1 << 1),

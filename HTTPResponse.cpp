@@ -172,8 +172,7 @@ const std::string list_dir_head =
 static inline std::string create_list_dir_entry(const std::string &path) {
   std::ostringstream oss;
   char m_time[30] = {0};
-  oss << "<tr><td><a href=\"" << path << ">" << path
-      << "</a></td><td>";
+  oss << "<tr><td><a href=\"" << path << ">" << path << "</a></td><td>";
   struct stat sb;
   if (stat(path.c_str(), &sb) < 0) {
     // TODO: Handle failure of the stat. What does that mean?

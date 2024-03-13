@@ -121,12 +121,9 @@ void SocketConnect::check_recv_() {
 void SocketConnect::resolve_uri_() {}
 
 void SocketConnect::interpret_request_headers_() {
-  // try get location file and read and send.
-  // TODO: create function for getting the correct path to the file
-  // if the URI is '/' then we need to redirect it to the index.html
-  // also check permission for the specified URI
-  response_.parsed_header_.insert(
-      std::make_pair("URI", request_.parsed_header_.at("URI")));
+  response_.HTTPBase::operator=(request_);
+  // response_.parsed_header_.insert(
+  //     std::make_pair("URI", request_.parsed_header_.at("URI")));
 }
 
 const char *SocketConnect::SendRecvError::what() const throw() {

@@ -19,13 +19,12 @@ private:
 
   void parse_uri_();
   void execute_();
-  pid_t create_pipe_();
+  std::string create_pipe_();
   void prepare_env_();
 
   const std::string &uri_;
   const HTTPRequest &req_;
   std::string exec_;
-  // std::string query_str_;
   std::vector<std::string> env_str_;
   char *env_[6];
 };

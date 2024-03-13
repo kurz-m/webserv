@@ -92,6 +92,8 @@ uint8_t HTTPResponse::check_uri_(HTTPRequest& req) {
 
 void HTTPResponse::call_cgi_(HTTPRequest& req) {
   body_ += CGI::call_cgi(req.parsed_header_.at("URI"), req);
+  std::cout << "cgi call returned!" << std::endl;
+  std::cout << body_ << std::endl;
   status_code_ = 200;
 }
 

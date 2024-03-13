@@ -4,18 +4,14 @@
 #include <sstream>
 #include <stdexcept>
 #include <sys/wait.h>
+#include <iostream>
+#include <cstdlib>
 
 std::string CGI::call_cgi(const std::string &uri,
                           const HTTPRequest &req) {
   CGI instance(uri, req);
   std::string ret = "";
-  pid_t pid = instance.create_pipe_();
-  waitpid(pid, NULL, 0); // TODO: make this not block other requests!
-  char buffer[1024] = {0};
-  while(read(STDIN_FILENO, buffer, 1024) > 0) {
-    ret += buffer;
-  }
-  return ret;
+  return instance.create_pipe_();   
 }
 
 // https://www.ibm.com/docs/en/netcoolomnibus/8.1?topic=scripts-environment-variables-in-cgi-script
@@ -51,16 +47,17 @@ void CGI::parse_uri_() {
   size_t pos = 0;
   pos = uri_.find("?");
   if (pos != std::string::npos) {
-    exec_ = uri_.substr(0, pos);
+    exec_ = req_.config_.find(Token::ROOT).str_val + uri_.substr(0, pos);
     env_str_.push_back("QUERY_STRING=" + uri_.substr(pos + 1));
   } else {
-    exec_ = uri_.substr(0);
+    exec_ = req_.config_.find(Token::ROOT).str_val + uri_.substr(0);
   }
 }
 
-pid_t CGI::create_pipe_() {
+std::string CGI::create_pipe_() {
   pid_t pid;
   int pipe_fd[2];
+  std::string ret = "";
 
   if (pipe(pipe_fd) < 0)
     throw std::runtime_error(std::strerror(errno));
@@ -68,18 +65,33 @@ pid_t CGI::create_pipe_() {
   if (pid == -1)
     throw std::runtime_error(std::strerror(errno));
   if (pid == 0) {
+    std::cout << "child executing ... " << std::endl;
     if (dup2(pipe_fd[1], STDOUT_FILENO) < 0)
       throw std::runtime_error(std::strerror(errno));
     close(pipe_fd[0]);
     close(pipe_fd[1]);
     execute_();
+    std::exit(0);
   } else {
-    if (dup2(pipe_fd[0], STDIN_FILENO) < 0)
-      throw std::runtime_error(std::strerror(errno));
-    close(pipe_fd[0]);
+    // if (dup2(pipe_fd[0], STDIN_FILENO) < 0)
+    //   throw std::runtime_error(std::strerror(errno));
+    // close(pipe_fd[0]);
     close(pipe_fd[1]);
+    int stat_loc = 0;
+    pid = waitpid(pid, &stat_loc, 0);
+    // while (pid == 0) {
+    //   std::cout << "waiting for child..." << std::endl;
+    //   usleep(1000000);
+    //   pid = waitpid(pid, NULL, WNOHANG);
+    // }
+    std::cout << "child exited. trying to read the pipe" << std::endl;
+    char buffer[1024] = {0};
+    while(read(pipe_fd[0], buffer, 1023) > 0) {
+      ret += buffer;
+    }
+    close(pipe_fd[0]);
   }
-  return (pid);
+  return (ret);
 }
 
 CGI::CGI(const std::string &uri, const HTTPRequest &req)

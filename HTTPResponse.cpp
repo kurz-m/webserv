@@ -1,8 +1,10 @@
 #include <algorithm>
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <sys/stat.h>
+#include <sys/wait.h>
 // #include <unistd.h>
 
 #include "CGI.hpp"
@@ -71,7 +73,7 @@ uint8_t HTTPResponse::check_uri_(HTTPRequest &req) {
   if (uri_.find("/cgi-bin") != std::string::npos) {
     return CGI;
   }
-  uri_ =root_ + "/" + uri_;
+  uri_ = root_ + "/" + uri_;
   if (stat(uri_.c_str(), &sb) < 0) {
     return FAIL;
   }
@@ -87,7 +89,6 @@ uint8_t HTTPResponse::check_uri_(HTTPRequest &req) {
   }
   return FAIL;
 }
-
 
 void HTTPResponse::read_file_(std::ifstream &file) {
   body_.assign(std::istreambuf_iterator<char>(file),
@@ -150,9 +151,8 @@ void HTTPResponse::prepare_for_send(HTTPRequest &req) {
 
 void HTTPResponse::call_cgi_(HTTPRequest &req) {
   std::string ret = "";
-  // TODO: check if 
-  if (access((root_ + uri_).c_str(), (F_OK | X_OK)) != 0)
-  {
+  // TODO: check if
+  if (access((root_ + uri_).c_str(), (F_OK | X_OK)) != 0) {
     std::ifstream file((root_ + uri_).c_str());
 
     read_file_(file);
@@ -200,7 +200,7 @@ std::string HTTPResponse::create_pipe_(HTTPRequest &req) {
     // }
     std::cout << "child exited. trying to read the pipe" << std::endl;
     char buffer[1024] = {0};
-    while(read(pipe_fd[0], buffer, 1023) > 0) {
+    while (read(pipe_fd[0], buffer, 1023) > 0) {
       ret += buffer;
       memset(buffer, 0, sizeof(buffer));
     }
@@ -209,16 +209,16 @@ std::string HTTPResponse::create_pipe_(HTTPRequest &req) {
   return (ret);
 }
 
-void HTTPResponse::execute_(HTTPRequest& req) {
+void HTTPResponse::execute_(HTTPRequest &req) {
   cgi_containter es = prepare_env_(req);
-  char * argv[2];
-  argv[0] = const_cast<char*>(es.exec.c_str());
+  char *argv[2];
+  argv[0] = const_cast<char *>(es.exec.c_str());
   argv[1] = NULL;
   execve(es.exec.c_str(), argv, es.env);
 }
 
 // https://www.ibm.com/docs/en/netcoolomnibus/8.1?topic=scripts-environment-variables-in-cgi-script
-cgi_containter HTTPResponse::prepare_env_(HTTPRequest& req) {
+cgi_containter HTTPResponse::prepare_env_(HTTPRequest &req) {
   cgi_containter ret;
   std::vector<std::string> tmp_env;
 
@@ -231,7 +231,7 @@ cgi_containter HTTPResponse::prepare_env_(HTTPRequest& req) {
   }
 
   tmp_env.push_back("CONTENT_TYPE=text/html");
-                    //  req_.parsed_header_.at("Content-Type"));
+  //  req_.parsed_header_.at("Content-Type"));
   tmp_env.push_back("SCRIPT_NAME=" + uri_);
   if (req.method_ == GET) {
     tmp_env.push_back("REQUEST_METHOD=GET");
@@ -243,10 +243,8 @@ cgi_containter HTTPResponse::prepare_env_(HTTPRequest& req) {
   }
   size_t i = 0;
   for (i = 0; i < tmp_env.size(); ++i) {
-    ret.env[i] = const_cast<char*>(tmp_env.at(i).c_str());
+    ret.env[i] = const_cast<char *>(tmp_env.at(i).c_str());
   }
   ret.env[i] = NULL;
   return ret;
 }
-
-

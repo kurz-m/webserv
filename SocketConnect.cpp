@@ -3,7 +3,7 @@
 
 SocketConnect::SocketConnect(pollfd &pollfd, const ServerBlock &config,
                              int timeout /*  = DEFAULT_TIMEOUT */)
-    : Socket(pollfd, config), request_(config), response_(config),
+    : Socket(pollfd, config), request_(config), response_(config, request_),
       timeout_(timeout), timestamp_(std::time(NULL)) {}
 
 SocketConnect::SocketConnect(const SocketConnect &cpy)
@@ -122,7 +122,7 @@ void SocketConnect::resolve_uri_() {}
 
 void SocketConnect::interpret_request_headers_() {
   // response_.HTTPBase::operator=(request_);
-  response_ = request_;
+  // response_ = request_;
   // response_.parsed_header_.insert(
   //     std::make_pair("URI", request_.parsed_header_.at("URI")));
 }

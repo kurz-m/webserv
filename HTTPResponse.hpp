@@ -6,7 +6,7 @@
 
 class HTTPResponse : public HTTPBase {
 public:
-  HTTPResponse(const ServerBlock&, const HTTPRequest&);
+  HTTPResponse(const ServerBlock&, HTTPRequest&);
   HTTPResponse(const HTTPResponse &cpy);
   HTTPResponse &operator=(const HTTPResponse &other);
   ~HTTPResponse();
@@ -14,10 +14,11 @@ public:
   void prepare_for_send();
 
 private:
-  void make_header_(std::ifstream& file);
+  void make_header_();
   uint8_t check_uri_(const std::string &uri);
-  std::string call_cgi_();
-  const HTTPRequest& request_;
+  void read_file_(std::ifstream& file);
+  void call_cgi_();
+  HTTPRequest& request_;
   int status_code_;
 
   template <typename T>

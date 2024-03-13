@@ -25,8 +25,8 @@ private:
   const std::string &uri_;
   const HTTPResponse &response_;
   std::string exec_;
-  std::string query_str_;
-  std::string env_str_[4];
+  // std::string query_str_;
+  std::vector<std::string> env_str_;
   char *env_[6];
 };
 

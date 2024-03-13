@@ -3,37 +3,61 @@
 #include <cstring>
 #include <sstream>
 #include <stdexcept>
+#include <sys/wait.h>
 
 std::string CGI::call_cgi(const std::string &uri,
                           const HTTPResponse &response) {
   CGI instance(uri, response);
-  instance.parse_uri_();
-  instance.create_pipe_();
+  std::string ret = "";
+  pid_t pid = instance.create_pipe_();
+  waitpid(pid, NULL, 0); // TODO: make this not block other requests!
+  char buffer[1024];
+  while(read(STDIN_FILENO, buffer, 1024) > 0) {
+    ret += buffer;
+  }
+  return ret;
 }
 
 // https://www.ibm.com/docs/en/netcoolomnibus/8.1?topic=scripts-environment-variables-in-cgi-script
 void CGI::prepare_env_() {
+  env_str_.push_back("CONTENT_TYPE=" +
+                     response_.request_.parsed_header_.at("Content-Type"));
+  env_str_.push_back("SCRIPT_NAME=" + response_.request_.parsed_header_.at("URI"));
   if (response_.request_.method_ == GET) {
-    // put REQUEST_METHOD var into env_str_
+    env_str_.push_back("REQUEST_METHOD=GET");
   } else if (response_.request_.method_ == POST) {
-    // also put sdlfja
+    env_str_.push_back("REQUEST_METHOD=POST");
+    std::ostringstream oss;
+    oss << "CONTENT_LENGTH=" << response_.request_.body_.size();
+    env_str_.push_back(oss.str());
   }
+  size_t i = 0;
+  for (i = 0; i < env_str_.size(); ++i) {
+    env_[i] = const_cast<char*>(env_str_.at(i).c_str());
+  }
+  env_[i] = NULL;
 }
 
-void CGI::execute_() { execve(exec_.c_str(), NULL, env_); }
+void CGI::execute_() {
+  parse_uri_();
+  prepare_env_();
+  char * argv[2];
+  argv[0] = const_cast<char*>(exec_.c_str());
+  argv[1] = NULL;
+  execve(exec_.c_str(), argv, env_);
+}
 
 void CGI::parse_uri_() {
   size_t pos = 0;
   pos = uri_.find("?");
   if (pos != std::string::npos) {
     exec_ = uri_.substr(0, pos);
-    query_str_ = uri_.substr(pos + 1);
+    env_str_.push_back("QUERY_STRING=" + uri_.substr(pos + 1));
   } else {
     exec_ = uri_.substr(0);
   }
 }
 
-// pid_t	create_pipe(void (f1)(void *), void *a1)
 pid_t CGI::create_pipe_() {
   pid_t pid;
   int pipe_fd[2];

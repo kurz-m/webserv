@@ -20,8 +20,7 @@ HTTPResponse::HTTPResponse(const ServerBlock &config) : HTTPBase(config) {
 
 HTTPResponse::~HTTPResponse() {}
 
-HTTPResponse::HTTPResponse(const HTTPResponse &cpy)
-    : HTTPBase(cpy), request_(cpy.request_) {}
+HTTPResponse::HTTPResponse(const HTTPResponse &cpy) : HTTPBase(cpy) {}
 
 HTTPResponse &HTTPResponse::operator=(const HTTPResponse &other) {
   HTTPBase::operator=(other);
@@ -109,6 +108,7 @@ void HTTPResponse::make_header_() {
 }
 
 void HTTPResponse::prepare_for_send(HTTPRequest &req) {
+  std::string& uri = req.parsed_header_.at("URI");
   uint8_t mask = check_uri_(req);
   std::ifstream file;
   switch (mask) {

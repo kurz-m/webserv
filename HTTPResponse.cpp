@@ -88,12 +88,6 @@ uint8_t HTTPResponse::check_uri_(HTTPRequest &req) {
   return FAIL;
 }
 
-void HTTPResponse::call_cgi_(HTTPRequest &req) {
-  body_ += CGI::call_cgi(req.parsed_header_.at("URI"), req);
-  // std::cout << "cgi call returned!" << std::endl;
-  // std::cout << body_ << std::endl;
-  status_code_ = 200;
-}
 
 void HTTPResponse::read_file_(std::ifstream &file) {
   body_.assign(std::istreambuf_iterator<char>(file),
@@ -153,3 +147,106 @@ void HTTPResponse::prepare_for_send(HTTPRequest &req) {
   std::cout << "buffer: " << buffer_ << std::endl;
 #endif
 }
+
+void HTTPResponse::call_cgi_(HTTPRequest &req) {
+  std::string ret = "";
+  // TODO: check if 
+  if (access((root_ + uri_).c_str(), (F_OK | X_OK)) != 0)
+  {
+    std::ifstream file((root_ + uri_).c_str());
+
+    read_file_(file);
+    // TODO: read file and send back
+  }
+  // TODO: create pipe and execute
+  create_pipe_(req);
+
+  // TODO: fill body with result
+  // std::cout << "cgi call returned!" << std::endl;
+  // std::cout << body_ << std::endl;
+  status_code_ = 200;
+}
+
+std::string HTTPResponse::create_pipe_(HTTPRequest &req) {
+  pid_t pid;
+  int pipe_fd[2];
+  std::string ret = "";
+
+  if (pipe(pipe_fd) < 0)
+    throw std::runtime_error(std::strerror(errno));
+  pid = fork();
+  if (pid == -1)
+    throw std::runtime_error(std::strerror(errno));
+  if (pid == 0) {
+    std::cout << "child executing ... " << std::endl;
+    if (dup2(pipe_fd[1], STDOUT_FILENO) < 0)
+      throw std::runtime_error(std::strerror(errno));
+    close(pipe_fd[0]);
+    close(pipe_fd[1]);
+    execute_(req);
+    std::exit(0);
+  } else {
+    // if (dup2(pipe_fd[0], STDIN_FILENO) < 0)
+    //   throw std::runtime_error(std::strerror(errno));
+    // close(pipe_fd[0]);
+    close(pipe_fd[1]);
+    int stat_loc = 0;
+    // FIX: check for child return status and handle accoringly -> 500 if not 0
+    pid = waitpid(pid, &stat_loc, 0);
+    // while (pid == 0) {
+    //   std::cout << "waiting for child..." << std::endl;
+    //   usleep(1000000);
+    //   pid = waitpid(pid, NULL, WNOHANG);
+    // }
+    std::cout << "child exited. trying to read the pipe" << std::endl;
+    char buffer[1024] = {0};
+    while(read(pipe_fd[0], buffer, 1023) > 0) {
+      ret += buffer;
+      memset(buffer, 0, sizeof(buffer));
+    }
+    close(pipe_fd[0]);
+  }
+  return (ret);
+}
+
+void HTTPResponse::execute_(HTTPRequest& req) {
+  cgi_containter es = prepare_env_(req);
+  char * argv[2];
+  argv[0] = const_cast<char*>(es.exec.c_str());
+  argv[1] = NULL;
+  execve(es.exec.c_str(), argv, es.env);
+}
+
+// https://www.ibm.com/docs/en/netcoolomnibus/8.1?topic=scripts-environment-variables-in-cgi-script
+cgi_containter HTTPResponse::prepare_env_(HTTPRequest& req) {
+  cgi_containter ret;
+  std::vector<std::string> tmp_env;
+
+  size_t pos = uri_.find("?");
+  if (pos != std::string::npos) {
+    ret.exec = root_ + uri_.substr(0, pos);
+    tmp_env.push_back("QUERY_STRING=" + uri_.substr(pos + 1));
+  } else {
+    ret.exec = root_ + uri_.substr(0);
+  }
+
+  tmp_env.push_back("CONTENT_TYPE=text/html");
+                    //  req_.parsed_header_.at("Content-Type"));
+  tmp_env.push_back("SCRIPT_NAME=" + uri_);
+  if (req.method_ == GET) {
+    tmp_env.push_back("REQUEST_METHOD=GET");
+  } else if (req.method_ == POST) {
+    tmp_env.push_back("REQUEST_METHOD=POST");
+    std::ostringstream oss;
+    oss << "CONTENT_LENGTH=" << req.body_.size();
+    tmp_env.push_back(oss.str());
+  }
+  size_t i = 0;
+  for (i = 0; i < tmp_env.size(); ++i) {
+    ret.env[i] = const_cast<char*>(tmp_env.at(i).c_str());
+  }
+  ret.env[i] = NULL;
+  return ret;
+}
+
+

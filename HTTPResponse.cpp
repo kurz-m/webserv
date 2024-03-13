@@ -11,14 +11,13 @@
 
 static const std::string proto_ = "HTTP/1.1";
 
-HTTPResponse::HTTPResponse(const ServerBlock &config,
-                           HTTPRequest &request)
-    : HTTPBase(config), request_(request) {}
+HTTPResponse::HTTPResponse(const ServerBlock &config)
+    : HTTPBase(config) {}
 
 HTTPResponse::~HTTPResponse() {}
 
 HTTPResponse::HTTPResponse(const HTTPResponse &cpy)
-    : HTTPBase(cpy), request_(cpy.request_) {}
+    : HTTPBase(cpy) {}
 
 HTTPResponse &HTTPResponse::operator=(const HTTPResponse &other) {
   HTTPBase::operator=(other);
@@ -35,11 +34,11 @@ enum uri_state {
 };
 
 template <typename T>
-uint8_t HTTPResponse::check_list_dir_(const T &curr_conf) {
+uint8_t HTTPResponse::check_list_dir_(const T &curr_conf, HTTPRequest& req) {
   try {
     std::string g_index = curr_conf.find(Token::INDEX).str_val;
     g_index = curr_conf.find(Token::ROOT).str_val + "/" + g_index;
-    request_.parsed_header_.at("URI") = g_index;
+    req.parsed_header_.at("URI") = g_index;
     return (DIRECTORY | INDEX);
   } catch (NotFoundError &e) {
     try {
@@ -61,9 +60,9 @@ bool ends_with(const std::string &str, const std::string &extension) {
   return std::equal(extension.rbegin(), extension.rend(), str.rbegin());
 }
 
-uint8_t HTTPResponse::check_uri_(const std::string &uri) {
+uint8_t HTTPResponse::check_uri_(HTTPRequest& req) {
   struct stat sb;
-  std::string uri_ = request_.parsed_header_.at("URI");
+  std::string uri_ = req.parsed_header_.at("URI");
   const RouteBlock *route = config_.find(uri_);
 
   if (ends_with(uri_, ".py")) {
@@ -71,9 +70,9 @@ uint8_t HTTPResponse::check_uri_(const std::string &uri) {
   }
 
   if (route) {
-    uri_ = route->find(Token::ROOT).str_val + "/" + uri;
+    uri_ = route->find(Token::ROOT).str_val + "/" + uri_;
   } else {
-    uri_ = config_.find(Token::ROOT).str_val + "/" + uri;
+    uri_ = config_.find(Token::ROOT).str_val + "/" + uri_;
   }
   if (stat(uri_.c_str(), &sb) < 0) {
     return FAIL;
@@ -83,16 +82,16 @@ uint8_t HTTPResponse::check_uri_(const std::string &uri) {
     return FIL;
   case S_IFDIR:
     if (route) {
-      return check_list_dir_(*route);
+      return check_list_dir_(*route, req);
     } else {
-      return check_list_dir_(config_);
+      return check_list_dir_(config_, req);
     }
   }
   return FAIL;
 }
 
-void HTTPResponse::call_cgi_() {
-  body_ += CGI::call_cgi(request_.parsed_header_.at("URI"), *this);
+void HTTPResponse::call_cgi_(HTTPRequest& req) {
+  body_ += CGI::call_cgi(req.parsed_header_.at("URI"), req);
   status_code_ = 200;
 }
 
@@ -112,12 +111,12 @@ void HTTPResponse::make_header_() {
   buffer_ += body_;
 }
 
-void HTTPResponse::prepare_for_send() {
-  uint8_t mask = check_uri_(request_.parsed_header_.at("URI"));
+void HTTPResponse::prepare_for_send(HTTPRequest& req) {
+  uint8_t mask = check_uri_(req);
   std::ifstream file;
   switch (mask) {
   case CGI:
-    call_cgi_();
+    call_cgi_(req);
     break;
   case (DIRECTORY | AUTO): // -> list dir
     // TODO: create function for index_of
@@ -131,7 +130,7 @@ void HTTPResponse::prepare_for_send() {
   case (DIRECTORY | INDEX): // -> index.html file
   case (FIL):               // -> send file
     // check if file exists
-    file.open(request_.parsed_header_.at("URI").c_str());
+    file.open(req.parsed_header_.at("URI").c_str());
     if (file.is_open()) {
       status_code_ = 200;
       read_file_(file);

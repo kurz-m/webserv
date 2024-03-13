@@ -36,3 +36,6 @@
 webserv
 .ccls-cache
 .ccls
+
+# python pyc files
+*.pyc

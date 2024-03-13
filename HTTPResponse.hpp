@@ -6,23 +6,22 @@
 
 class HTTPResponse : public HTTPBase {
 public:
-  HTTPResponse(const ServerBlock&, HTTPRequest&);
+  HTTPResponse(const ServerBlock&);
   HTTPResponse(const HTTPResponse &cpy);
   HTTPResponse &operator=(const HTTPResponse &other);
   ~HTTPResponse();
 
-  void prepare_for_send();
+  void prepare_for_send(HTTPRequest&);
 
 private:
   void make_header_();
-  uint8_t check_uri_(const std::string &uri);
+  uint8_t check_uri_(HTTPRequest& req);
   void read_file_(std::ifstream& file);
-  void call_cgi_();
-  HTTPRequest& request_;
+  void call_cgi_(HTTPRequest& req);
   int status_code_;
 
   template <typename T>
-  uint8_t check_list_dir_(const T& curr_conf);
+  uint8_t check_list_dir_(const T& curr_conf, HTTPRequest& req);
 
 friend class CGI;
 };

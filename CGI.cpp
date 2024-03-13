@@ -6,12 +6,12 @@
 #include <sys/wait.h>
 
 std::string CGI::call_cgi(const std::string &uri,
-                          const HTTPResponse &response) {
-  CGI instance(uri, response);
+                          const HTTPRequest &req) {
+  CGI instance(uri, req);
   std::string ret = "";
   pid_t pid = instance.create_pipe_();
   waitpid(pid, NULL, 0); // TODO: make this not block other requests!
-  char buffer[1024];
+  char buffer[1024] = {0};
   while(read(STDIN_FILENO, buffer, 1024) > 0) {
     ret += buffer;
   }
@@ -20,15 +20,15 @@ std::string CGI::call_cgi(const std::string &uri,
 
 // https://www.ibm.com/docs/en/netcoolomnibus/8.1?topic=scripts-environment-variables-in-cgi-script
 void CGI::prepare_env_() {
-  env_str_.push_back("CONTENT_TYPE=" +
-                     response_.request_.parsed_header_.at("Content-Type"));
-  env_str_.push_back("SCRIPT_NAME=" + response_.request_.parsed_header_.at("URI"));
-  if (response_.request_.method_ == GET) {
+  env_str_.push_back("CONTENT_TYPE=text/html");
+                    //  req_.parsed_header_.at("Content-Type"));
+  env_str_.push_back("SCRIPT_NAME=" + req_.parsed_header_.at("URI"));
+  if (req_.method_ == GET) {
     env_str_.push_back("REQUEST_METHOD=GET");
-  } else if (response_.request_.method_ == POST) {
+  } else if (req_.method_ == POST) {
     env_str_.push_back("REQUEST_METHOD=POST");
     std::ostringstream oss;
-    oss << "CONTENT_LENGTH=" << response_.request_.body_.size();
+    oss << "CONTENT_LENGTH=" << req_.body_.size();
     env_str_.push_back(oss.str());
   }
   size_t i = 0;
@@ -82,7 +82,7 @@ pid_t CGI::create_pipe_() {
   return (pid);
 }
 
-CGI::CGI(const std::string &uri, const HTTPResponse &response)
-    : uri_(uri), response_(response) {}
+CGI::CGI(const std::string &uri, const HTTPRequest &req)
+    : uri_(uri), req_(req) {}
 
 CGI::~CGI() {}

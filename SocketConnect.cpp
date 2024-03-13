@@ -3,7 +3,7 @@
 
 SocketConnect::SocketConnect(pollfd &pollfd, const ServerBlock &config,
                              int timeout /*  = DEFAULT_TIMEOUT */)
-    : Socket(pollfd, config), request_(config), response_(config, request_),
+    : Socket(pollfd, config), request_(config), response_(config),
       timeout_(timeout), timestamp_(std::time(NULL)) {}
 
 SocketConnect::SocketConnect(const SocketConnect &cpy)
@@ -66,8 +66,7 @@ void SocketConnect::receive_() {
 }
 
 void SocketConnect::send_response_() {
-  interpret_request_headers_();
-  response_.prepare_for_send();
+  response_.prepare_for_send(request_);
   ssize_t num_bytes = send(pollfd_.fd, response_.buffer_.c_str(),
                            response_.buffer_.size(), MSG_DONTWAIT);
   if (num_bytes < 0) {
@@ -119,13 +118,6 @@ void SocketConnect::check_recv_() {
 }
 
 void SocketConnect::resolve_uri_() {}
-
-void SocketConnect::interpret_request_headers_() {
-  // response_.HTTPBase::operator=(request_);
-  // response_ = request_;
-  // response_.parsed_header_.insert(
-  //     std::make_pair("URI", request_.parsed_header_.at("URI")));
-}
 
 const char *SocketConnect::SendRecvError::what() const throw() {
   return "Send or Recv returned -1!";

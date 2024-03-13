@@ -31,7 +31,6 @@ private:
   void send_response_();
   void check_recv_();
   void resolve_uri_();
-  void interpret_request_headers_();
 
   HTTPRequest request_;
   HTTPResponse response_;

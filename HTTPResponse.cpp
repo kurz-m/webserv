@@ -1,18 +1,22 @@
 #include <algorithm>
+#include <cstring>
 #include <dirent.h>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <sys/stat.h>
+#include <sys/wait.h>
+// #include <unistd.h>
 
+#include "CGI.hpp"
 #include "HTTPResponse.hpp"
 #include "Settings.hpp"
 
 static const std::string proto_ = "HTTP/1.1";
 
-HTTPResponse::HTTPResponse(const ServerBlock &config,
-                           const HTTPRequest &request)
-    : HTTPBase(config), request_(request) {}
+HTTPResponse::HTTPResponse(const ServerBlock &config) : HTTPBase(config) {
+  root_ = config_.find(Token::ROOT).str_val;
+}
 
 HTTPResponse::~HTTPResponse() {}
 
@@ -34,11 +38,11 @@ enum uri_state {
 };
 
 template <typename T>
-uint8_t HTTPResponse::check_list_dir_(const T &curr_conf) {
+uint8_t HTTPResponse::check_list_dir_(const T &curr_conf, HTTPRequest &req) {
   try {
     std::string g_index = curr_conf.find(Token::INDEX).str_val;
-    // parsed_header_.at("URI") =
-    curr_conf.find(Token::ROOT).str_val + "/" + g_index;
+    g_index = root_ + "/" + g_index;
+    req.parsed_header_.at("URI") = g_index;
     return (DIRECTORY | INDEX);
   } catch (NotFoundError &e) {
     try {
@@ -54,27 +58,24 @@ uint8_t HTTPResponse::check_list_dir_(const T &curr_conf) {
   }
 }
 
-static inline bool ends_with(const std::string &str,
-                             const std::string &extension) {
+bool ends_with(const std::string &str, const std::string &extension) {
   if (extension.size() > str.size())
     return false;
   return std::equal(extension.rbegin(), extension.rend(), str.rbegin());
 }
 
-uint8_t HTTPResponse::check_uri_(const std::string &uri) {
+// bool check_for_cgi_(const std::string &uri, )
+
+uint8_t HTTPResponse::check_uri_(HTTPRequest &req) {
   struct stat sb;
-  std::string uri_ = request_.parsed_header_.at("URI");
+  std::string uri_ = req.parsed_header_.at("URI");
   const RouteBlock *route = config_.find(uri_);
 
-  if (ends_with(uri_, ".py")) {
+  // TODO: make better function to check for CGI
+  if (uri_.find("/cgi-bin") != std::string::npos) {
     return CGI;
   }
-
-  if (route) {
-    uri_ = route->find(Token::ROOT).str_val + "/" + uri;
-  } else {
-    uri_ = config_.find(Token::ROOT).str_val + "/" + uri;
-  }
+  uri_ = root_ + "/" + uri_;
   if (stat(uri_.c_str(), &sb) < 0) {
     return FAIL;
   }
@@ -83,30 +84,20 @@ uint8_t HTTPResponse::check_uri_(const std::string &uri) {
     return FIL;
   case S_IFDIR:
     if (route) {
-      return check_list_dir_(*route);
+      return check_list_dir_(*route, req);
     } else {
-      return check_list_dir_(config_);
+      return check_list_dir_(config_, req);
     }
   }
   return FAIL;
 }
 
-std::string HTTPResponse::call_cgi_() {}
+void HTTPResponse::read_file_(std::ifstream &file) {
+  body_.assign(std::istreambuf_iterator<char>(file),
+               std::istreambuf_iterator<char>());
+}
 
-void HTTPResponse::make_header_(std::ifstream &file) {
-
-  switch (status_code_) {
-  case (200):
-    // create response with the whatever
-    body_.assign(std::istreambuf_iterator<char>(file),
-                 std::istreambuf_iterator<char>());
-    break;
-  case (404):
-  case (403):
-    // buffer = status_to_string(status_code_);
-    body_.assign(create_status_html(status_code_));
-  }
-
+void HTTPResponse::make_header_() {
   std::ostringstream oss;
   oss << proto_ << " " << status_code_ << " " << status_map_.at(status_code_)
       << "\r\n";
@@ -117,11 +108,13 @@ void HTTPResponse::make_header_(std::ifstream &file) {
   buffer_ += body_;
 }
 
-void HTTPResponse::prepare_for_send() {
-  uint8_t mask = check_uri_(request_.parsed_header_.at("URI"));
+void HTTPResponse::prepare_for_send(HTTPRequest &req) {
+  uint8_t mask = check_uri_(req);
   std::ifstream file;
   switch (mask) {
   case CGI:
+    call_cgi_(req);
+    break;
 
   case (DIRECTORY | AUTO): // -> list dir
     // TODO: create function for index_of
@@ -131,29 +124,134 @@ void HTTPResponse::prepare_for_send() {
   case (DIRECTORY): // -> 403
     // Return 403
     status_code_ = 403;
+    body_.assign(create_status_html(status_code_));
     break;
   case (DIRECTORY | INDEX): // -> index.html file
   case (FIL):               // -> send file
     // check if file exists
-    file.open(request_.parsed_header_.at("URI").c_str());
+    file.open(req.parsed_header_.at("URI").c_str());
+
     if (file.is_open()) {
       status_code_ = 200;
+      read_file_(file);
     } else {
       status_code_ = 404;
+      body_.assign(create_status_html(status_code_));
     }
     break;
   case (FAIL): // -> 404
     // 404
     status_code_ = 404;
+    body_.assign(create_status_html(status_code_));
     break;
   default:
     std::cerr << "not intended, catch me" << std::endl;
     return;
   }
-  make_header_(file);
+  make_header_();
 #ifdef __verbose__
   std::cout << "buffer: " << buffer_ << std::endl;
 #endif
+}
+
+void HTTPResponse::call_cgi_(HTTPRequest &req) {
+  std::string ret = "";
+  // TODO: check if
+  if (access((root_ + uri_).c_str(), (F_OK | X_OK)) != 0) {
+    std::ifstream file((root_ + uri_).c_str());
+
+    read_file_(file);
+    // TODO: read file and send back
+  }
+  // TODO: create pipe and execute
+  create_pipe_(req);
+
+  // TODO: fill body with result
+  // std::cout << "cgi call returned!" << std::endl;
+  // std::cout << body_ << std::endl;
+  status_code_ = 200;
+}
+
+std::string HTTPResponse::create_pipe_(HTTPRequest &req) {
+  pid_t pid;
+  int pipe_fd[2];
+  std::string ret = "";
+
+  if (pipe(pipe_fd) < 0)
+    throw std::runtime_error(std::strerror(errno));
+  pid = fork();
+  if (pid == -1)
+    throw std::runtime_error(std::strerror(errno));
+  if (pid == 0) {
+    std::cout << "child executing ... " << std::endl;
+    if (dup2(pipe_fd[1], STDOUT_FILENO) < 0)
+      throw std::runtime_error(std::strerror(errno));
+    close(pipe_fd[0]);
+    close(pipe_fd[1]);
+    execute_(req);
+    std::exit(0);
+  } else {
+    // if (dup2(pipe_fd[0], STDIN_FILENO) < 0)
+    //   throw std::runtime_error(std::strerror(errno));
+    // close(pipe_fd[0]);
+    close(pipe_fd[1]);
+    int stat_loc = 0;
+    // FIX: check for child return status and handle accoringly -> 500 if not 0
+    pid = waitpid(pid, &stat_loc, 0);
+    // while (pid == 0) {
+    //   std::cout << "waiting for child..." << std::endl;
+    //   usleep(1000000);
+    //   pid = waitpid(pid, NULL, WNOHANG);
+    // }
+    std::cout << "child exited. trying to read the pipe" << std::endl;
+    char buffer[1024] = {0};
+    while (read(pipe_fd[0], buffer, 1023) > 0) {
+      ret += buffer;
+      memset(buffer, 0, sizeof(buffer));
+    }
+    close(pipe_fd[0]);
+  }
+  return (ret);
+}
+
+void HTTPResponse::execute_(HTTPRequest &req) {
+  cgi_containter es = prepare_env_(req);
+  char *argv[2];
+  argv[0] = const_cast<char *>(es.exec.c_str());
+  argv[1] = NULL;
+  execve(es.exec.c_str(), argv, es.env);
+}
+
+// https://www.ibm.com/docs/en/netcoolomnibus/8.1?topic=scripts-environment-variables-in-cgi-script
+cgi_containter HTTPResponse::prepare_env_(HTTPRequest &req) {
+  cgi_containter ret;
+  std::vector<std::string> tmp_env;
+
+  size_t pos = uri_.find("?");
+  if (pos != std::string::npos) {
+    ret.exec = root_ + uri_.substr(0, pos);
+    tmp_env.push_back("QUERY_STRING=" + uri_.substr(pos + 1));
+  } else {
+    ret.exec = root_ + uri_.substr(0);
+  }
+
+  tmp_env.push_back("CONTENT_TYPE=text/html");
+  //  req_.parsed_header_.at("Content-Type"));
+  tmp_env.push_back("SCRIPT_NAME=" + uri_);
+  if (req.method_ == GET) {
+    tmp_env.push_back("REQUEST_METHOD=GET");
+  } else if (req.method_ == POST) {
+    tmp_env.push_back("REQUEST_METHOD=POST");
+    std::ostringstream oss;
+    oss << "CONTENT_LENGTH=" << req.body_.size();
+    tmp_env.push_back(oss.str());
+  }
+  size_t i = 0;
+  for (i = 0; i < tmp_env.size(); ++i) {
+    ret.env[i] = const_cast<char *>(tmp_env.at(i).c_str());
+  }
+  ret.env[i] = NULL;
+  return ret;
 }
 
 const std::string list_dir_head =

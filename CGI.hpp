@@ -9,24 +9,23 @@
 class CGI {
 public:
   static std::string call_cgi(const std::string &uri,
-                              const HTTPResponse &response);
+                              const HTTPRequest &req);
 
 private:
-  CGI(const std::string &uri, const HTTPResponse &response);
+  CGI(const std::string &uri, const HTTPRequest &req);
   CGI(const CGI &cpy);
   CGI &operator=(const CGI &other);
   ~CGI();
 
   void parse_uri_();
   void execute_();
-  pid_t create_pipe_();
+  std::string create_pipe_();
   void prepare_env_();
 
   const std::string &uri_;
-  const HTTPResponse &response_;
+  const HTTPRequest &req_;
   std::string exec_;
-  std::string query_str_;
-  std::string env_str_[4];
+  std::vector<std::string> env_str_;
   char *env_[6];
 };
 

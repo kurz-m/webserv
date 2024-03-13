@@ -5,19 +5,19 @@
 #include <sys/stat.h>
 // #include <unistd.h>
 
+#include "CGI.hpp"
 #include "HTTPResponse.hpp"
 #include "Settings.hpp"
-#include "CGI.hpp"
 
 static const std::string proto_ = "HTTP/1.1";
 
-HTTPResponse::HTTPResponse(const ServerBlock &config)
-    : HTTPBase(config) {}
+HTTPResponse::HTTPResponse(const ServerBlock &config) : HTTPBase(config) {
+  root_ = config_.find(Token::ROOT).str_val;
+}
 
 HTTPResponse::~HTTPResponse() {}
 
-HTTPResponse::HTTPResponse(const HTTPResponse &cpy)
-    : HTTPBase(cpy) {}
+HTTPResponse::HTTPResponse(const HTTPResponse &cpy) : HTTPBase(cpy) {}
 
 HTTPResponse &HTTPResponse::operator=(const HTTPResponse &other) {
   HTTPBase::operator=(other);
@@ -34,10 +34,10 @@ enum uri_state {
 };
 
 template <typename T>
-uint8_t HTTPResponse::check_list_dir_(const T &curr_conf, HTTPRequest& req) {
+uint8_t HTTPResponse::check_list_dir_(const T &curr_conf, HTTPRequest &req) {
   try {
     std::string g_index = curr_conf.find(Token::INDEX).str_val;
-    g_index = curr_conf.find(Token::ROOT).str_val + "/" + g_index;
+    g_index = root_ + "/" + g_index;
     req.parsed_header_.at("URI") = g_index;
     return (DIRECTORY | INDEX);
   } catch (NotFoundError &e) {
@@ -60,20 +60,18 @@ bool ends_with(const std::string &str, const std::string &extension) {
   return std::equal(extension.rbegin(), extension.rend(), str.rbegin());
 }
 
-uint8_t HTTPResponse::check_uri_(HTTPRequest& req) {
+// bool check_for_cgi_(const std::string &uri, )
+
+uint8_t HTTPResponse::check_uri_(HTTPRequest &req) {
   struct stat sb;
   std::string uri_ = req.parsed_header_.at("URI");
   const RouteBlock *route = config_.find(uri_);
 
-  if (ends_with(uri_, ".py")) {
+  // TODO: make better function to check for CGI
+  if (uri_.find("/cgi-bin") != std::string::npos) {
     return CGI;
   }
-
-  if (route) {
-    uri_ = route->find(Token::ROOT).str_val + "/" + uri_;
-  } else {
-    uri_ = config_.find(Token::ROOT).str_val + "/" + uri_;
-  }
+  uri_ =root_ + "/" + uri_;
   if (stat(uri_.c_str(), &sb) < 0) {
     return FAIL;
   }
@@ -90,16 +88,16 @@ uint8_t HTTPResponse::check_uri_(HTTPRequest& req) {
   return FAIL;
 }
 
-void HTTPResponse::call_cgi_(HTTPRequest& req) {
+void HTTPResponse::call_cgi_(HTTPRequest &req) {
   body_ += CGI::call_cgi(req.parsed_header_.at("URI"), req);
-  std::cout << "cgi call returned!" << std::endl;
-  std::cout << body_ << std::endl;
+  // std::cout << "cgi call returned!" << std::endl;
+  // std::cout << body_ << std::endl;
   status_code_ = 200;
 }
 
-void HTTPResponse::read_file_(std::ifstream& file) {
+void HTTPResponse::read_file_(std::ifstream &file) {
   body_.assign(std::istreambuf_iterator<char>(file),
-                 std::istreambuf_iterator<char>());
+               std::istreambuf_iterator<char>());
 }
 
 void HTTPResponse::make_header_() {
@@ -113,7 +111,7 @@ void HTTPResponse::make_header_() {
   buffer_ += body_;
 }
 
-void HTTPResponse::prepare_for_send(HTTPRequest& req) {
+void HTTPResponse::prepare_for_send(HTTPRequest &req) {
   uint8_t mask = check_uri_(req);
   std::ifstream file;
   switch (mask) {

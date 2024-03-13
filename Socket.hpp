@@ -21,7 +21,7 @@ class SocketInterface;
 
 class Socket {
 public:
-  enum status { READY, URECV, USEND, CLOSED };
+  enum status { READY, URECV, USEND, WAITCGI, CLOSED };
 
   Socket(pollfd_t &pollfd, const ServerBlock &config);
   Socket(const Socket &other);

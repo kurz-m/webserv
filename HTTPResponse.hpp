@@ -19,6 +19,7 @@ private:
   void read_file_(std::ifstream& file);
   void call_cgi_(HTTPRequest& req);
   int status_code_;
+  std::string root_;
 
   template <typename T>
   uint8_t check_list_dir_(const T& curr_conf, HTTPRequest& req);

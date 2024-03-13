@@ -11,6 +11,10 @@ std::string CGI::call_cgi(const std::string &uri,
                           const HTTPRequest &req) {
   CGI instance(uri, req);
   std::string ret = "";
+  if (access((req.config_.find(Token::ROOT).str_val + uri).c_str(), (F_OK | X_OK)) != 0)
+  {
+    // read file!
+  }
   return instance.create_pipe_();   
 }
 

@@ -19,6 +19,7 @@ private:
   std::map<std::string, std::string> parsed_header_;
   method_e method_;
 
+
   friend class Socket;
   friend class HTTPResponse;
   friend class CGI;

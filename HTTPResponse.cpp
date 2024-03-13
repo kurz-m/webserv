@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cstring>
+#include <dirent.h>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -19,7 +20,8 @@ HTTPResponse::HTTPResponse(const ServerBlock &config) : HTTPBase(config) {
 
 HTTPResponse::~HTTPResponse() {}
 
-HTTPResponse::HTTPResponse(const HTTPResponse &cpy) : HTTPBase(cpy) {}
+HTTPResponse::HTTPResponse(const HTTPResponse &cpy)
+    : HTTPBase(cpy), request_(cpy.request_) {}
 
 HTTPResponse &HTTPResponse::operator=(const HTTPResponse &other) {
   HTTPBase::operator=(other);
@@ -113,8 +115,10 @@ void HTTPResponse::prepare_for_send(HTTPRequest &req) {
   case CGI:
     call_cgi_(req);
     break;
+
   case (DIRECTORY | AUTO): // -> list dir
     // TODO: create function for index_of
+    body_ = create_list_dir_();
     status_code_ = 200;
     return;
   case (DIRECTORY): // -> 403
@@ -126,6 +130,7 @@ void HTTPResponse::prepare_for_send(HTTPRequest &req) {
   case (FIL):               // -> send file
     // check if file exists
     file.open(req.parsed_header_.at("URI").c_str());
+
     if (file.is_open()) {
       status_code_ = 200;
       read_file_(file);
@@ -247,4 +252,60 @@ cgi_containter HTTPResponse::prepare_env_(HTTPRequest &req) {
   }
   ret.env[i] = NULL;
   return ret;
+}
+
+const std::string list_dir_head =
+    "<!DOCTYPE html> <html lang=\"en\"> <head> <meta charset=\"UTF-8\">"
+    "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.5\">"
+    "<title>Directory Listing</title> <style> body { font-family: Arial, "
+    "sans-serif; margin: 20px;"
+    "} h1 { text-align: center; } table { border-collapse: collapse; margin: "
+    "20px auto; }"
+    "th, td { border: 1px solid #ccc; padding: 10px; } a { text-decoration: "
+    "none; } </style>"
+    "</head> <body> <h1>Directory Listing</h1> <table> <thead> <tr> "
+    "<th>Name</th> <th>Last Modified</th>"
+    "<th>Size</th> <th>Type</th>  </tr> </thead> <tbody>";
+
+static inline std::string create_list_dir_entry(const std::string &path) {
+  std::ostringstream oss;
+  char m_time[30] = {0};
+  oss << "<tr><td><a href=\"" << path << ">" << path << "</a></td><td>";
+  struct stat sb;
+  if (stat(path.c_str(), &sb) < 0) {
+    // TODO: Handle failure of the stat. What does that mean?
+  }
+  strftime(m_time, sizeof(m_time), "%y-%b-%d %H:%M:%S",
+           std::localtime(&(sb.st_mtime)));
+  oss << std::string(m_time) << "</td><td>";
+  switch (sb.st_mode & S_IFMT) {
+  case S_IFREG:
+    oss << sb.st_size << " KB</td><td>File</td></tr>";
+    break;
+  case S_IFDIR:
+    // TODO: handle directory
+    break;
+  }
+
+  return oss.str();
+  ;
+}
+
+std::string HTTPResponse::create_list_dir_() {
+  std::ostringstream oss;
+  DIR *dir = opendir(".");
+  if (dir == NULL) {
+    return oss.str();
+  }
+  oss << list_dir_head;
+  struct dirent *dp = NULL;
+  while ((dp = readdir(dir))) {
+    std::string dir_name = dp->d_name;
+    if (dir_name != ".") {
+      continue;
+    } else {
+    }
+  }
+  oss << "</tbody></table></body></html>";
+  return oss.str();
 }

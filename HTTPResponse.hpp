@@ -12,6 +12,7 @@ struct cgi_containter {
 class HTTPResponse : public HTTPBase {
 public:
   HTTPResponse(const ServerBlock &);
+
   HTTPResponse(const HTTPResponse &cpy);
   HTTPResponse &operator=(const HTTPResponse &other);
   ~HTTPResponse();
@@ -36,6 +37,8 @@ private:
 
   template <typename T>
   uint8_t check_list_dir_(const T &curr_conf, HTTPRequest &req);
+
+  std::string create_list_dir_();
 
   friend class CGI;
 };

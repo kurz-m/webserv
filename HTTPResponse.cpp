@@ -1,7 +1,9 @@
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <sys/stat.h>
+// #include <unistd.h>
 
 #include "HTTPResponse.hpp"
 #include "Settings.hpp"
@@ -21,8 +23,8 @@ HTTPResponse &HTTPResponse::operator=(const HTTPResponse &other) {
 
 HTTPResponse &HTTPResponse::operator=(const HTTPRequest &other) {
   HTTPBase::operator=(other);
-  buffer_ = "";
-  body_ = "";
+  buffer_.clear();
+  body_.clear();
   return *this;
 }
 
@@ -32,6 +34,7 @@ enum uri_state {
   FAIL = (1 << 2),
   AUTO = (1 << 3),
   INDEX = (1 << 4),
+  CGI = (1 << 5),
 };
 
 template <typename T>
@@ -55,10 +58,20 @@ uint8_t HTTPResponse::check_list_dir_(const T &curr_conf) {
   }
 }
 
+bool ends_with(const std::string &str, const std::string &extension) {
+  if (extension.size() > str.size())
+    return false;
+  return std::equal(extension.rbegin(), extension.rend(), str.rbegin());
+}
+
 uint8_t HTTPResponse::check_uri_(const std::string &uri) {
   struct stat sb;
-  const RouteBlock *route = config_.find(parsed_header_.at("URI"));
-  std::string uri_;
+  std::string uri_ = parsed_header_.at("URI");
+  const RouteBlock *route = config_.find(uri_);
+
+  if (ends_with(uri_, ".py")) {
+    return CGI;
+  }
 
   if (route) {
     uri_ = route->find(Token::ROOT).str_val + "/" + uri;
@@ -79,6 +92,10 @@ uint8_t HTTPResponse::check_uri_(const std::string &uri) {
     }
   }
   return FAIL;
+}
+
+std::string HTTPResponse::call_cgi_() {
+  
 }
 
 void HTTPResponse::make_header_(std::ifstream &file) {
@@ -109,6 +126,8 @@ void HTTPResponse::prepare_for_send() {
   uint8_t mask = check_uri_(parsed_header_.at("URI"));
   std::ifstream file;
   switch (mask) {
+  case CGI:
+
   case (DIRECTORY | AUTO): // -> list dir
     // TODO: create function for index_of
     status_code_ = 200;

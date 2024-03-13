@@ -1,14 +1,13 @@
+#include "Server.hpp"
+#include "SocketListen.hpp"
+#include "Token.hpp"
+#include <cerrno>
 #include <csignal>
 #include <cstdio>
 #include <cstring>
 #include <iostream>
 #include <sstream>
-#include <cerrno>
 #include <stdexcept>
-
-#include "Server.hpp"
-#include "SocketListen.hpp"
-#include "Token.hpp"
 
 extern sig_atomic_t g_signal;
 
@@ -40,7 +39,8 @@ void Server::create_listen_socket_(const ServerBlock &config) {
   // bind to all interfaces on port
   if ((status = getaddrinfo(NULL, config.find(Token::LISTEN).str_val.c_str(),
                             &hints, &servinfo)) != 0) {
-    throw std::runtime_error(std::string("server: getaddrinfo: ") + std::strerror(errno));
+    throw std::runtime_error(std::string("server: getaddrinfo: ") +
+                             std::strerror(errno));
   }
 
   for (p = servinfo; p != NULL; p = p->ai_next) {

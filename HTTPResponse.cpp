@@ -1,9 +1,9 @@
 #include <algorithm>
+#include <dirent.h>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <sys/stat.h>
-// #include <unistd.h>
 
 #include "HTTPResponse.hpp"
 #include "Settings.hpp"
@@ -37,8 +37,8 @@ template <typename T>
 uint8_t HTTPResponse::check_list_dir_(const T &curr_conf) {
   try {
     std::string g_index = curr_conf.find(Token::INDEX).str_val;
-    parsed_header_.at("URI") =
-        curr_conf.find(Token::ROOT).str_val + "/" + g_index;
+    // parsed_header_.at("URI") =
+    curr_conf.find(Token::ROOT).str_val + "/" + g_index;
     return (DIRECTORY | INDEX);
   } catch (NotFoundError &e) {
     try {
@@ -124,6 +124,7 @@ void HTTPResponse::prepare_for_send() {
 
   case (DIRECTORY | AUTO): // -> list dir
     // TODO: create function for index_of
+    body_ = create_list_dir_();
     status_code_ = 200;
     return;
   case (DIRECTORY): // -> 403
@@ -152,4 +153,10 @@ void HTTPResponse::prepare_for_send() {
 #ifdef __verbose__
   std::cout << "buffer: " << buffer_ << std::endl;
 #endif
+}
+
+std::string HTTPResponse::create_list_dir_() {
+  std::string tmp;
+  Dir *dir = opendir;
+  return tmp;
 }

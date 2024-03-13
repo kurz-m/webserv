@@ -88,6 +88,7 @@ std::string CGI::create_pipe_() {
     char buffer[1024] = {0};
     while(read(pipe_fd[0], buffer, 1023) > 0) {
       ret += buffer;
+      memset(buffer, 0, sizeof(buffer));
     }
     close(pipe_fd[0]);
   }

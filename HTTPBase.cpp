@@ -18,20 +18,17 @@ const std::map<int, std::string> HTTPBase::status_map_ =
     HTTPBase::create_map_();
 
 HTTPBase::HTTPBase(const ServerBlock &config)
-    : buffer_(), parsed_header_(), body_(), method_(UNKNOWN), config_(config) {}
+    : buffer_(), body_(), config_(config) {}
 
 HTTPBase::HTTPBase(const HTTPBase &cpy)
-    : buffer_(), parsed_header_(), body_(), method_(UNKNOWN),
-      config_(cpy.config_) {
+    : buffer_(), body_(), config_(cpy.config_) {
   *this = cpy;
 }
 
 HTTPBase &HTTPBase::operator=(const HTTPBase &other) {
   if (this != &other) {
     buffer_ = other.buffer_;
-    parsed_header_ = other.parsed_header_;
     body_ = other.body_;
-    method_ = other.method_;
   }
   return *this;
 }
@@ -42,21 +39,22 @@ void HTTPBase::parse_buffer_() {}
 
 void HTTPBase::reset() {
   buffer_.clear();
-  parsed_header_.clear();
   body_.clear();
-  method_ = UNKNOWN;
 }
 
 std::string HTTPBase::create_status_html(int status_code) const {
   std::ostringstream oss;
 
   oss << status_code << " " << status_map_.at(status_code);
-  return
-    "<html>"
-    "<head><title>" + oss.str() + "</title></head>"
-    "<body>"
-    "<center><h1>" + oss.str() + "</h1></center>"
-    "<hr><center>webserv by makurz and flauer</center>"
-    "</body>"
-    "</html>";
+  return "<html>"
+         "<head><title>" +
+         oss.str() +
+         "</title></head>"
+         "<body>"
+         "<center><h1>" +
+         oss.str() +
+         "</h1></center>"
+         "<hr><center>webserv by makurz and flauer</center>"
+         "</body>"
+         "</html>";
 }

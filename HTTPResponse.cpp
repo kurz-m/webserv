@@ -163,9 +163,10 @@ std::string HTTPResponse::create_list_dir_() {
   }
   struct dirent *dp = NULL;
   while ((dp = readdir(dir))) {
-    if (strcmp(dp->d_name, ".") == 0) {
+    std::string dir_name = dp->d_name;
+    if (dir_name != ".") {
       continue;
-    } else if (strcmp(dp->d_name, "..") == 0) {
+    } else if (dir_name == "..") {
 
     } else {
 

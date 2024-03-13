@@ -121,7 +121,8 @@ void SocketConnect::check_recv_() {
 void SocketConnect::resolve_uri_() {}
 
 void SocketConnect::interpret_request_headers_() {
-  response_.HTTPBase::operator=(request_);
+  // response_.HTTPBase::operator=(request_);
+  response_ = request_;
   // response_.parsed_header_.insert(
   //     std::make_pair("URI", request_.parsed_header_.at("URI")));
 }

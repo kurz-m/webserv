@@ -155,11 +155,14 @@ Socket::status HTTPResponse::call_cgi_(HTTPRequest &req) {
   std::string ret = "";
   if (access((root_ + uri_).c_str(), F_OK) != 0) {
     status_code_ = 404;
+    body_.assign(create_status_html(status_code_));
+    make_header_();
     return Socket::READY;
   } else if (access((root_ + uri_).c_str(), X_OK) != 0) {
     std::ifstream file((root_ + uri_).c_str());
     read_file_(file);
     status_code_ = 200;
+    make_header_();
     return Socket::READY;
   }
   create_pipe_(req);

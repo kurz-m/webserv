@@ -278,6 +278,7 @@ static inline FileInfo create_list_dir_entry(const std::string &path) {
   oss << "<tr><td><a href=\"" << path << "\">" << path << "</a></td><td>";
   struct stat sb;
   if (stat(path.c_str(), &sb) < 0) {
+    std::cerr << "something wrong here" << std::endl;
     // TODO: Handle failure of the stat. What does that mean?
   }
   strftime(m_time, sizeof(m_time), "%y-%b-%d %H:%M:%S",
@@ -307,6 +308,7 @@ inline bool compare_file(const FileInfo& a, const FileInfo& b) {
 }
 
 std::string HTTPResponse::create_list_dir_() {
+
   std::vector<FileInfo> files;
   std::ostringstream oss;
   DIR *dir = opendir(uri_.c_str());
@@ -320,7 +322,7 @@ std::string HTTPResponse::create_list_dir_() {
     if (dir_name == ".") {
       continue;
     } else {
-      files.push_back(create_list_dir_entry(dp->d_name));
+      files.push_back(create_list_dir_entry(uri_ + dir_name));
     }
   }
   std::sort(files.begin(), files.end(), compare_file);

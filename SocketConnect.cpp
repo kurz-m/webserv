@@ -28,6 +28,12 @@ void SocketConnect::handle(std::map<int, SocketInterface> &client_map,
                            std::list<pollfd_t> &poll_list) {
   (void)client_map;
   (void)poll_list;
+  if (status_ == WAITCGI) {
+    status_ = response_.check_child_status();
+    if (status_ == WAITCGI) {
+      pollfd_.events = 0;
+    }
+  }
 #ifdef __verbose__
   std::cout << "handle client: " << pollfd_.fd << std::endl;
 #endif

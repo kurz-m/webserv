@@ -4,11 +4,6 @@
 #include "HTTPBase.hpp"
 #include "HTTPRequest.hpp"
 
-typedef struct cgi_containter {
-  std::string exec;
-  char *env[6];
-} cgi_t;
-
 class HTTPResponse : public HTTPBase {
 public:
   HTTPResponse(const ServerBlock &);

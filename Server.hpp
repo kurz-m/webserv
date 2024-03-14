@@ -11,6 +11,8 @@
 #include <unistd.h>
 #include <vector>
 
+#define RESET 0
+
 typedef struct sigaction sigaction_t;
 
 class Server {

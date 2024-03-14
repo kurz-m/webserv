@@ -21,7 +21,6 @@ private:
 
   friend class Socket;
   friend class HTTPResponse;
-  friend class CGI;
 };
 
 #endif // __HTTPREQUEST_HPP__

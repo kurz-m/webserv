@@ -4,10 +4,10 @@
 #include "HTTPBase.hpp"
 #include "HTTPRequest.hpp"
 
-struct cgi_containter {
+typedef struct cgi_containter {
   std::string exec;
   char *env[6];
-};
+} cgi_t;
 
 class HTTPResponse : public HTTPBase {
 public:
@@ -21,26 +21,24 @@ public:
 
 private:
   void make_header_();
-  uint8_t check_uri_(HTTPRequest &req);
+  uint8_t check_uri_();
   void read_file_(std::ifstream &file);
   int status_code_;
   std::string root_;
   std::string uri_;
-  pid_t cgi_pid_;
-  int child_pipe_;
+  // pid_t cgi_pid_;
+  // int child_pipe_;
 
   // cgi functionality
   void call_cgi_(HTTPRequest &req);
-  cgi_containter prepare_env_(HTTPRequest &req);
+  // void prepare_env_(HTTPRequest &req);
   void execute_(HTTPRequest &req);
-  std::string create_pipe_(HTTPRequest &req);
+  void create_pipe_(HTTPRequest &req);
 
   template <typename T>
-  uint8_t check_list_dir_(const T &curr_conf, HTTPRequest &req);
+  uint8_t check_list_dir_(const T &curr_conf);
 
   std::string create_list_dir_();
-
-  friend class CGI;
 };
 
 #endif // __HTTP_RESPONSE_HPP__

@@ -37,8 +37,9 @@ void SocketListen::handle(std::map<int, SocketInterface> &client_map,
     pollfd_t pollfd = (pollfd_t){.fd = sockfd, .events = POLLIN, .revents = 0};
     poll_list.push_back(pollfd);
     client_map.insert(std::make_pair(sockfd, SocketInterface(poll_list.back(), config_)));
+    std::cout << "accepted client fd: " << sockfd << std::endl;
   } catch (const std::exception &e) {
-    std::cerr << e.what() << '\n';
+    std::cerr << "accept failed: " << e.what() << '\n';
   }
 }
 

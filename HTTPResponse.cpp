@@ -171,18 +171,27 @@ Socket::status HTTPResponse::call_cgi_(HTTPRequest &req) {
 
 Socket::status HTTPResponse::check_child_status() {
   int stat_loc = 0;
-  cgi_pid_ = waitpid(cgi_pid_, &stat_loc, WNOHANG);
-  if (WIFEXITED(stat_loc)) {
-    if (WEXITSTATUS(stat_loc) != 0) {
-      status_code_ = 500;
-    } else {
+  pid_t pid_check = waitpid(cgi_pid_, &stat_loc, WNOHANG);
+  if (pid_check == 0) {
+    // child still running. set EVENTS to 0!
+    return Socket::WAITCGI;
+  } else if (pid_check < 0) {
+    status_code_ = 500;
+    body_.assign(create_status_html(status_code_));
+    make_header_();
+    return Socket::READY;
+  } 
+  else {
+    if (WIFEXITED(stat_loc)) {
+      status_code_ = 200;
       read_child_pipe_();
       make_header_();
-      status_code_ = 200;
+    } else {
+      status_code_ = 500;
+      body_.assign(create_status_html(status_code_));
+      make_header_();
     }
     return Socket::READY;
-  } else {
-    return Socket::WAITCGI;
   }
 }
 

@@ -59,6 +59,10 @@ void SocketConnect::receive_() {
     std::cerr << "recv failed!" << std::endl;
     throw std::exception();
   }
+  if (n == 0) {
+    status_ = CLOSED;
+    return;
+  }
   request_.buffer_ += std::string(buf);
   timestamp_ = std::time(NULL);
   check_recv_();
@@ -99,6 +103,8 @@ void SocketConnect::respond_() {
     break;
   case WAITCGI:
     status_ = response_.check_child_status();
+    break;
+  default:
     break;
   }
   if (status_ == READY) {

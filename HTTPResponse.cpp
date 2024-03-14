@@ -122,8 +122,9 @@ void HTTPResponse::prepare_for_send(HTTPRequest &req) {
   case (DIRECTORY | AUTO): // -> list dir
     // TODO: create function for index_of
     body_ = create_list_dir_();
+    std::cout << body_ << std::endl;
     status_code_ = 200;
-    return;
+    break;
   case (DIRECTORY): // -> 403
     // Return 403
     status_code_ = 403;
@@ -308,7 +309,7 @@ inline bool compare_file(const FileInfo& a, const FileInfo& b) {
 std::string HTTPResponse::create_list_dir_() {
   std::vector<FileInfo> files;
   std::ostringstream oss;
-  DIR *dir = opendir(".");
+  DIR *dir = opendir(uri_.c_str());
   if (dir == NULL) {
     return oss.str();
   }

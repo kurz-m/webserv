@@ -110,15 +110,15 @@ void HTTPResponse::make_header_() {
   buffer_ += body_;
 }
 
-void HTTPResponse::prepare_for_send(HTTPRequest &req) {
+// Socket::status HTTPResponse::check_
+
+Socket::status HTTPResponse::prepare_for_send(HTTPRequest &req) {
   uri_ = req.parsed_header_.at("URI");
   uint8_t mask = check_uri_();
   std::ifstream file;
   switch (mask) {
   case CGI:
-    call_cgi_(req);
-    break;
-
+    return call_cgi_(req);
   case (DIRECTORY | AUTO): // -> list dir
     // TODO: create function for index_of
     body_ = create_list_dir_();
@@ -133,7 +133,6 @@ void HTTPResponse::prepare_for_send(HTTPRequest &req) {
   case (FIL):               // -> send file
     // check if file exists
     file.open(uri_.c_str());
-
     if (file.is_open()) {
       status_code_ = 200;
       read_file_(file);
@@ -143,7 +142,6 @@ void HTTPResponse::prepare_for_send(HTTPRequest &req) {
     }
     break;
   case (FAIL): // -> 404
-    // 404
     status_code_ = 404;
     body_.assign(create_status_html(status_code_));
     break;
@@ -152,40 +150,61 @@ void HTTPResponse::prepare_for_send(HTTPRequest &req) {
     return;
   }
   make_header_();
-// #ifdef __verbose__
-//   std::cout << "buffer: " << buffer_ << std::endl;
-// #endif
+  return Socket::READY;
 }
 
-void HTTPResponse::call_cgi_(HTTPRequest &req) {
+Socket::status HTTPResponse::call_cgi_(HTTPRequest &req) {
   std::string ret = "";
-  // TODO: check if
-  if (access((root_ + uri_).c_str(), (F_OK | X_OK)) != 0) {
+  if (access((root_ + uri_).c_str(), F_OK) != 0) {
+    status_code_ = 404;
+    return Socket::READY;
+  } else if (access((root_ + uri_).c_str(), X_OK) != 0) {
     std::ifstream file((root_ + uri_).c_str());
-
     read_file_(file);
-    // TODO: read file and send back
+    status_code_ = 200;
+    return Socket::READY;
   }
-  // TODO: create pipe and execute
   create_pipe_(req);
+  return check_child_status();
+}
 
-  // TODO: fill body with result
-  // std::cout << "cgi call returned!" << std::endl;
-  // std::cout << body_ << std::endl;
-  status_code_ = 200;
+Socket::status HTTPResponse::check_child_status() {
+  int stat_loc = 0;
+  cgi_pid_ = waitpid(cgi_pid_, &stat_loc, WNOHANG);
+  if (WIFEXITED(stat_loc)) {
+    if (WEXITSTATUS(stat_loc) != 0) {
+      status_code_ = 500;
+    } else {
+      read_child_pipe_();
+      make_header_();
+      status_code_ = 200;
+    }
+    return Socket::READY;
+  } else {
+    return Socket::WAITCGI;
+  }
+}
+
+void HTTPResponse::read_child_pipe_() {
+  std::cout << "child exited. trying to read the pipe" << std::endl;
+  char buffer[BUFFER_SIZE + 1] = {0};
+  while (read(child_pipe_, buffer, BUFFER_SIZE) > 0) {
+    body_ += buffer;
+    memset(buffer, 0, sizeof(buffer));
+  }
+  close(child_pipe_);
 }
 
 void HTTPResponse::create_pipe_(HTTPRequest &req) {
-  pid_t pid;
   int pipe_fd[2];
   std::string ret = "";
 
   if (pipe(pipe_fd) < 0)
     throw std::runtime_error(std::strerror(errno));
-  pid = fork();
-  if (pid == -1)
+  cgi_pid_ = fork();
+  if (cgi_pid_ == -1)
     throw std::runtime_error(std::strerror(errno));
-  if (pid == 0) {
+  if (cgi_pid_ == 0) {
     std::cout << "child executing ... " << std::endl;
     if (dup2(pipe_fd[1], STDOUT_FILENO) < 0)
       throw std::runtime_error(std::strerror(errno));
@@ -194,25 +213,8 @@ void HTTPResponse::create_pipe_(HTTPRequest &req) {
     execute_(req);
     std::exit(0);
   } else {
-    // if (dup2(pipe_fd[0], STDIN_FILENO) < 0)
-    //   throw std::runtime_error(std::strerror(errno));
-    // close(pipe_fd[0]);
     close(pipe_fd[1]);
-    int stat_loc = 0;
-    // FIX: check for child return status and handle accoringly -> 500 if not 0
-    pid = waitpid(pid, &stat_loc, 0);
-    // while (pid == 0) {
-    //   std::cout << "waiting for child..." << std::endl;
-    //   usleep(1000000);
-    //   pid = waitpid(pid, NULL, WNOHANG);
-    // }
-    std::cout << "child exited. trying to read the pipe" << std::endl;
-    char buffer[1024] = {0};
-    while (read(pipe_fd[0], buffer, 1023) > 0) {
-      body_ += buffer;
-      memset(buffer, 0, sizeof(buffer));
-    }
-    close(pipe_fd[0]);
+    child_pipe_ = pipe_fd[0];
   }
 }
 

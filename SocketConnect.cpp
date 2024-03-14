@@ -42,7 +42,7 @@ void SocketConnect::handle(std::map<int, SocketInterface> &client_map,
 #ifdef __verbose__
     std::cout << "POLLOUT" << std::endl;
 #endif
-    send_response_();
+    respond_();
     break;
   }
 }
@@ -65,7 +65,6 @@ void SocketConnect::receive_() {
 }
 
 void SocketConnect::send_response_() {
-  response_.prepare_for_send(request_);
   ssize_t num_bytes = send(pollfd_.fd, response_.buffer_.c_str(),
                            response_.buffer_.size(), MSG_DONTWAIT);
   if (num_bytes < 0) {
@@ -86,7 +85,25 @@ void SocketConnect::send_response_() {
     status_ = READY;
     pollfd_.events = POLLIN;
   }
-  timestamp_ = std::time(NULL);
+}
+
+
+
+void SocketConnect::respond_() {
+  switch (status_) {
+  case USEND:
+    send_response_();
+    return;
+  case READY:
+    status_ = response_.prepare_for_send(request_);
+    break;
+  case WAITCGI:
+    status_ = response_.check_child_status();
+    break;
+  }
+  if (status_ == READY) {
+    send_response_();
+  }
 }
 
 void SocketConnect::check_recv_() {

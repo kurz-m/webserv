@@ -28,6 +28,7 @@ public:
 
 private:
   void receive_();
+  void respond_();
   void send_response_();
   void check_recv_();
   void resolve_uri_();

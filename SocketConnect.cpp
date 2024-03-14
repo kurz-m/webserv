@@ -45,7 +45,6 @@ void SocketConnect::handle(std::map<int, SocketInterface> &client_map,
     send_response_();
     break;
   }
-  pollfd_.revents = RESET;
 }
 
 bool SocketConnect::check_timeout() const {

@@ -13,9 +13,6 @@
 
 #include "SocketInterface.hpp"
 
-#define RESET 0
-
-
 class Server;
 class SocketInterface;
 

@@ -130,6 +130,7 @@ void Server::event_handler_() {
       continue;
     }
     client_map_.at(it->fd).handle(client_map_, poll_list_);
+    it->revents = RESET;
     ++it;
   }
 }

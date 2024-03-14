@@ -23,9 +23,7 @@ protected:
   void parse_buffer_();
 
   std::string buffer_;
-  std::map<std::string, std::string> parsed_header_;
   std::string body_;
-  method_e method_;
 
   static std::map<int, std::string> create_map_();
   const static std::map<int, std::string> status_map_;

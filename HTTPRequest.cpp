@@ -1,15 +1,17 @@
 #include "HTTPRequest.hpp"
 #include "Socket.hpp"
+#include <cstdlib>
+#include <iostream>
 #include <sstream>
 #include <string>
-#include <iostream>
-#include <cstdlib>
 
-HTTPRequest::HTTPRequest(const ServerBlock& config) : HTTPBase(config) {}
+HTTPRequest::HTTPRequest(const ServerBlock &config)
+    : HTTPBase(config), parsed_header_(), method_(UNKNOWN) {}
 
 HTTPRequest::~HTTPRequest() {}
 
-HTTPRequest::HTTPRequest(const HTTPRequest &cpy) : HTTPBase(cpy) {}
+HTTPRequest::HTTPRequest(const HTTPRequest &cpy)
+    : HTTPBase(cpy), parsed_header_(), method_(UNKNOWN) {}
 
 HTTPRequest &HTTPRequest::operator=(const HTTPRequest &other) {
   HTTPBase::operator=(other);
@@ -44,7 +46,8 @@ Socket::status HTTPRequest::parse_header() {
     if (cont_len > body_.length()) {
       // URECV
 #ifdef __verbose__
-  std::cout << __LINE__ << "Client did not send the complete content yet" << std::endl;
+      std::cout << __LINE__ << "Client did not send the complete content yet"
+                << std::endl;
 #endif
       return Socket::URECV;
     }

@@ -66,8 +66,7 @@ void SocketConnect::receive_() {
 }
 
 void SocketConnect::send_response_() {
-  interpret_request_headers_();
-  response_.prepare_for_send();
+  response_.prepare_for_send(request_);
   ssize_t num_bytes = send(pollfd_.fd, response_.buffer_.c_str(),
                            response_.buffer_.size(), MSG_DONTWAIT);
   if (num_bytes < 0) {
@@ -119,15 +118,6 @@ void SocketConnect::check_recv_() {
 }
 
 void SocketConnect::resolve_uri_() {}
-
-void SocketConnect::interpret_request_headers_() {
-  // try get location file and read and send.
-  // TODO: create function for getting the correct path to the file
-  // if the URI is '/' then we need to redirect it to the index.html
-  // also check permission for the specified URI
-  response_.parsed_header_.insert(
-      std::make_pair("URI", request_.parsed_header_.at("URI")));
-}
 
 const char *SocketConnect::SendRecvError::what() const throw() {
   return "Send or Recv returned -1!";

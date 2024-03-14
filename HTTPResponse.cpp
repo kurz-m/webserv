@@ -146,9 +146,6 @@ Socket::status HTTPResponse::prepare_for_send(HTTPRequest &req) {
     status_code_ = 404;
     body_.assign(create_status_html(status_code_));
     break;
-  default:
-    std::cerr << "not intended, catch me" << std::endl;
-    return;
   }
   make_header_();
   return Socket::READY;

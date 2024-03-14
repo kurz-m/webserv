@@ -30,6 +30,8 @@ public:
 
 private:
   Socket *sock_;
+
+friend class Server;
 };
 
 #endif

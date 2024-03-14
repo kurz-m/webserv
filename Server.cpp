@@ -130,6 +130,14 @@ void Server::event_handler_() {
       continue;
     }
     client_map_.at(it->fd).handle(client_map_, poll_list_);
+    if (client_map_.at(it->fd).sock_->status_ == Socket::CLOSED)
+    {
+      std::cout << "client: " << it->fd << " closed (empty recv)." << std::endl;
+      close(it->fd);
+      client_map_.erase(it->fd);
+      it = poll_list_.erase(it);
+      continue;
+    }
     it->revents = RESET;
     ++it;
   }

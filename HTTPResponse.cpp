@@ -173,7 +173,8 @@ Socket::status HTTPResponse::check_child_status() {
   int stat_loc = 0;
   pid_t pid_check = waitpid(cgi_pid_, &stat_loc, WNOHANG);
   if (pid_check == 0) {
-    // child still running. set EVENTS to 0!
+    // child still running. 
+    // TODO: set EVENTS to 0!
     return Socket::WAITCGI;
   } else if (pid_check < 0) {
     status_code_ = 500;

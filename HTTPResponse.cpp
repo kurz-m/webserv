@@ -6,24 +6,29 @@
 #include <sstream>
 #include <sys/stat.h>
 #include <sys/wait.h>
-// #include <unistd.h>
+#include <unistd.h>
 
-#include "CGI.hpp"
 #include "HTTPResponse.hpp"
 #include "Settings.hpp"
 
 static const std::string proto_ = "HTTP/1.1";
 
-HTTPResponse::HTTPResponse(const ServerBlock &config) : HTTPBase(config) {
+HTTPResponse::HTTPResponse(const ServerBlock &config) : HTTPBase(config), status_code_(0) {
   root_ = config_.find(Token::ROOT).str_val;
 }
 
 HTTPResponse::~HTTPResponse() {}
 
-HTTPResponse::HTTPResponse(const HTTPResponse &cpy) : HTTPBase(cpy) {}
+HTTPResponse::HTTPResponse(const HTTPResponse &cpy)
+    : HTTPBase(cpy), status_code_(cpy.status_code_), root_(cpy.root_), uri_(cpy.uri_) {}
 
 HTTPResponse &HTTPResponse::operator=(const HTTPResponse &other) {
   HTTPBase::operator=(other);
+  if (this != &other) {
+    status_code_ = other.status_code_;
+    root_ = other.root_;
+    uri_ = other.uri_;
+  }
   return *this;
 }
 
@@ -37,11 +42,9 @@ enum uri_state {
 };
 
 template <typename T>
-uint8_t HTTPResponse::check_list_dir_(const T &curr_conf, HTTPRequest &req) {
+uint8_t HTTPResponse::check_list_dir_(const T &curr_conf) {
   try {
-    std::string g_index = curr_conf.find(Token::INDEX).str_val;
-    g_index = root_ + "/" + g_index;
-    req.parsed_header_.at("URI") = g_index;
+    uri_ = root_ + "/" + curr_conf.find(Token::INDEX).str_val;
     return (DIRECTORY | INDEX);
   } catch (NotFoundError &e) {
     try {
@@ -65,9 +68,9 @@ bool ends_with(const std::string &str, const std::string &extension) {
 
 // bool check_for_cgi_(const std::string &uri, )
 
-uint8_t HTTPResponse::check_uri_(HTTPRequest &req) {
+uint8_t HTTPResponse::check_uri_() {
   struct stat sb;
-  std::string uri_ = req.parsed_header_.at("URI");
+  // std::string uri_ = req.parsed_header_.at("URI");
   const RouteBlock *route = config_.find(uri_);
 
   // TODO: make better function to check for CGI
@@ -83,9 +86,9 @@ uint8_t HTTPResponse::check_uri_(HTTPRequest &req) {
     return FIL;
   case S_IFDIR:
     if (route) {
-      return check_list_dir_(*route, req);
+      return check_list_dir_(*route);
     } else {
-      return check_list_dir_(config_, req);
+      return check_list_dir_(config_);
     }
   }
   return FAIL;
@@ -108,8 +111,8 @@ void HTTPResponse::make_header_() {
 }
 
 void HTTPResponse::prepare_for_send(HTTPRequest &req) {
-  std::string& uri = req.parsed_header_.at("URI");
-  uint8_t mask = check_uri_(req);
+  uri_ = req.parsed_header_.at("URI");
+  uint8_t mask = check_uri_();
   std::ifstream file;
   switch (mask) {
   case CGI:
@@ -129,7 +132,7 @@ void HTTPResponse::prepare_for_send(HTTPRequest &req) {
   case (DIRECTORY | INDEX): // -> index.html file
   case (FIL):               // -> send file
     // check if file exists
-    file.open(req.parsed_header_.at("URI").c_str());
+    file.open(uri_.c_str());
 
     if (file.is_open()) {
       status_code_ = 200;
@@ -149,9 +152,9 @@ void HTTPResponse::prepare_for_send(HTTPRequest &req) {
     return;
   }
   make_header_();
-#ifdef __verbose__
-  std::cout << "buffer: " << buffer_ << std::endl;
-#endif
+// #ifdef __verbose__
+//   std::cout << "buffer: " << buffer_ << std::endl;
+// #endif
 }
 
 void HTTPResponse::call_cgi_(HTTPRequest &req) {
@@ -172,7 +175,7 @@ void HTTPResponse::call_cgi_(HTTPRequest &req) {
   status_code_ = 200;
 }
 
-std::string HTTPResponse::create_pipe_(HTTPRequest &req) {
+void HTTPResponse::create_pipe_(HTTPRequest &req) {
   pid_t pid;
   int pipe_fd[2];
   std::string ret = "";
@@ -206,33 +209,26 @@ std::string HTTPResponse::create_pipe_(HTTPRequest &req) {
     std::cout << "child exited. trying to read the pipe" << std::endl;
     char buffer[1024] = {0};
     while (read(pipe_fd[0], buffer, 1023) > 0) {
-      ret += buffer;
+      body_ += buffer;
       memset(buffer, 0, sizeof(buffer));
     }
     close(pipe_fd[0]);
   }
-  return (ret);
-}
-
-void HTTPResponse::execute_(HTTPRequest &req) {
-  cgi_containter es = prepare_env_(req);
-  char *argv[2];
-  argv[0] = const_cast<char *>(es.exec.c_str());
-  argv[1] = NULL;
-  execve(es.exec.c_str(), argv, es.env);
 }
 
 // https://www.ibm.com/docs/en/netcoolomnibus/8.1?topic=scripts-environment-variables-in-cgi-script
-cgi_containter HTTPResponse::prepare_env_(HTTPRequest &req) {
-  cgi_containter ret;
+void HTTPResponse::execute_(HTTPRequest &req) {
   std::vector<std::string> tmp_env;
+  std::string exec;
+  char *env[6];
+  char *argv[2];
 
   size_t pos = uri_.find("?");
   if (pos != std::string::npos) {
-    ret.exec = root_ + uri_.substr(0, pos);
+    exec = root_ + uri_.substr(0, pos);
     tmp_env.push_back("QUERY_STRING=" + uri_.substr(pos + 1));
   } else {
-    ret.exec = root_ + uri_.substr(0);
+    exec = root_ + uri_.substr(0);
   }
 
   tmp_env.push_back("CONTENT_TYPE=text/html");
@@ -248,10 +244,12 @@ cgi_containter HTTPResponse::prepare_env_(HTTPRequest &req) {
   }
   size_t i = 0;
   for (i = 0; i < tmp_env.size(); ++i) {
-    ret.env[i] = const_cast<char *>(tmp_env.at(i).c_str());
+    env[i] = const_cast<char *>(tmp_env.at(i).c_str());
   }
-  ret.env[i] = NULL;
-  return ret;
+  env[i] = NULL;
+  argv[0] = const_cast<char *>(exec.c_str());
+  argv[1] = NULL;
+  execve(exec.c_str(), argv, env);
 }
 
 const std::string list_dir_head =
@@ -267,29 +265,29 @@ const std::string list_dir_head =
     "<th>Name</th> <th>Last Modified</th>"
     "<th>Size</th> <th>Type</th>  </tr> </thead> <tbody>";
 
-static inline std::string create_list_dir_entry(const std::string &path) {
-  std::ostringstream oss;
-  char m_time[30] = {0};
-  oss << "<tr><td><a href=\"" << path << ">" << path << "</a></td><td>";
-  struct stat sb;
-  if (stat(path.c_str(), &sb) < 0) {
-    // TODO: Handle failure of the stat. What does that mean?
-  }
-  strftime(m_time, sizeof(m_time), "%y-%b-%d %H:%M:%S",
-           std::localtime(&(sb.st_mtime)));
-  oss << std::string(m_time) << "</td><td>";
-  switch (sb.st_mode & S_IFMT) {
-  case S_IFREG:
-    oss << sb.st_size << " KB</td><td>File</td></tr>";
-    break;
-  case S_IFDIR:
-    // TODO: handle directory
-    break;
-  }
+// static inline std::string create_list_dir_entry(const std::string &path) {
+//   std::ostringstream oss;
+//   char m_time[30] = {0};
+//   oss << "<tr><td><a href=\"" << path << ">" << path << "</a></td><td>";
+//   struct stat sb;
+//   if (stat(path.c_str(), &sb) < 0) {
+//     // TODO: Handle failure of the stat. What does that mean?
+//   }
+//   strftime(m_time, sizeof(m_time), "%y-%b-%d %H:%M:%S",
+//            std::localtime(&(sb.st_mtime)));
+//   oss << std::string(m_time) << "</td><td>";
+//   switch (sb.st_mode & S_IFMT) {
+//   case S_IFREG:
+//     oss << sb.st_size << " KB</td><td>File</td></tr>";
+//     break;
+//   case S_IFDIR:
+//     // TODO: handle directory
+//     break;
+//   }
 
-  return oss.str();
-  ;
-}
+//   return oss.str();
+//   ;
+// }
 
 std::string HTTPResponse::create_list_dir_() {
   std::ostringstream oss;

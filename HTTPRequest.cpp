@@ -11,10 +11,16 @@ HTTPRequest::HTTPRequest(const ServerBlock &config)
 HTTPRequest::~HTTPRequest() {}
 
 HTTPRequest::HTTPRequest(const HTTPRequest &cpy)
-    : HTTPBase(cpy), parsed_header_(), method_(UNKNOWN) {}
+    : HTTPBase(cpy), parsed_header_(), method_(UNKNOWN) {
+  *this = cpy;
+}
 
 HTTPRequest &HTTPRequest::operator=(const HTTPRequest &other) {
   HTTPBase::operator=(other);
+  if (this != &other) {
+    parsed_header_ = other.parsed_header_;
+    method_ = other.method_;
+  }
   return *this;
 }
 

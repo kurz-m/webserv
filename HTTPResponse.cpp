@@ -122,8 +122,9 @@ Socket::status HTTPResponse::prepare_for_send(HTTPRequest &req) {
   case (DIRECTORY | AUTO): // -> list dir
     // TODO: create function for index_of
     body_ = create_list_dir_();
+    std::cout << body_ << std::endl;
     status_code_ = 200;
-    return;
+    break;
   case (DIRECTORY): // -> 403
     // Return 403
     status_code_ = 403;
@@ -267,33 +268,50 @@ const std::string list_dir_head =
     "<th>Name</th> <th>Last Modified</th>"
     "<th>Size</th> <th>Type</th>  </tr> </thead> <tbody>";
 
-// static inline std::string create_list_dir_entry(const std::string &path) {
-//   std::ostringstream oss;
-//   char m_time[30] = {0};
-//   oss << "<tr><td><a href=\"" << path << ">" << path << "</a></td><td>";
-//   struct stat sb;
-//   if (stat(path.c_str(), &sb) < 0) {
-//     // TODO: Handle failure of the stat. What does that mean?
-//   }
-//   strftime(m_time, sizeof(m_time), "%y-%b-%d %H:%M:%S",
-//            std::localtime(&(sb.st_mtime)));
-//   oss << std::string(m_time) << "</td><td>";
-//   switch (sb.st_mode & S_IFMT) {
-//   case S_IFREG:
-//     oss << sb.st_size << " KB</td><td>File</td></tr>";
-//     break;
-//   case S_IFDIR:
-//     // TODO: handle directory
-//     break;
-//   }
+struct FileInfo {
+  std::string name;
+  bool is_dir;
+};
 
-//   return oss.str();
-//   ;
-// }
+static inline FileInfo create_list_dir_entry(const std::string &path) {
+  FileInfo file;
+  std::ostringstream oss;
+  char m_time[30] = {0};
+  oss << "<tr><td><a href=\"" << path << "\">" << path << "</a></td><td>";
+  struct stat sb;
+  if (stat(path.c_str(), &sb) < 0) {
+    // TODO: Handle failure of the stat. What does that mean?
+  }
+  strftime(m_time, sizeof(m_time), "%y-%b-%d %H:%M:%S",
+           std::localtime(&(sb.st_mtime)));
+  oss << std::string(m_time) << "</td><td>";
+  switch (sb.st_mode & S_IFMT) {
+  case S_IFREG:
+    oss << sb.st_size << " KB</td><td>File</td></tr>";
+    file.is_dir = false;
+    break;
+  case S_IFDIR:
+    oss << "</td><td>Directory</td></tr>";
+    file.is_dir = true;
+    break;
+  }
+
+  file.name = oss.str();
+  return file;
+}
+
+inline bool compare_file(const FileInfo& a, const FileInfo& b) {
+  if (a.is_dir && b.is_dir) {
+    return a.name < b.name;
+  } else {
+    return a.is_dir > b.is_dir;
+  }
+}
 
 std::string HTTPResponse::create_list_dir_() {
+  std::vector<FileInfo> files;
   std::ostringstream oss;
-  DIR *dir = opendir(".");
+  DIR *dir = opendir(uri_.c_str());
   if (dir == NULL) {
     return oss.str();
   }
@@ -301,10 +319,16 @@ std::string HTTPResponse::create_list_dir_() {
   struct dirent *dp = NULL;
   while ((dp = readdir(dir))) {
     std::string dir_name = dp->d_name;
-    if (dir_name != ".") {
+    if (dir_name == ".") {
       continue;
     } else {
+      files.push_back(create_list_dir_entry(dp->d_name));
     }
+  }
+  std::sort(files.begin(), files.end(), compare_file);
+  std::vector<FileInfo>::iterator it;
+  for (it = files.begin(); it != files.end(); ++it) {
+    oss << it->name;
   }
   oss << "</tbody></table></body></html>";
   return oss.str();

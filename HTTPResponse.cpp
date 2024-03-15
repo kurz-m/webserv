@@ -13,21 +13,28 @@
 
 static const std::string proto_ = "HTTP/1.1";
 
-HTTPResponse::HTTPResponse(const ServerBlock &config) : HTTPBase(config), status_code_(0) {
+HTTPResponse::HTTPResponse(const ServerBlock &config)
+    : HTTPBase(config), status_(), uri_(), cgi_pid_(), child_pipe_(),
+      child_timestamp_(), status_code_(0) {
   root_ = config_.find(Token::ROOT).str_val;
 }
 
 HTTPResponse::~HTTPResponse() {}
 
 HTTPResponse::HTTPResponse(const HTTPResponse &cpy)
-    : HTTPBase(cpy), status_code_(cpy.status_code_), root_(cpy.root_), uri_(cpy.uri_) {}
+    : HTTPBase(cpy), status_code_(cpy.status_code_), root_(cpy.root_),
+      uri_(cpy.uri_) {}
 
 HTTPResponse &HTTPResponse::operator=(const HTTPResponse &other) {
   HTTPBase::operator=(other);
   if (this != &other) {
+    status_ = other.status_;
     status_code_ = other.status_code_;
     root_ = other.root_;
     uri_ = other.uri_;
+    cgi_pid_ = other.cgi_pid_;
+    child_pipe_ = other.child_pipe_;
+    child_timestamp_ = other.child_timestamp_;
   }
   return *this;
 }
@@ -148,7 +155,7 @@ Socket::status HTTPResponse::prepare_for_send(HTTPRequest &req) {
     break;
   }
   make_header_();
-  return Socket::READY;
+  return Socket::READY_SEND;
 }
 
 Socket::status HTTPResponse::call_cgi_(HTTPRequest &req) {
@@ -157,32 +164,32 @@ Socket::status HTTPResponse::call_cgi_(HTTPRequest &req) {
     status_code_ = 404;
     body_.assign(create_status_html(status_code_));
     make_header_();
-    return Socket::READY;
+    return Socket::READY_SEND;
   } else if (access((root_ + uri_).c_str(), X_OK) != 0) {
     std::ifstream file((root_ + uri_).c_str());
     read_file_(file);
     status_code_ = 200;
     make_header_();
-    return Socket::READY;
+    return Socket::READY_SEND;
   }
   create_pipe_(req);
-  return check_child_status();
+  return Socket::WAITCGI;
+  // return check_child_status();
 }
 
 Socket::status HTTPResponse::check_child_status() {
   int stat_loc = 0;
   pid_t pid_check = waitpid(cgi_pid_, &stat_loc, WNOHANG);
   if (pid_check == 0) {
-    // child still running. 
+    // child still running.
     // TODO: set EVENTS to 0!
     return Socket::WAITCGI;
   } else if (pid_check < 0) {
     status_code_ = 500;
     body_.assign(create_status_html(status_code_));
     make_header_();
-    return Socket::READY;
-  } 
-  else {
+    return Socket::READY_SEND;
+  } else {
     if (WIFEXITED(stat_loc)) {
       status_code_ = 200;
       read_child_pipe_();
@@ -192,7 +199,7 @@ Socket::status HTTPResponse::check_child_status() {
       body_.assign(create_status_html(status_code_));
       make_header_();
     }
-    return Socket::READY;
+    return Socket::READY_SEND;
   }
 }
 
@@ -310,7 +317,7 @@ static inline FileInfo create_list_dir_entry(const std::string &path) {
   return file;
 }
 
-inline bool compare_file(const FileInfo& a, const FileInfo& b) {
+inline bool compare_file(const FileInfo &a, const FileInfo &b) {
   if (a.is_dir && b.is_dir) {
     return a.name < b.name;
   } else {

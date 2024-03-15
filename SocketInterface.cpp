@@ -28,7 +28,7 @@ SocketInterface::~SocketInterface() {
   delete sock_;
 }
 
-void SocketInterface::handle(std::map<int, SocketInterface> &sock_map, std::list<pollfd_t>& poll_list) {
+Socket::status SocketInterface::handle(std::map<int, SocketInterface> &sock_map, std::list<pollfd_t>& poll_list) {
   sock_->handle(sock_map, poll_list);
 }
 

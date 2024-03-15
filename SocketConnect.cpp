@@ -1,11 +1,14 @@
 #include "SocketConnect.hpp"
-#include <iostream>
 #include <cstring>
+#include <iostream>
+
+#define CGI_TIMEOUT 5
 
 SocketConnect::SocketConnect(pollfd &pollfd, const ServerBlock &config,
                              int timeout /*  = DEFAULT_TIMEOUT */)
     : Socket(pollfd, config), request_(config), response_(config),
-      timeout_(timeout), timestamp_(std::time(NULL)) {}
+      timeout_(timeout), timestamp_(std::time(NULL)),
+      cgi_timestamp_(std::time(NULL)) {}
 
 SocketConnect::SocketConnect(const SocketConnect &cpy)
     : Socket(cpy), request_(cpy.request_), response_(cpy.response_) {
@@ -28,48 +31,56 @@ SocketConnect::~SocketConnect() {}
 /// @brief handle the Socket. 2 Cases: reading data and sending data.
 /// When first called, the Socket first receives the request data and processes
 /// it to check, if the request is complete.
-/// @param client_map unused 
+/// @param client_map unused
 /// @param poll_list unused
-void SocketConnect::handle(std::map<int, SocketInterface> &client_map,
-                           std::list<pollfd_t> &poll_list) {
+Socket::status SocketConnect::handle(std::map<int, SocketInterface> &client_map,
+                                     std::list<pollfd_t> &poll_list) {
   (void)client_map;
   (void)poll_list;
-  // check the State here. If state == WATICGI, set the events to 0
-  // since we dont want to send anything just yet? see Note below.  
-  // Set the events according to the State, then wait one more poll and then send.
-  // maybe we need something like an incoming status and a result status,
-  // a before and after handle status.
-  // Note: if we set the events to 0 during WAITCGI, we will wait up to 
-  // poll_timeout_ after child finishes, until we actually send the data. Maybe
-  // don't set events to 0?
-  // If we had threads this would be a good idea. since we dont have threads
-  // leave the continuous polling in maybe. TBD.
-  if (status_ == WAITCGI) {
+
+  // check state here. if WAITCGI set events = 0. after the next poll check
+  // again.
+  //
+  switch (status_) {
+  case PREPARE_SEND:
+    status_ = response_.prepare_for_send(request_);
+    // handle(client_map, poll_list);
+    break;
+  case WAITCGI:
     status_ = response_.check_child_status();
-    if (status_ == WAITCGI) {
-      pollfd_.events = 0;
+    if (status_ == READY_SEND) {
+      pollfd_.events = POLLOUT;
     }
-  }
-#ifdef __verbose__
-  std::cout << "handle client: " << pollfd_.fd << std::endl;
-#endif
-  switch (pollfd_.revents) {
-  case POLLIN:
-#ifdef __verbose__
-    std::cout << "POLLIN!!" << std::endl;
-#endif
-    receive_();
     break;
-  case POLLOUT:
-#ifdef __verbose__
-    std::cout << "POLLOUT" << std::endl;
-#endif
-    respond_();
+  case READY_RECV:
+  case URECV:
+    if (pollfd_.revents & POLLIN) {
+      receive_();
+    } else if (check_timeout_()) {
+      return Socket::CLOSED;
+    }
+    break;
+  case READY_SEND:
+  case USEND:
+    if (pollfd_.revents & POLLOUT) {
+      respond_();
+    } else if (check_timeout_()) {
+      return Socket::CLOSED;
+    }
+    break;
+  default:
     break;
   }
+  // check status again outgoing.
+  // if now ready, then send.
 }
 
-bool SocketConnect::check_timeout() const {
+bool SocketConnect::check_cgi_timeout_() {
+  timestamp_ = std::time(NULL);
+  return std::difftime(std::time(NULL), cgi_timestamp_) > CGI_TIMEOUT;
+}
+
+bool SocketConnect::check_timeout_() const {
   return std::difftime(std::time(NULL), timestamp_) > timeout_;
 }
 
@@ -89,7 +100,7 @@ void SocketConnect::receive_() {
   while (n > 0) {
     request_.buffer_ += buf;
     std::memset(buf, 0, sizeof(buf));
-    n = recv(pollfd_.fd, buf, HTTPBase::MAX_BUFFER, MSG_DONTWAIT); 
+    n = recv(pollfd_.fd, buf, HTTPBase::MAX_BUFFER, MSG_DONTWAIT);
   }
   timestamp_ = std::time(NULL);
   check_recv_();
@@ -111,28 +122,19 @@ void SocketConnect::send_response_() {
 #ifdef __verbose__
     std::cout << "server did send the full message" << std::endl;
 #endif
-    request_.reset();
-    response_.reset();
-    status_ = READY;
+    request_ = HTTPRequest(request_.config_);
+    response_ = HTTPResponse(response_.config_);
+    status_ = READY_RECV;
     pollfd_.events = POLLIN;
   }
 }
 
-
-
 void SocketConnect::respond_() {
-  switch (status_) {
-  case READY:
-    status_ = response_.prepare_for_send(request_);
-    break;
-  case WAITCGI:
-    status_ = response_.check_child_status();
-    break;
-  default:
-    break;
-  }
-  if (status_ == READY | status_ == USEND) {
+  if (status_ & (READY_SEND | USEND)) {
     send_response_();
+  } else { // WAITCGI
+    cgi_timestamp_ = std::time(NULL);
+    pollfd_.events = 0;
   }
 }
 
@@ -152,7 +154,7 @@ void SocketConnect::check_recv_() {
     status_ = request_.parse_header();
   }
   switch (status_) {
-  case READY:
+  case READY_SEND:
     pollfd_.events = POLLOUT;
     break;
   case URECV:

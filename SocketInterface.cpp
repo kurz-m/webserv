@@ -4,18 +4,18 @@
 
 // SocketInterface::SocketInterface() : sock_(NULL) {}
 
-SocketInterface::SocketInterface(pollfd &pollfd, const ServerBlock &config,
+ISocket::ISocket(pollfd &pollfd, const ServerBlock &config,
                                  const addrinfo_t &info) {
   sock_ = new SocketListen(pollfd, config, info);
 }
-SocketInterface::SocketInterface(pollfd_t &pollfd, const ServerBlock &config,
+ISocket::ISocket(pollfd_t &pollfd, const ServerBlock &config,
                                  int timeout /* = DEFAULT_TIMEOUT */) {
   sock_ = new SocketConnect(pollfd, config, timeout);
 }
 
-SocketInterface::SocketInterface(const SocketInterface &obj) : sock_(NULL) { *this = obj; }
+ISocket::ISocket(const ISocket &obj) : sock_(NULL) { *this = obj; }
 
-SocketInterface &SocketInterface::operator=(const SocketInterface &obj) {
+ISocket &ISocket::operator=(const ISocket &obj) {
   if (this != &obj) {
     if (sock_ != NULL) {
       delete sock_;
@@ -24,15 +24,15 @@ SocketInterface &SocketInterface::operator=(const SocketInterface &obj) {
   }
   return *this;
 }
-SocketInterface::~SocketInterface() {
+ISocket::~ISocket() {
   delete sock_;
 }
 
-Socket::status SocketInterface::handle(std::map<int, SocketInterface> &sock_map, std::list<pollfd_t>& poll_list) {
-  sock_->handle(sock_map, poll_list);
+ISocket::status ISocket::handle(std::map<int, ISocket> &sock_map, std::list<pollfd_t>& poll_list) {
+  return sock_->handle(sock_map, poll_list);
 }
 
-bool SocketInterface::check_timeout() const
+bool ISocket::check_timeout_() const
 {
-  return sock_->check_timeout();
+  return sock_->check_timeout_();
 }

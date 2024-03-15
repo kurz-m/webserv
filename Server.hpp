@@ -30,7 +30,7 @@ private:
   void create_listen_socket_(const ServerBlock &config);
 
   std::list<pollfd_t> poll_list_;
-  std::map<int, SocketInterface> client_map_;
+  std::map<int, ISocket> client_map_;
   const HttpBlock &config_; // all settings from config
   int poll_timeout_;
 

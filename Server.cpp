@@ -68,7 +68,7 @@ void Server::create_listen_socket_(const ServerBlock &config) {
     pollfd_t pollfd = (pollfd_t){.fd = sockfd, .events = POLLIN, .revents = 0};
     poll_list_.push_back(pollfd);
     client_map_.insert(
-        std::make_pair(sockfd, SocketInterface(poll_list_.back(), config, *p)));
+        std::make_pair(sockfd, ISocket(poll_list_.back(), config, *p)));
     break;
   }
 
@@ -104,7 +104,7 @@ void Server::event_handler_() {
   std::list<pollfd_t>::iterator it;
   for (it = poll_list_.begin(); it != poll_list_.end();) {
     std::cout << "Fd: " << it->fd << " from polling" << std::endl;
-    // leave this here as SocketListen also needs it. Create a Callback 
+    // leave this here as SocketListen also needs it. Create a Callback
     // that the socket cann call to kill itself, in case of status CLOSED.
     // if ((it->revents & POLLERR) | (it->revents & POLLNVAL)) {
     //   std::cout << "client: " << it->fd << " connection error." << std::endl;
@@ -131,9 +131,9 @@ void Server::event_handler_() {
     //   }
     //   continue;
     // }
-    Socket::status check = client_map_.at(it->fd).handle(client_map_, poll_list_);
-    if (check == Socket::CLOSED)
-    {
+    ISocket::status check =
+        client_map_.at(it->fd).handle(client_map_, poll_list_);
+    if (check == ISocket::CLOSED) {
       std::cout << "client: " << it->fd << " closed (empty recv)." << std::endl;
       close(it->fd);
       client_map_.erase(it->fd);

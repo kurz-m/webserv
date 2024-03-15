@@ -104,33 +104,6 @@ void Server::event_handler_() {
   std::list<pollfd_t>::iterator it;
   for (it = poll_list_.begin(); it != poll_list_.end();) {
     std::cout << "Fd: " << it->fd << " from polling" << std::endl;
-    // leave this here as SocketListen also needs it. Create a Callback
-    // that the socket cann call to kill itself, in case of status CLOSED.
-    // if ((it->revents & POLLERR) | (it->revents & POLLNVAL)) {
-    //   std::cout << "client: " << it->fd << " connection error." << std::endl;
-    //   close(it->fd);
-    //   client_map_.erase(it->fd);
-    //   it = poll_list_.erase(it);
-    //   continue;
-    // }
-    // if (it->revents & POLLHUP) {
-    //   std::cout << "client: " << it->fd << " POLLHUP." << std::endl;
-    //   close(it->fd);
-    //   client_map_.erase(it->fd);
-    //   it = poll_list_.erase(it);
-    //   continue;
-    // }
-    // if (!(it->events & it->revents)) {
-    //   if (client_map_.at(it->fd).check_timeout()) {
-    //     std::cout << "client: " << it->fd << " Timeout." << std::endl;
-    //     close(it->fd);
-    //     client_map_.erase(it->fd);
-    //     it = poll_list_.erase(it);
-    //   } else {
-    //     ++it;
-    //   }
-    //   continue;
-    // }
     ISocket::status check =
         client_map_.at(it->fd).handle(client_map_, poll_list_);
     if (check == ISocket::CLOSED) {
@@ -151,8 +124,6 @@ void Server::run() {
 #ifdef __verbose__
     std::cout << "polled" << std::endl;
 #endif
-    // if (num_events > 0) {
     event_handler_();
-    // }
   }
 }

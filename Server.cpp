@@ -12,7 +12,7 @@
 extern sig_atomic_t g_signal;
 
 Server::Server(const HttpBlock &config)
-    : config_(config), poll_timeout_(2500) {}
+    : config_(config) {}
 
 Server::~Server() {}
 

@@ -32,7 +32,7 @@ private:
   std::list<pollfd_t> poll_list_;
   std::map<int, ISocket> client_map_;
   const HttpBlock &config_; // all settings from config
-  int poll_timeout_;
+  static const int poll_timeout_ = 500;
 
   friend class Socket;
 };

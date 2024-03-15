@@ -1,4 +1,4 @@
-#include "SocketInterface.hpp"
+#include "ISocket.hpp"
 #include "SocketConnect.hpp"
 #include "SocketListen.hpp"
 

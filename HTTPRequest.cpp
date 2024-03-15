@@ -64,7 +64,7 @@ Socket::status HTTPRequest::parse_header() {
     std::cout << it->first << ": " << it->second << std::endl;
   }
 #endif
-  return Socket::READY;
+  return Socket::PREPARE_SEND;
 }
 
 void HTTPRequest::parse_body() {}

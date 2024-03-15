@@ -24,7 +24,7 @@ public:
   SocketInterface &operator=(const SocketInterface &obj);
   ~SocketInterface();
 
-  void handle(std::map<int, SocketInterface> &sock_map,
+  Socket::status handle(std::map<int, SocketInterface> &sock_map,
               std::list<pollfd_t> &poll_list);
   bool check_timeout() const;
 

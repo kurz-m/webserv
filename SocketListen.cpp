@@ -22,7 +22,7 @@ SocketListen &SocketListen::operator=(const SocketListen &other) {
 
 SocketListen::~SocketListen() {}
 
-void SocketListen::handle(std::map<int, SocketInterface> &client_map,
+Socket::status SocketListen::handle(std::map<int, SocketInterface> &client_map,
                           std::list<pollfd_t> &poll_list) {
   try {
 #ifdef __verbose__
@@ -43,6 +43,6 @@ void SocketListen::handle(std::map<int, SocketInterface> &client_map,
   }
 }
 
-bool SocketListen::check_timeout() const { return false; }
+bool SocketListen::check_timeout_() const { return false; }
 
 SocketListen *SocketListen::clone() const { return new SocketListen(*this); }

@@ -20,7 +20,7 @@ public:
   SocketConnect &operator=(const SocketConnect &other);
   ~SocketConnect();
 
-  Socket::status handle(std::map<int, SocketInterface> &client_map,
+  ISocket::status handle(std::map<int, ISocket> &client_map,
               std::list<pollfd_t> &poll_list);
 
   SocketConnect *clone() const;

@@ -14,11 +14,11 @@ public:
   HTTPResponse &operator=(const HTTPResponse &other);
   ~HTTPResponse();
 
-  Socket::status prepare_for_send(HTTPRequest &);
-  Socket::status check_child_status();
+  ISocket::status prepare_for_send(HTTPRequest &);
+  ISocket::status check_child_status();
 
 private:
-  Socket::status status_;
+  ISocket::status status_;
   int status_code_;
   std::string root_;
   std::string uri_;
@@ -31,7 +31,7 @@ private:
   void read_file_(std::ifstream &file);
 
   // cgi functionality
-  Socket::status call_cgi_(HTTPRequest &req);
+  ISocket::status call_cgi_(HTTPRequest &req);
   void execute_(HTTPRequest &req);
   void create_pipe_(HTTPRequest &req);
   void read_child_pipe_();

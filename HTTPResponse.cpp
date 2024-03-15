@@ -14,8 +14,8 @@
 static const std::string proto_ = "HTTP/1.1";
 
 HTTPResponse::HTTPResponse(const ServerBlock &config)
-    : HTTPBase(config), status_(), uri_(), cgi_pid_(), child_pipe_(),
-      child_timestamp_(), status_code_(0) {
+    : HTTPBase(config), status_(), status_code_(0), uri_(), cgi_pid_(),
+      child_pipe_(), child_timestamp_() {
   root_ = config_.find(Token::ROOT).str_val;
 }
 
@@ -119,9 +119,9 @@ void HTTPResponse::make_header_() {
   buffer_ += body_;
 }
 
-// Socket::status HTTPResponse::check_
+// ISocket::status HTTPResponse::check_
 
-Socket::status HTTPResponse::prepare_for_send(HTTPRequest &req) {
+ISocket::status HTTPResponse::prepare_for_send(HTTPRequest &req) {
   uri_ = req.parsed_header_.at("URI");
   uint8_t mask = check_uri_();
   std::ifstream file;
@@ -157,41 +157,41 @@ Socket::status HTTPResponse::prepare_for_send(HTTPRequest &req) {
     break;
   }
   make_header_();
-  return Socket::READY_SEND;
+  return ISocket::READY_SEND;
 }
 
-Socket::status HTTPResponse::call_cgi_(HTTPRequest &req) {
+ISocket::status HTTPResponse::call_cgi_(HTTPRequest &req) {
   std::string exec = uri_.substr(0, uri_.find("?"));
   if (access((root_ + exec).c_str(), F_OK) != 0) {
     status_code_ = 404;
     body_.assign(create_status_html(status_code_));
     make_header_();
-    return Socket::READY_SEND;
+    return ISocket::READY_SEND;
   } else if (access((root_ + exec).c_str(), X_OK) != 0) {
     // std::ifstream file((root_ + exec).c_str());
     // read_file_(file);
     status_code_ = 403;
     body_.assign(create_status_html(status_code_));
     make_header_();
-    return Socket::READY_SEND;
+    return ISocket::READY_SEND;
   }
   create_pipe_(req);
-  return Socket::WAITCGI;
-  // return check_child_status();
+  // return ISocket::WAITCGI;
+  return check_child_status();
 }
 
-Socket::status HTTPResponse::check_child_status() {
+ISocket::status HTTPResponse::check_child_status() {
   int stat_loc = 0;
   pid_t pid_check = waitpid(cgi_pid_, &stat_loc, WNOHANG);
   if (pid_check == 0) {
     // child still running.
     // TODO: set EVENTS to 0!
-    return Socket::WAITCGI;
+    return ISocket::WAITCGI;
   } else if (pid_check < 0) {
     status_code_ = 500;
     body_.assign(create_status_html(status_code_));
     make_header_();
-    return Socket::READY_SEND;
+    return ISocket::READY_SEND;
   } else {
     if (WIFEXITED(stat_loc)) {
       status_code_ = 200;
@@ -202,7 +202,7 @@ Socket::status HTTPResponse::check_child_status() {
       body_.assign(create_status_html(status_code_));
       make_header_();
     }
-    return Socket::READY_SEND;
+    return ISocket::READY_SEND;
   }
 }
 

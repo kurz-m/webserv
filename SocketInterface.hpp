@@ -12,21 +12,31 @@ typedef struct pollfd pollfd_t;
 
 class Socket;
 
-class SocketInterface {
+class ISocket {
 public:
-  // SocketInterface();
-  SocketInterface(pollfd &pollfd, const ServerBlock &config,
+  // need this here because we need it here.
+  enum status {
+    PREPARE_SEND,
+    READY_SEND,
+    READY_RECV,
+    URECV,
+    USEND,
+    WAITCGI,
+    CLOSED
+  };
+
+  ISocket(pollfd &pollfd, const ServerBlock &config,
                   const addrinfo_t &info);
-  SocketInterface(pollfd_t &pollfd, const ServerBlock &config,
+  ISocket(pollfd_t &pollfd, const ServerBlock &config,
                   int timeout = DEFAULT_TIMEOUT);
 
-  SocketInterface(const SocketInterface &obj);
-  SocketInterface &operator=(const SocketInterface &obj);
-  ~SocketInterface();
+  ISocket(const ISocket &obj);
+  ISocket &operator=(const ISocket &obj);
+  ~ISocket();
 
-  Socket::status handle(std::map<int, SocketInterface> &sock_map,
+  status handle(std::map<int, ISocket> &sock_map,
               std::list<pollfd_t> &poll_list);
-  bool check_timeout() const;
+  bool check_timeout_() const;
 
 private:
   Socket *sock_;

@@ -22,7 +22,7 @@ SocketListen &SocketListen::operator=(const SocketListen &other) {
 
 SocketListen::~SocketListen() {}
 
-Socket::status SocketListen::handle(std::map<int, SocketInterface> &client_map,
+ISocket::status SocketListen::handle(std::map<int, ISocket> &client_map,
                           std::list<pollfd_t> &poll_list) {
   try {
 #ifdef __verbose__
@@ -31,16 +31,17 @@ Socket::status SocketListen::handle(std::map<int, SocketInterface> &client_map,
     int sockfd = accept(pollfd_.fd, servinfo_.ai_addr, &servinfo_.ai_addrlen);
     if (sockfd < 0) {
       perror("accept");
-      return;
+      return ISocket::READY_RECV;
     }
 
     pollfd_t pollfd = (pollfd_t){.fd = sockfd, .events = POLLIN, .revents = 0};
     poll_list.push_back(pollfd);
-    client_map.insert(std::make_pair(sockfd, SocketInterface(poll_list.back(), config_)));
+    client_map.insert(std::make_pair(sockfd, ISocket(poll_list.back(), config_)));
     std::cout << "accepted client fd: " << sockfd << std::endl;
   } catch (const std::exception &e) {
     std::cerr << "accept failed: " << e.what() << '\n';
   }
+  return ISocket::READY_RECV;
 }
 
 bool SocketListen::check_timeout_() const { return false; }

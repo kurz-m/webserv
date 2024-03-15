@@ -13,7 +13,7 @@ public:
   SocketListen &operator=(const SocketListen &other);
   ~SocketListen();
 
-  Socket::status handle(std::map<int, SocketInterface> &client_map,
+  ISocket::status handle(std::map<int, ISocket> &client_map,
               std::list<pollfd_t> &poll_list);
   bool check_timeout_() const;
   SocketListen *clone() const;

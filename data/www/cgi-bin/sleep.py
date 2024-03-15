@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 import time
 
-time.sleep(10)
+time.sleep(5)
 
-print("<html>waited 10 seconds</html>")
+print("<html>waited 5 seconds</html>")

@@ -81,6 +81,8 @@ uint8_t HTTPResponse::check_uri_() {
   const RouteBlock *route = config_.find(uri_);
 
   // TODO: make better function to check for CGI
+  // check first if the route is cgi-bin, after that, check if it
+  // is an executable file with a known ending (.py etc)
   if (uri_.find("/cgi-bin") != std::string::npos) {
     return CGI;
   }

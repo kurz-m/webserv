@@ -201,7 +201,7 @@ void HTTPResponse::read_child_pipe_() {
   char buffer[BUFFER_SIZE + 1] = {0};
   while (read(child_pipe_, buffer, BUFFER_SIZE) > 0) {
     body_ += buffer;
-    memset(buffer, 0, sizeof(buffer));
+    std::memset(buffer, 0, sizeof(buffer));
   }
   close(child_pipe_);
 }

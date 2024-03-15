@@ -104,6 +104,10 @@ void Server::event_handler_() {
   std::list<pollfd_t>::iterator it;
   for (it = poll_list_.begin(); it != poll_list_.end();) {
     std::cout << "Fd: " << it->fd << " from polling" << std::endl;
+    // remove old Sockets here, but only depending on Socket::state. 
+    // should move the revents check to Socket.
+    // Server does not need to know Socket Status unlesss its CLOSED -> use 
+    // a callback function in Server, that Socket can call to destroy itself?
     if ((it->revents & POLLERR) | (it->revents & POLLNVAL)) {
       std::cout << "client: " << it->fd << " connection error." << std::endl;
       close(it->fd);

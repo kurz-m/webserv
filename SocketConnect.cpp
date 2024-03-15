@@ -1,5 +1,6 @@
 #include "SocketConnect.hpp"
 #include <iostream>
+#include <cstring>
 
 SocketConnect::SocketConnect(pollfd &pollfd, const ServerBlock &config,
                              int timeout /*  = DEFAULT_TIMEOUT */)
@@ -24,10 +25,25 @@ SocketConnect &SocketConnect::operator=(const SocketConnect &other) {
 
 SocketConnect::~SocketConnect() {}
 
+/// @brief handle the Socket. 2 Cases: reading data and sending data.
+/// When first called, the Socket first receives the request data and processes
+/// it to check, if the request is complete.
+/// @param client_map unused 
+/// @param poll_list unused
 void SocketConnect::handle(std::map<int, SocketInterface> &client_map,
                            std::list<pollfd_t> &poll_list) {
   (void)client_map;
   (void)poll_list;
+  // check the State here. If state == WATICGI, set the events to 0
+  // since we dont want to send anything just yet? see Note below.  
+  // Set the events according to the State, then wait one more poll and then send.
+  // maybe we need something like an incoming status and a result status,
+  // a before and after handle status.
+  // Note: if we set the events to 0 during WAITCGI, we will wait up to 
+  // poll_timeout_ after child finishes, until we actually send the data. Maybe
+  // don't set events to 0?
+  // If we had threads this would be a good idea. since we dont have threads
+  // leave the continuous polling in maybe. TBD.
   if (status_ == WAITCGI) {
     status_ = response_.check_child_status();
     if (status_ == WAITCGI) {
@@ -69,7 +85,12 @@ void SocketConnect::receive_() {
     status_ = CLOSED;
     return;
   }
-  request_.buffer_ += std::string(buf);
+  // TODO: limit client max body size. maybe read header and body separately?
+  while (n > 0) {
+    request_.buffer_ += buf;
+    std::memset(buf, 0, sizeof(buf));
+    n = recv(pollfd_.fd, buf, HTTPBase::MAX_BUFFER, MSG_DONTWAIT); 
+  }
   timestamp_ = std::time(NULL);
   check_recv_();
 }
@@ -101,9 +122,6 @@ void SocketConnect::send_response_() {
 
 void SocketConnect::respond_() {
   switch (status_) {
-  case USEND:
-    send_response_();
-    return;
   case READY:
     status_ = response_.prepare_for_send(request_);
     break;
@@ -113,7 +131,7 @@ void SocketConnect::respond_() {
   default:
     break;
   }
-  if (status_ == READY) {
+  if (status_ == READY | status_ == USEND) {
     send_response_();
   }
 }

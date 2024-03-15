@@ -23,7 +23,6 @@ public:
   Socket &operator=(const Socket &other);
   virtual ~Socket() = 0;
 
-  // virtual bool handle() = 0;
   virtual bool check_timeout_() const = 0;
   virtual Socket *clone() const = 0;
   virtual ISocket::status

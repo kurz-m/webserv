@@ -2,8 +2,6 @@
 #include "SocketConnect.hpp"
 #include "SocketListen.hpp"
 
-// SocketInterface::SocketInterface() : sock_(NULL) {}
-
 ISocket::ISocket(pollfd &pollfd, const ServerBlock &config,
                                  const addrinfo_t &info) {
   sock_ = new SocketListen(pollfd, config, info);

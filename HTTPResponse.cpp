@@ -73,16 +73,10 @@ bool ends_with(const std::string &str, const std::string &extension) {
   return std::equal(extension.rbegin(), extension.rend(), str.rbegin());
 }
 
-// bool check_for_cgi_(const std::string &uri, )
-
 uint8_t HTTPResponse::check_uri_() {
   struct stat sb;
-  // std::string uri_ = req.parsed_header_.at("URI");
   const RouteBlock *route = config_.find(uri_);
 
-  // TODO: make better function to check for CGI
-  // check first if the route is cgi-bin, after that, check if it
-  // is an executable file with a known ending (.py etc)
   if (uri_.find("/cgi-bin") != std::string::npos) {
     return CGI;
   }
@@ -119,8 +113,6 @@ void HTTPResponse::make_header_() {
   buffer_ += body_;
 }
 
-// ISocket::status HTTPResponse::check_
-
 ISocket::status HTTPResponse::prepare_for_send(HTTPRequest &req) {
   uri_ = req.parsed_header_.at("URI");
   uint8_t mask = check_uri_();
@@ -129,7 +121,6 @@ ISocket::status HTTPResponse::prepare_for_send(HTTPRequest &req) {
   case CGI:
     return call_cgi_(req);
   case (DIRECTORY | AUTO): // -> list dir
-    // TODO: create function for index_of
     body_ = create_list_dir_();
     std::cout << body_ << std::endl;
     status_code_ = 200;
@@ -141,7 +132,6 @@ ISocket::status HTTPResponse::prepare_for_send(HTTPRequest &req) {
     break;
   case (DIRECTORY | INDEX): // -> index.html file
   case (FIL):               // -> send file
-    // check if file exists
     file.open(uri_.c_str());
     if (file.is_open()) {
       status_code_ = 200;
@@ -168,15 +158,12 @@ ISocket::status HTTPResponse::call_cgi_(HTTPRequest &req) {
     make_header_();
     return ISocket::READY_SEND;
   } else if (access((root_ + exec).c_str(), X_OK) != 0) {
-    // std::ifstream file((root_ + exec).c_str());
-    // read_file_(file);
     status_code_ = 403;
     body_.assign(create_status_html(status_code_));
     make_header_();
     return ISocket::READY_SEND;
   }
   create_pipe_(req);
-  // return ISocket::WAITCGI;
   return check_child_status();
 }
 
@@ -184,8 +171,6 @@ ISocket::status HTTPResponse::check_child_status() {
   int stat_loc = 0;
   pid_t pid_check = waitpid(cgi_pid_, &stat_loc, WNOHANG);
   if (pid_check == 0) {
-    // child still running.
-    // TODO: set EVENTS to 0!
     return ISocket::WAITCGI;
   } else if (pid_check < 0) {
     status_code_ = 500;

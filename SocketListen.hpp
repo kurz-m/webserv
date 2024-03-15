@@ -3,7 +3,7 @@
 
 #include "Server.hpp"
 #include "Socket.hpp"
-#include "SocketInterface.hpp"
+#include "ISocket.hpp"
 
 class SocketListen : public Socket {
 public:

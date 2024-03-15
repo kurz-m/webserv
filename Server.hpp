@@ -4,7 +4,7 @@
 #include "Parser.hpp"
 #include "Settings.hpp"
 #include "Socket.hpp"
-#include "SocketInterface.hpp"
+#include "ISocket.hpp"
 #include <list>
 #include <map>
 #include <sys/poll.h>

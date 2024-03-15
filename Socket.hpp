@@ -11,7 +11,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
-#include "SocketInterface.hpp"
+#include "ISocket.hpp"
 
 class Server;
 class ISocket;

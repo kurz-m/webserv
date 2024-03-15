@@ -103,11 +103,11 @@ int Server::do_poll_() {
 void Server::event_handler_() {
   std::list<pollfd_t>::iterator it;
   for (it = poll_list_.begin(); it != poll_list_.end();) {
-    std::cout << "Fd: " << it->fd << " from polling" << std::endl;
+    // std::cout << "Fd: " << it->fd << " from polling" << std::endl;
     ISocket::status check =
         client_map_.at(it->fd).handle(client_map_, poll_list_);
     if (check == ISocket::CLOSED) {
-      std::cout << "client: " << it->fd << " closed (empty recv)." << std::endl;
+      std::cout << "client: " << it->fd << " closed." << std::endl;
       close(it->fd);
       client_map_.erase(it->fd);
       it = poll_list_.erase(it);
@@ -121,9 +121,9 @@ void Server::event_handler_() {
 void Server::run() {
   while (g_signal == 0) {
     do_poll_();
-#ifdef __verbose__
-    std::cout << "polled" << std::endl;
-#endif
+// #ifdef __verbose__
+//     std::cout << "polled" << std::endl;
+// #endif
     event_handler_();
   }
 }

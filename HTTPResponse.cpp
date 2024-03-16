@@ -50,19 +50,15 @@ enum uri_state {
 
 template <typename T>
 uint8_t HTTPResponse::check_list_dir_(const T &curr_conf) {
-  try {
+  if (curr_conf.index.length() > 0) {
     uri_ = root_ + "/" + curr_conf.index;
-    return (DIRECTORY | INDEX);
-  } catch (NotFoundError &e) {
-    try {
-      if (curr_conf.autoindex) {
-        return (DIRECTORY | AUTO);
-      } else {
-        return (DIRECTORY);
-      }
-    } catch (NotFoundError &e) {
-      return (DIRECTORY);
-    }
+    return DIRECTORY | INDEX;
+  }
+  switch (curr_conf.autoindex) {
+  case 1:
+    return DIRECTORY | AUTO;
+  default:
+    return DIRECTORY;
   }
 }
 
@@ -75,6 +71,7 @@ bool ends_with(const std::string &str, const std::string &extension) {
 uint8_t HTTPResponse::check_uri_() {
   struct stat sb;
   const RouteBlock *route = config_.find(uri_);
+  // config_.index.sic
 
   if (uri_.find("/cgi-bin") != std::string::npos) {
     return CGI;

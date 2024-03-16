@@ -1,11 +1,11 @@
-#include "Parser.hpp"
-#include "Lexer.hpp"
-#include "Token.hpp"
-
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
 #include <sys/stat.h>
+
+#include "Lexer.hpp"
+#include "Parser.hpp"
+#include "Token.hpp"
 
 #ifndef __verbose__
 #define __verbose__
@@ -55,8 +55,8 @@ HttpBlock &Parser::parse_config() {
     if (expect_current_(Token::SERVER)) {
       http_.servers.push_back(parse_serverblock_());
       ++server_count_;
-    } else if (current_token_.type & S_BITS) {
-      http_.settings.push_back(parse_setting_());
+    } else if (current_token_.type & Token::HTTP_SETTING) {
+      parse_http_settings_(http_);
     } else if (expect_current_(Token::COMMENT)) {
       next_token_();
       continue;
@@ -69,9 +69,6 @@ HttpBlock &Parser::parse_config() {
     --block_depth_;
   } else {
     throw std::invalid_argument("wrong syntax for config file");
-  }
-  if (block_depth_ != 0) {
-    throw std::invalid_argument("http block is not fully closed");
   }
 #ifdef __verbose__
   std::cout << "-----Printing out the server settings-----" << std::endl;
@@ -109,6 +106,7 @@ HttpBlock &Parser::parse_config() {
     }
   }
 #endif
+  check_correct_syntax_();
   return http_;
 }
 
@@ -120,7 +118,7 @@ ServerBlock Parser::parse_serverblock_() {
   }
   ++block_depth_;
   next_token_();
-  ServerBlock server;
+  ServerBlock server(http_);
   if (http_.settings.size() != 0) {
     std::vector<Setting>::iterator it;
     for (it = http_.settings.begin(); it != http_.settings.end(); ++it) {
@@ -129,9 +127,9 @@ ServerBlock Parser::parse_serverblock_() {
   }
   while ((current_token_.type & (Token::RBRACE | Token::EF)) == RUN_LOOP) {
     if (expect_current_(Token::LOCATION)) {
-      server.routes.push_back(parse_routeblock_());
-    } else if (current_token_.type & S_BITS) {
-      server.settings.push_back(parse_setting_());
+      server.routes.push_back(parse_routeblock_(server));
+    } else if (current_token_.type & Token::SERVER_SETTING) {
+      parse_server_settings_(server);
     } else if (expect_current_(Token::COMMENT)) {
       next_token_();
       continue;
@@ -148,12 +146,12 @@ ServerBlock Parser::parse_serverblock_() {
   return server;
 }
 
-RouteBlock Parser::parse_routeblock_() {
+RouteBlock Parser::parse_routeblock_(const ServerBlock &server) {
   if (expect_current_(Token::LOCATION) && expect_peek_(Token::STRING)) {
     check_file_(peek_token_.literal);
   }
   next_token_();
-  RouteBlock route;
+  RouteBlock route(server);
   route.path = current_token_.literal;
   if (expect_peek_(Token::LBRACE)) {
     ++block_depth_;
@@ -163,9 +161,10 @@ RouteBlock Parser::parse_routeblock_() {
       if (expect_current_(Token::COMMENT)) {
         next_token_();
         continue;
+      } else if (current_token_.type & Token::ROUTE_SETTING) {
+        parse_route_settings_(route);
+        next_token_();
       }
-      route.settings.push_back(parse_setting_());
-      next_token_();
     }
   } else {
     throw std::invalid_argument("invalid syntax for config file");
@@ -178,56 +177,146 @@ RouteBlock Parser::parse_routeblock_() {
   return route;
 }
 
-Setting Parser::parse_setting_() {
-  Setting setting = (Setting){
-      .type = Setting::UNSET,
-      .name = Token::ILLEGAL,
-      .str_val = "",
-      .int_val = 0,
-  };
+void Parser::parse_http_settings_(HttpBlock &http) {
   Token tok = current_token_;
   next_token_();
   while (!expect_current_(Token::SEMICOLON)) {
     switch (tok.type) {
-    case Token::SERVER_NAME:
+    case Token::CLIENT_MAX_BODY_SIZE:
+      http.client_max_body_size = parse_int_value_();
+      break;
     case Token::DEFAULT_TYPE:
-    case Token::ROOT:
-    case Token::INDEX:
-      setting.type = Setting::STRING;
-      setting.name = tok.type;
-      if (std::isdigit(current_token_.literal[0])) {
-        setting.int_val = parse_int_value_();
-      }
-      setting.str_val = current_token_.literal;
+      http.default_type = current_token_.literal;
       break;
     case Token::KEEPALIVE_TIMEOUT:
-    case Token::CLIENT_MAX_BODY_SIZE:
-    case Token::LISTEN:
-      setting.type = Setting::INT;
-      setting.name = tok.type;
-      setting.str_val = current_token_.literal;
-      setting.int_val = parse_int_value_();
+      http.keepalive_timeout = parse_int_value_();
       break;
-    case Token::ALLOW:
-    case Token::DENY:
-      setting.type = Setting::INT;
-      setting.name = tok.type;
-      setting.int_val |= parse_http_method_();
-      break;
-    case Token::AUTOINDEX:
-      setting.type = Setting::INT;
-      setting.name = tok.type;
-      setting.str_val = current_token_.literal,
-      setting.int_val = parse_auto_index_();
+    case Token::ROOT:
+      http.root = current_token_.literal;
       break;
     default:
-      throw std::invalid_argument("unknown setting provided");
-      break;
-    };
+      throw std::invalid_argument("unknown setting for http block provided");
+    }
     next_token_();
   }
-  return setting;
 }
+
+void Parser::parse_server_settings_(ServerBlock &server) {
+  Token tok = current_token_;
+  next_token_();
+  while (!expect_current_(Token::SEMICOLON)) {
+    switch (tok.type) {
+    case Token::ALLOW:
+      server.allow |= parse_http_method_();
+      break;
+    case Token::DENY:
+      server.allow &= ~(parse_http_method_());
+      break;
+    case Token::AUTOINDEX:
+      server.autoindex = parse_auto_index_();
+      break;
+    case Token::CLIENT_MAX_BODY_SIZE:
+      server.client_max_body_size = parse_int_value_();
+      break;
+    case Token::DEFAULT_TYPE:
+      server.default_type = current_token_.literal;
+      break;
+    case Token::INDEX:
+      server.index = current_token_.literal;
+      break;
+    case Token::KEEPALIVE_TIMEOUT:
+      server.keepalive_timeout = parse_int_value_();
+      break;
+    case Token::LISTEN:
+      server.listen = current_token_.literal;
+      break;
+    case Token::ROOT:
+      server.root = current_token_.literal;
+      break;
+    case Token::SERVER_NAME:
+      server.server_name = current_token_.literal;
+      break;
+    default:
+      throw std::invalid_argument("unknown setting for server block provided");
+    }
+    next_token_();
+  }
+}
+
+void Parser::parse_route_settings_(RouteBlock &route) {
+  Token tok = current_token_;
+  next_token_();
+  while (!expect_current_(Token::SEMICOLON)) {
+    switch (tok.type) {
+    case Token::ALLOW:
+      route.allow |= parse_http_method_();
+      break;
+    case Token::DENY:
+      route.allow &= ~(parse_http_method_());
+      break;
+    case Token::AUTOINDEX:
+      route.autoindex = parse_auto_index_();
+      break;
+    case Token::INDEX:
+      route.index = current_token_.literal;
+      break;
+    default:
+      throw std::invalid_argument("unknown setting for route block provided");
+    }
+    next_token_();
+  }
+}
+
+// Setting Parser::parse_setting_() {
+//   Setting setting = (Setting){
+//       .type = Setting::UNSET,
+//       .name = Token::ILLEGAL,
+//       .str_val = "",
+//       .int_val = 0,
+//   };
+//   Token tok = current_token_;
+//   next_token_();
+//   while (!expect_current_(Token::SEMICOLON)) {
+//     switch (tok.type) {
+//     case Token::SERVER_NAME:
+//     case Token::DEFAULT_TYPE:
+//     case Token::ROOT:
+//     case Token::INDEX:
+//       setting.type = Setting::STRING;
+//       setting.name = tok.type;
+//       if (std::isdigit(current_token_.literal[0])) {
+//         setting.int_val = parse_int_value_();
+//       }
+//       setting.str_val = current_token_.literal;
+//       break;
+//     case Token::KEEPALIVE_TIMEOUT:
+//     case Token::CLIENT_MAX_BODY_SIZE:
+//     case Token::LISTEN:
+//       setting.type = Setting::INT;
+//       setting.name = tok.type;
+//       setting.str_val = current_token_.literal;
+//       setting.int_val = parse_int_value_();
+//       break;
+//     case Token::ALLOW:
+//     case Token::DENY:
+//       setting.type = Setting::INT;
+//       setting.name = tok.type;
+//       setting.int_val |= parse_http_method_();
+//       break;
+//     case Token::AUTOINDEX:
+//       setting.type = Setting::INT;
+//       setting.name = tok.type;
+//       setting.str_val = current_token_.literal,
+//       setting.int_val = parse_auto_index_();
+//       break;
+//     default:
+//       throw std::invalid_argument("unknown setting provided");
+//       break;
+//     };
+//     next_token_();
+//   }
+//   return setting;
+// }
 
 inline bool Parser::check_file_(const std::string &file) const {
   struct stat sb;
@@ -244,10 +333,10 @@ inline bool Parser::check_file_(const std::string &file) const {
     }
     return true;
   case S_IFDIR:
-    if (current_token_.type & S_BITS) {
-      throw std::invalid_argument("got a directory, wanted a file");
-      return false;
-    }
+    // if (current_token_.type & (Token::STRING_BITS | Token::INT_BITS)) {
+    //   throw std::invalid_argument("got a directory, wanted a file");
+    //   return false;
+    // }
     return true;
   }
   return false;
@@ -286,4 +375,10 @@ inline method_e Parser::parse_http_method_() {
     throw std::invalid_argument("no valid http method provided");
   }
   return method;
+}
+
+inline void Parser::check_correct_syntax_() const {
+  if (block_depth_ != 0) {
+    throw std::invalid_argument("http block is not fully closed");
+  }
 }

@@ -245,6 +245,9 @@ void Parser::parse_server_settings_(ServerBlock &server) {
 
 void Parser::parse_route_settings_(RouteBlock &route) {
   Token tok = current_token_;
+  if (expect_current_(Token::ALLOW)) {
+    route.allow = 0;
+  }
   next_token_();
   while (!expect_current_(Token::SEMICOLON)) {
     switch (tok.type) {

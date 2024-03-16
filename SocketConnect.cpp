@@ -1,14 +1,12 @@
 #include "SocketConnect.hpp"
 #include <cstring>
 #include <iostream>
-
-#define CGI_TIMEOUT 5
+#include <signal.h>
 
 SocketConnect::SocketConnect(pollfd &pollfd, const ServerBlock &config,
                              int timeout /*  = DEFAULT_TIMEOUT */)
     : Socket(pollfd, config), request_(config), response_(config),
-      timeout_(timeout), timestamp_(std::time(NULL)),
-      cgi_timestamp_(std::time(NULL)) {}
+      timeout_(timeout), timestamp_(std::time(NULL)) {}
 
 SocketConnect::SocketConnect(const SocketConnect &cpy)
     : Socket(cpy), request_(cpy.request_), response_(cpy.response_) {
@@ -34,7 +32,7 @@ SocketConnect::~SocketConnect() {}
 /// @param client_map unused
 /// @param poll_list unused
 ISocket::status SocketConnect::handle(std::map<int, ISocket> &client_map,
-                                     std::list<pollfd_t> &poll_list) {
+                                      std::list<pollfd_t> &poll_list) {
   (void)client_map;
   (void)poll_list;
 
@@ -43,20 +41,18 @@ ISocket::status SocketConnect::handle(std::map<int, ISocket> &client_map,
     status_ = response_.prepare_for_send(request_);
     if (status_ == ISocket::READY_SEND) {
       handle(client_map, poll_list);
-    } else { //WAITGCI
-      cgi_timestamp_ = std::time(NULL);
+    } else if (status_ == ISocket::WAITCGI) {
       pollfd_.events = 0;
+    } else { // error
+      throw std::runtime_error("Unexpected status_ after prepare_for_send()!");
     }
     break;
   case ISocket::WAITCGI:
     status_ = response_.check_child_status();
     if (status_ == ISocket::READY_SEND) {
       pollfd_.events = POLLOUT;
-    } else {
-      // TODO: check child timeout
-      if (check_cgi_timeout_()) {
-        // Kill child, return 500
-      }
+    } else if (status_ == ISocket::WAITCGI) {
+      timestamp_ = std::time(NULL);
     }
     break;
   case ISocket::READY_RECV:
@@ -80,11 +76,6 @@ ISocket::status SocketConnect::handle(std::map<int, ISocket> &client_map,
   }
   check_poll_err_();
   return status_;
-}
-
-bool SocketConnect::check_cgi_timeout_() {
-  timestamp_ = std::time(NULL);
-  return std::difftime(std::time(NULL), cgi_timestamp_) > CGI_TIMEOUT;
 }
 
 bool SocketConnect::check_timeout_() const {

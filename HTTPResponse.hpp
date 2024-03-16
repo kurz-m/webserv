@@ -6,6 +6,7 @@
 #include "Socket.hpp"
 
 #define BUFFER_SIZE 1024
+#define CGI_TIMEOUT 25
 
 class HTTPResponse : public HTTPBase {
 public:
@@ -16,6 +17,8 @@ public:
 
   ISocket::status prepare_for_send(HTTPRequest &);
   ISocket::status check_child_status();
+  ISocket::status kill_child();
+  bool check_cgi_timeout();
 
 private:
   ISocket::status status_;
@@ -24,7 +27,8 @@ private:
   std::string uri_;
   pid_t cgi_pid_;
   int child_pipe_;
-  std::time_t child_timestamp_;
+  std::time_t cgi_timestamp_;
+  std::vector<pid_t> killed_childs_;
 
   void make_header_();
   uint8_t check_uri_();

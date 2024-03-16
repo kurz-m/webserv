@@ -32,13 +32,11 @@ private:
   void check_recv_();
   void resolve_uri_();
   bool check_timeout_() const;
-  bool check_cgi_timeout_();
 
   HTTPRequest request_;
   HTTPResponse response_;
   int timeout_;
   std::time_t timestamp_;
-  std::time_t cgi_timestamp_;
 
   friend class Server;
 };

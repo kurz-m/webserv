@@ -3,6 +3,7 @@
 #include <dirent.h>
 #include <fstream>
 #include <iostream>
+#include <signal.h>
 #include <sstream>
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -15,11 +16,20 @@ static const std::string proto_ = "HTTP/1.1";
 
 HTTPResponse::HTTPResponse(const ServerBlock &config)
     : HTTPBase(config), status_(), status_code_(0), uri_(), cgi_pid_(),
-      child_pipe_(), child_timestamp_() {
+      child_pipe_(), cgi_timestamp_() {
   root_ = config_.root;
 }
 
-HTTPResponse::~HTTPResponse() {}
+HTTPResponse::~HTTPResponse() {
+  if (killed_childs_.size() > 0) {
+    std::vector<pid_t>::const_iterator it;
+    for (it = killed_childs_.begin(); it != killed_childs_.end(); ++it) {
+      if (!waitpid(*it, NULL, WNOHANG)) {
+        throw std::runtime_error("child wont be killed!");
+      }
+    }
+  }
+}
 
 HTTPResponse::HTTPResponse(const HTTPResponse &cpy)
     : HTTPBase(cpy), status_code_(cpy.status_code_), root_(cpy.root_),
@@ -34,7 +44,7 @@ HTTPResponse &HTTPResponse::operator=(const HTTPResponse &other) {
     uri_ = other.uri_;
     cgi_pid_ = other.cgi_pid_;
     child_pipe_ = other.child_pipe_;
-    child_timestamp_ = other.child_timestamp_;
+    cgi_timestamp_ = other.cgi_timestamp_;
   }
   return *this;
 }
@@ -146,6 +156,10 @@ ISocket::status HTTPResponse::prepare_for_send(HTTPRequest &req) {
   return ISocket::READY_SEND;
 }
 
+bool HTTPResponse::check_cgi_timeout() {
+  return std::difftime(std::time(NULL), cgi_timestamp_) > CGI_TIMEOUT;
+}
+
 ISocket::status HTTPResponse::call_cgi_(HTTPRequest &req) {
   std::string exec = uri_.substr(0, uri_.find("?"));
   if (access((root_ + exec).c_str(), F_OK) != 0) {
@@ -160,10 +174,14 @@ ISocket::status HTTPResponse::call_cgi_(HTTPRequest &req) {
     return ISocket::READY_SEND;
   }
   create_pipe_(req);
+  cgi_timestamp_ = std::time(NULL);
   return check_child_status();
 }
 
 ISocket::status HTTPResponse::check_child_status() {
+  if (check_cgi_timeout()) {
+    return kill_child();
+  }
   int stat_loc = 0;
   pid_t pid_check = waitpid(cgi_pid_, &stat_loc, WNOHANG);
   if (pid_check == 0) {
@@ -185,6 +203,23 @@ ISocket::status HTTPResponse::check_child_status() {
     }
     return ISocket::READY_SEND;
   }
+}
+
+ISocket::status HTTPResponse::kill_child() {
+  if (child_pipe_ > 0) {
+    close(child_pipe_);
+    child_pipe_ = -1;
+  }
+  kill(cgi_pid_, SIGKILL);
+  pid_t pid = waitpid(cgi_pid_, NULL, WNOHANG);
+  if (pid == 0) {
+    killed_childs_.push_back(cgi_pid_); // await these childs in the destructor.
+  }
+  cgi_pid_ = 0;
+  status_code_ = 500;
+  body_ = create_status_html(500);
+  make_header_();
+  return ISocket::READY_SEND;
 }
 
 void HTTPResponse::read_child_pipe_() {

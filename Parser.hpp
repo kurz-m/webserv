@@ -1,8 +1,8 @@
 #ifndef __PARSER_HPP__
 #define __PARSER_HPP__
 
-#include <vector>
 #include <sys/types.h>
+#include <vector>
 
 #include "HTTP.hpp"
 #include "Settings.hpp"
@@ -15,7 +15,7 @@ public:
   Parser(Lexer &);
   ~Parser();
 
-  HttpBlock& parse_config();
+  HttpBlock &parse_config();
 
 private:
   Parser(const Parser &);
@@ -23,15 +23,20 @@ private:
 
   void next_token_();
   ServerBlock parse_serverblock_();
-  RouteBlock parse_routeblock_();
-  Setting parse_setting_();
+  RouteBlock parse_routeblock_(const ServerBlock &server);
   bool expect_current_(const Token::token_type_t) const;
   bool expect_peek_(const Token::token_type_t) const;
+
+  void parse_http_settings_(HttpBlock &http);
+  void parse_server_settings_(ServerBlock &server);
+  void parse_route_settings_(RouteBlock &route);
 
   bool check_file_(const std::string &) const;
   int parse_auto_index_();
   int parse_int_value_();
   method_e parse_http_method_();
+  void check_correct_syntax_() const;
+
 
   Lexer &lexer_;
   Token current_token_;

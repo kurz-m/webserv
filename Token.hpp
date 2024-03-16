@@ -4,8 +4,6 @@
 #include <map>
 #include <string>
 
-#define S_BITS 0x000FFF00
-
 struct Token {
 public:
   enum token_type_t {
@@ -19,26 +17,35 @@ public:
     SERVER = (1 << 5),
     LOCATION = (1 << 6),
 
-    // Keywords
-    DEFAULT_TYPE = (1 << 8),
-    KEEPALIVE_TIMEOUT = (1 << 9),
-    LISTEN = (1 << 10),
-    CLIENT_MAX_BODY_SIZE = (1 << 11),
-    ROOT = (1 << 12),
-    AUTOINDEX = (1 << 13),
-    ALLOW = (1 << 14),
-    DENY = (1 << 15),
-    SERVER_NAME = (1 << 16),
-    INDEX = (1 << 17),
+    // INT keywords
+    AUTOINDEX = (1 << 8),
+    ALLOW = (1 << 9),
+    DENY = (1 << 10),
+    KEEPALIVE_TIMEOUT = (1 << 11),
+    CLIENT_MAX_BODY_SIZE = (1 << 12),
+
+    // STRING keywords
+    DEFAULT_TYPE = (1 << 16),
+    LISTEN = (1 << 17),
+    ROOT = (1 << 18),
+    SERVER_NAME = (1 << 19),
+    INDEX = (1 << 20),
 
     // Bool
-    TRUE = (1 << 20),
-    FALSE = (1 << 21),
+    TRUE = (1 << 24),
+    FALSE = (1 << 25),
     // Delimiter
-    LBRACE = (1 << 22),
-    RBRACE = (1 << 23),
-    SEMICOLON = (1 << 24),
-    COMMENT = (1 << 25)
+    LBRACE = (1 << 26),
+    RBRACE = (1 << 27),
+    SEMICOLON = (1 << 28),
+    COMMENT = (1 << 29),
+
+    // Block settings
+    HTTP_SETTING = 0x00051800,
+    SERVER_SETTING = 0x001F1F00,
+    ROUTE_SETTING = 0x00100700,
+    STRING_BITS = 0x00FF0000,
+    INT_BITS = 0x0000FF00,
   };
 
   token_type_t type;

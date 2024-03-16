@@ -3,9 +3,12 @@
 
 #include "Token.hpp"
 
+#include "Token.hpp"
 #include <string>
 #include <vector>
-#include "Token.hpp"
+
+struct HttpBlock;
+struct ServerBlock;
 
 class NotFoundError : public std::exception {
 public:
@@ -19,26 +22,52 @@ struct Setting {
   int int_val;
 };
 
-struct RouteBlock {
+typedef struct RouteBlock {
+  RouteBlock(const ServerBlock &server);
+
+  const Setting find(Token::token_type_t) const;
+
   std::string path;
   std::vector<Setting> settings;
 
-  const Setting find(Token::token_type_t) const;
-};
+  int allow;
+  int autoindex;
+  std::string index;
+} RouteBlock;
 
-struct ServerBlock {
+typedef struct ServerBlock {
+  ServerBlock(const HttpBlock &http);
+
+  const Setting find(Token::token_type_t) const;
+  const RouteBlock *find(const std::string &uri) const;
+
   std::vector<Setting> settings;
   std::vector<RouteBlock> routes;
 
-  const Setting find(Token::token_type_t) const;
-  const RouteBlock *find(const std::string& uri) const;
-};
+  int allow;
+  int autoindex;
+  int client_max_body_size;
+  std::string default_type;
+  std::string index;
+  int keepalive_timeout;
+  std::string listen;
+  std::string root;
+  std::string server_name;
+} ServerBlock;
 
-struct HttpBlock {
+typedef struct HttpBlock {
+  HttpBlock();
+
+  const Setting find(Token::token_type_t) const;
+
   std::vector<Setting> settings;
   std::vector<ServerBlock> servers;
 
-  const Setting find(Token::token_type_t) const;
-};
+  int client_max_body_size;
+  std::string default_type;
+  int keepalive_timeout;
+  std::string root;
+
+} HttpBlock;
 
 #endif // !__SETTINGS_HPP__

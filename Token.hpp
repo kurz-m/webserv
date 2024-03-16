@@ -44,8 +44,6 @@ public:
     HTTP_SETTING = 0x00051800,
     SERVER_SETTING = 0x001F1F00,
     ROUTE_SETTING = 0x00100700,
-    STRING_BITS = 0x00FF0000,
-    INT_BITS = 0x0000FF00,
   };
 
   token_type_t type;

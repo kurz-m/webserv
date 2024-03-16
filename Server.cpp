@@ -11,8 +11,7 @@
 
 extern sig_atomic_t g_signal;
 
-Server::Server(const HttpBlock &config)
-    : config_(config) {}
+Server::Server(const HttpBlock &config) : config_(config) {}
 
 Server::~Server() {}
 
@@ -37,8 +36,8 @@ void Server::create_listen_socket_(const ServerBlock &config) {
   hints.ai_flags = AI_PASSIVE;     // Fill in my IP for me
 
   // bind to all interfaces on port
-  if ((status = getaddrinfo(NULL, config.find(Token::LISTEN).str_val.c_str(),
-                            &hints, &servinfo)) != 0) {
+  if ((status = getaddrinfo(NULL, config.listen.c_str(), &hints, &servinfo)) !=
+      0) {
     throw std::runtime_error(std::string("server: getaddrinfo: ") +
                              std::strerror(errno));
   }
@@ -121,9 +120,9 @@ void Server::event_handler_() {
 void Server::run() {
   while (g_signal == 0) {
     do_poll_();
-// #ifdef __verbose__
-//     std::cout << "polled" << std::endl;
-// #endif
+    // #ifdef __verbose__
+    //     std::cout << "polled" << std::endl;
+    // #endif
     event_handler_();
   }
 }

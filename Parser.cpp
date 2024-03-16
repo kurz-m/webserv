@@ -71,40 +71,7 @@ HttpBlock &Parser::parse_config() {
     throw std::invalid_argument("wrong syntax for config file");
   }
 #ifdef __verbose__
-  std::cout << "-----Printing out the server settings-----" << std::endl;
-  std::vector<ServerBlock>::iterator it;
-  for (it = http_.servers.begin(); it != http_.servers.end(); ++it) {
-    std::vector<Setting>::iterator sit;
-    std::cout << "Server settings:" << std::endl;
-    for (sit = it->settings.begin(); sit != it->settings.end(); ++sit) {
-      if (sit->type == Setting::STRING) {
-        std::cout << Token::reverse_map.at(sit->name) << ": " << sit->str_val
-                  << std::endl;
-      } else {
-        std::cout << Token::reverse_map.at(sit->name) << ": " << sit->int_val
-                  << std::endl;
-      }
-    }
-    std::vector<RouteBlock>::iterator rit;
-    for (rit = it->routes.begin(); rit != it->routes.end(); ++rit) {
-      std::cout << "Route settings: path -> " << rit->path << std::endl;
-      std::vector<Setting>::iterator rsit;
-      for (rsit = rit->settings.begin(); rsit != rit->settings.end(); ++rsit) {
-        if (rsit->type == Setting::STRING) {
-          std::cout << Token::reverse_map.at(rsit->name) << ": "
-                    << rsit->str_val << std::endl;
-        } else {
-          std::cout << Token::reverse_map.at(rsit->name) << ": ";
-          if (rsit->name & (Token::ALLOW | Token::DENY)) {
-            print_method(rsit->int_val);
-            std::cout << std::endl;
-          } else {
-            std::cout << rsit->int_val << std::endl;
-          }
-        }
-      }
-    }
-  }
+  // TODO: write a more sophisticated logger class that logs all the settings
 #endif
   check_correct_syntax_();
   return http_;
@@ -119,12 +86,6 @@ ServerBlock Parser::parse_serverblock_() {
   ++block_depth_;
   next_token_();
   ServerBlock server(http_);
-  if (http_.settings.size() != 0) {
-    std::vector<Setting>::iterator it;
-    for (it = http_.settings.begin(); it != http_.settings.end(); ++it) {
-      server.settings.push_back(*it);
-    }
-  }
   while ((current_token_.type & (Token::RBRACE | Token::EF)) == RUN_LOOP) {
     if (expect_current_(Token::LOCATION)) {
       server.routes.push_back(parse_routeblock_(server));
@@ -269,57 +230,6 @@ void Parser::parse_route_settings_(RouteBlock &route) {
     next_token_();
   }
 }
-
-// Setting Parser::parse_setting_() {
-//   Setting setting = (Setting){
-//       .type = Setting::UNSET,
-//       .name = Token::ILLEGAL,
-//       .str_val = "",
-//       .int_val = 0,
-//   };
-//   Token tok = current_token_;
-//   next_token_();
-//   while (!expect_current_(Token::SEMICOLON)) {
-//     switch (tok.type) {
-//     case Token::SERVER_NAME:
-//     case Token::DEFAULT_TYPE:
-//     case Token::ROOT:
-//     case Token::INDEX:
-//       setting.type = Setting::STRING;
-//       setting.name = tok.type;
-//       if (std::isdigit(current_token_.literal[0])) {
-//         setting.int_val = parse_int_value_();
-//       }
-//       setting.str_val = current_token_.literal;
-//       break;
-//     case Token::KEEPALIVE_TIMEOUT:
-//     case Token::CLIENT_MAX_BODY_SIZE:
-//     case Token::LISTEN:
-//       setting.type = Setting::INT;
-//       setting.name = tok.type;
-//       setting.str_val = current_token_.literal;
-//       setting.int_val = parse_int_value_();
-//       break;
-//     case Token::ALLOW:
-//     case Token::DENY:
-//       setting.type = Setting::INT;
-//       setting.name = tok.type;
-//       setting.int_val |= parse_http_method_();
-//       break;
-//     case Token::AUTOINDEX:
-//       setting.type = Setting::INT;
-//       setting.name = tok.type;
-//       setting.str_val = current_token_.literal,
-//       setting.int_val = parse_auto_index_();
-//       break;
-//     default:
-//       throw std::invalid_argument("unknown setting provided");
-//       break;
-//     };
-//     next_token_();
-//   }
-//   return setting;
-// }
 
 inline bool Parser::check_file_(const std::string &file) const {
   struct stat sb;

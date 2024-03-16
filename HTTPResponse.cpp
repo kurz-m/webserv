@@ -16,7 +16,7 @@ static const std::string proto_ = "HTTP/1.1";
 HTTPResponse::HTTPResponse(const ServerBlock &config)
     : HTTPBase(config), status_(), status_code_(0), uri_(), cgi_pid_(),
       child_pipe_(), child_timestamp_() {
-  root_ = config_.find(Token::ROOT).str_val;
+  root_ = config_.root;
 }
 
 HTTPResponse::~HTTPResponse() {}
@@ -51,12 +51,11 @@ enum uri_state {
 template <typename T>
 uint8_t HTTPResponse::check_list_dir_(const T &curr_conf) {
   try {
-    uri_ = root_ + "/" + curr_conf.find(Token::INDEX).str_val;
+    uri_ = root_ + "/" + curr_conf.index;
     return (DIRECTORY | INDEX);
   } catch (NotFoundError &e) {
     try {
-      int auto_ = curr_conf.find(Token::AUTOINDEX).int_val;
-      if (auto_) {
+      if (curr_conf.autoindex) {
         return (DIRECTORY | AUTO);
       } else {
         return (DIRECTORY);
@@ -278,7 +277,8 @@ struct FileInfo {
   bool is_dir;
 };
 
-static inline FileInfo create_list_dir_entry(const std::string &uri, const std::string &path) {
+static inline FileInfo create_list_dir_entry(const std::string &uri,
+                                             const std::string &path) {
   FileInfo file;
   std::string full_path = uri + "/" + path;
   std::ostringstream oss;

@@ -15,20 +15,10 @@ public:
   const char *what() const throw();
 };
 
-struct Setting {
-  enum Type { UNSET, STRING, INT } type;
-  Token::token_type_t name;
-  std::string str_val;
-  int int_val;
-};
-
 typedef struct RouteBlock {
   RouteBlock(const ServerBlock &server);
 
-  const Setting find(Token::token_type_t) const;
-
   std::string path;
-  std::vector<Setting> settings;
 
   int allow;
   int autoindex;
@@ -38,10 +28,8 @@ typedef struct RouteBlock {
 typedef struct ServerBlock {
   ServerBlock(const HttpBlock &http);
 
-  const Setting find(Token::token_type_t) const;
   const RouteBlock *find(const std::string &uri) const;
 
-  std::vector<Setting> settings;
   std::vector<RouteBlock> routes;
 
   int allow;
@@ -58,9 +46,6 @@ typedef struct ServerBlock {
 typedef struct HttpBlock {
   HttpBlock();
 
-  const Setting find(Token::token_type_t) const;
-
-  std::vector<Setting> settings;
   std::vector<ServerBlock> servers;
 
   int client_max_body_size;

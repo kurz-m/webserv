@@ -12,7 +12,7 @@ public:
   HTTPRequest &operator=(const HTTPRequest &other);
   ~HTTPRequest();
 
-  Socket::status parse_header();
+  ISocket::status parse_header();
   void parse_body();
 
 private:

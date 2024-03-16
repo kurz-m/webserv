@@ -1,10 +1,14 @@
 #include "SocketConnect.hpp"
+#include <cstring>
 #include <iostream>
+
+#define CGI_TIMEOUT 5
 
 SocketConnect::SocketConnect(pollfd &pollfd, const ServerBlock &config,
                              int timeout /*  = DEFAULT_TIMEOUT */)
     : Socket(pollfd, config), request_(config), response_(config),
-      timeout_(timeout), timestamp_(std::time(NULL)) {}
+      timeout_(timeout), timestamp_(std::time(NULL)),
+      cgi_timestamp_(std::time(NULL)) {}
 
 SocketConnect::SocketConnect(const SocketConnect &cpy)
     : Socket(cpy), request_(cpy.request_), response_(cpy.response_) {
@@ -24,30 +28,66 @@ SocketConnect &SocketConnect::operator=(const SocketConnect &other) {
 
 SocketConnect::~SocketConnect() {}
 
-void SocketConnect::handle(std::map<int, SocketInterface> &client_map,
-                           std::list<pollfd_t> &poll_list) {
+/// @brief handle the Socket. 2 Cases: reading data and sending data.
+/// When first called, the Socket first receives the request data and processes
+/// it to check, if the request is complete.
+/// @param client_map unused
+/// @param poll_list unused
+ISocket::status SocketConnect::handle(std::map<int, ISocket> &client_map,
+                                     std::list<pollfd_t> &poll_list) {
   (void)client_map;
   (void)poll_list;
-#ifdef __verbose__
-  std::cout << "handle client: " << pollfd_.fd << std::endl;
-#endif
-  switch (pollfd_.revents) {
-  case POLLIN:
-#ifdef __verbose__
-    std::cout << "POLLIN!!" << std::endl;
-#endif
-    receive_();
+
+  switch (status_) {
+  case ISocket::PREPARE_SEND:
+    status_ = response_.prepare_for_send(request_);
+    if (status_ == ISocket::READY_SEND) {
+      handle(client_map, poll_list);
+    } else { //WAITGCI
+      cgi_timestamp_ = std::time(NULL);
+      pollfd_.events = 0;
+    }
     break;
-  case POLLOUT:
-#ifdef __verbose__
-    std::cout << "POLLOUT" << std::endl;
-#endif
-    send_response_();
+  case ISocket::WAITCGI:
+    status_ = response_.check_child_status();
+    if (status_ == ISocket::READY_SEND) {
+      pollfd_.events = POLLOUT;
+    } else {
+      // TODO: check child timeout
+      if (check_cgi_timeout_()) {
+        // Kill child, return 500
+      }
+    }
+    break;
+  case ISocket::READY_RECV:
+  case ISocket::URECV:
+    if (pollfd_.revents & POLLIN) {
+      receive_();
+    } else if (check_timeout_()) {
+      return ISocket::CLOSED;
+    }
+    break;
+  case ISocket::READY_SEND:
+  case ISocket::USEND:
+    if (pollfd_.revents & POLLOUT) {
+      send_response_();
+    } else if (check_timeout_()) {
+      return ISocket::CLOSED;
+    }
+    break;
+  default:
     break;
   }
+  check_poll_err_();
+  return status_;
 }
 
-bool SocketConnect::check_timeout() const {
+bool SocketConnect::check_cgi_timeout_() {
+  timestamp_ = std::time(NULL);
+  return std::difftime(std::time(NULL), cgi_timestamp_) > CGI_TIMEOUT;
+}
+
+bool SocketConnect::check_timeout_() const {
   return std::difftime(std::time(NULL), timestamp_) > timeout_;
 }
 
@@ -59,13 +99,21 @@ void SocketConnect::receive_() {
     std::cerr << "recv failed!" << std::endl;
     throw std::exception();
   }
-  request_.buffer_ += std::string(buf);
+  if (n == 0) {
+    status_ = ISocket::CLOSED;
+    return;
+  }
+  // TODO: limit client max body size. maybe read header and body separately?
+  while (n > 0) {
+    request_.buffer_ += buf;
+    std::memset(buf, 0, sizeof(buf));
+    n = recv(pollfd_.fd, buf, HTTPBase::MAX_BUFFER, MSG_DONTWAIT);
+  }
   timestamp_ = std::time(NULL);
   check_recv_();
 }
 
 void SocketConnect::send_response_() {
-  response_.prepare_for_send(request_);
   ssize_t num_bytes = send(pollfd_.fd, response_.buffer_.c_str(),
                            response_.buffer_.size(), MSG_DONTWAIT);
   if (num_bytes < 0) {
@@ -75,18 +123,17 @@ void SocketConnect::send_response_() {
 #ifdef __verbose__
     std::cout << "server did not send the full message yet" << std::endl;
 #endif
-    status_ = USEND;
+    status_ = ISocket::USEND;
     pollfd_.events = POLLOUT;
   } else {
 #ifdef __verbose__
     std::cout << "server did send the full message" << std::endl;
 #endif
-    request_.reset();
-    response_.reset();
-    status_ = READY;
+    request_ = HTTPRequest(request_.config_);
+    response_ = HTTPResponse(response_.config_);
+    status_ = ISocket::READY_RECV;
     pollfd_.events = POLLIN;
   }
-  timestamp_ = std::time(NULL);
 }
 
 void SocketConnect::check_recv_() {
@@ -95,7 +142,7 @@ void SocketConnect::check_recv_() {
     std::cout << __LINE__ << "server could not find the end of the header"
               << std::endl;
 #endif
-    status_ = URECV;
+    status_ = ISocket::URECV;
   }
   // TODO: check content length for finished body???
   else {
@@ -105,10 +152,10 @@ void SocketConnect::check_recv_() {
     status_ = request_.parse_header();
   }
   switch (status_) {
-  case READY:
+  case ISocket::PREPARE_SEND:
     pollfd_.events = POLLOUT;
     break;
-  case URECV:
+  case ISocket::URECV:
     pollfd_.events = POLLIN;
     break;
   default:

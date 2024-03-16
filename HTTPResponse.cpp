@@ -13,21 +13,28 @@
 
 static const std::string proto_ = "HTTP/1.1";
 
-HTTPResponse::HTTPResponse(const ServerBlock &config) : HTTPBase(config), status_code_(0) {
+HTTPResponse::HTTPResponse(const ServerBlock &config)
+    : HTTPBase(config), status_(), status_code_(0), uri_(), cgi_pid_(),
+      child_pipe_(), child_timestamp_() {
   root_ = config_.find(Token::ROOT).str_val;
 }
 
 HTTPResponse::~HTTPResponse() {}
 
 HTTPResponse::HTTPResponse(const HTTPResponse &cpy)
-    : HTTPBase(cpy), status_code_(cpy.status_code_), root_(cpy.root_), uri_(cpy.uri_) {}
+    : HTTPBase(cpy), status_code_(cpy.status_code_), root_(cpy.root_),
+      uri_(cpy.uri_) {}
 
 HTTPResponse &HTTPResponse::operator=(const HTTPResponse &other) {
   HTTPBase::operator=(other);
   if (this != &other) {
+    status_ = other.status_;
     status_code_ = other.status_code_;
     root_ = other.root_;
     uri_ = other.uri_;
+    cgi_pid_ = other.cgi_pid_;
+    child_pipe_ = other.child_pipe_;
+    child_timestamp_ = other.child_timestamp_;
   }
   return *this;
 }
@@ -66,14 +73,10 @@ bool ends_with(const std::string &str, const std::string &extension) {
   return std::equal(extension.rbegin(), extension.rend(), str.rbegin());
 }
 
-// bool check_for_cgi_(const std::string &uri, )
-
 uint8_t HTTPResponse::check_uri_() {
   struct stat sb;
-  // std::string uri_ = req.parsed_header_.at("URI");
   const RouteBlock *route = config_.find(uri_);
 
-  // TODO: make better function to check for CGI
   if (uri_.find("/cgi-bin") != std::string::npos) {
     return CGI;
   }
@@ -110,17 +113,14 @@ void HTTPResponse::make_header_() {
   buffer_ += body_;
 }
 
-void HTTPResponse::prepare_for_send(HTTPRequest &req) {
+ISocket::status HTTPResponse::prepare_for_send(HTTPRequest &req) {
   uri_ = req.parsed_header_.at("URI");
   uint8_t mask = check_uri_();
   std::ifstream file;
   switch (mask) {
   case CGI:
-    call_cgi_(req);
-    break;
-
+    return call_cgi_(req);
   case (DIRECTORY | AUTO): // -> list dir
-    // TODO: create function for index_of
     body_ = create_list_dir_();
     std::cout << body_ << std::endl;
     status_code_ = 200;
@@ -132,9 +132,7 @@ void HTTPResponse::prepare_for_send(HTTPRequest &req) {
     break;
   case (DIRECTORY | INDEX): // -> index.html file
   case (FIL):               // -> send file
-    // check if file exists
     file.open(uri_.c_str());
-
     if (file.is_open()) {
       status_code_ = 200;
       read_file_(file);
@@ -144,49 +142,75 @@ void HTTPResponse::prepare_for_send(HTTPRequest &req) {
     }
     break;
   case (FAIL): // -> 404
-    // 404
     status_code_ = 404;
     body_.assign(create_status_html(status_code_));
     break;
-  default:
-    std::cerr << "not intended, catch me" << std::endl;
-    return;
   }
   make_header_();
-// #ifdef __verbose__
-//   std::cout << "buffer: " << buffer_ << std::endl;
-// #endif
+  return ISocket::READY_SEND;
 }
 
-void HTTPResponse::call_cgi_(HTTPRequest &req) {
-  std::string ret = "";
-  // TODO: check if
-  if (access((root_ + uri_).c_str(), (F_OK | X_OK)) != 0) {
-    std::ifstream file((root_ + uri_).c_str());
-
-    read_file_(file);
-    // TODO: read file and send back
+ISocket::status HTTPResponse::call_cgi_(HTTPRequest &req) {
+  std::string exec = uri_.substr(0, uri_.find("?"));
+  if (access((root_ + exec).c_str(), F_OK) != 0) {
+    status_code_ = 404;
+    body_.assign(create_status_html(status_code_));
+    make_header_();
+    return ISocket::READY_SEND;
+  } else if (access((root_ + exec).c_str(), X_OK) != 0) {
+    status_code_ = 403;
+    body_.assign(create_status_html(status_code_));
+    make_header_();
+    return ISocket::READY_SEND;
   }
-  // TODO: create pipe and execute
   create_pipe_(req);
+  return check_child_status();
+}
 
-  // TODO: fill body with result
-  // std::cout << "cgi call returned!" << std::endl;
-  // std::cout << body_ << std::endl;
-  status_code_ = 200;
+ISocket::status HTTPResponse::check_child_status() {
+  int stat_loc = 0;
+  pid_t pid_check = waitpid(cgi_pid_, &stat_loc, WNOHANG);
+  if (pid_check == 0) {
+    return ISocket::WAITCGI;
+  } else if (pid_check < 0) {
+    status_code_ = 500;
+    body_.assign(create_status_html(status_code_));
+    make_header_();
+    return ISocket::READY_SEND;
+  } else {
+    if (WIFEXITED(stat_loc)) {
+      status_code_ = 200;
+      read_child_pipe_();
+      make_header_();
+    } else {
+      status_code_ = 500;
+      body_.assign(create_status_html(status_code_));
+      make_header_();
+    }
+    return ISocket::READY_SEND;
+  }
+}
+
+void HTTPResponse::read_child_pipe_() {
+  std::cout << "child exited. trying to read the pipe" << std::endl;
+  char buffer[BUFFER_SIZE + 1] = {0};
+  while (read(child_pipe_, buffer, BUFFER_SIZE) > 0) {
+    body_ += buffer;
+    std::memset(buffer, 0, sizeof(buffer));
+  }
+  close(child_pipe_);
 }
 
 void HTTPResponse::create_pipe_(HTTPRequest &req) {
-  pid_t pid;
   int pipe_fd[2];
   std::string ret = "";
 
   if (pipe(pipe_fd) < 0)
     throw std::runtime_error(std::strerror(errno));
-  pid = fork();
-  if (pid == -1)
+  cgi_pid_ = fork();
+  if (cgi_pid_ == -1)
     throw std::runtime_error(std::strerror(errno));
-  if (pid == 0) {
+  if (cgi_pid_ == 0) {
     std::cout << "child executing ... " << std::endl;
     if (dup2(pipe_fd[1], STDOUT_FILENO) < 0)
       throw std::runtime_error(std::strerror(errno));
@@ -195,25 +219,8 @@ void HTTPResponse::create_pipe_(HTTPRequest &req) {
     execute_(req);
     std::exit(0);
   } else {
-    // if (dup2(pipe_fd[0], STDIN_FILENO) < 0)
-    //   throw std::runtime_error(std::strerror(errno));
-    // close(pipe_fd[0]);
     close(pipe_fd[1]);
-    int stat_loc = 0;
-    // FIX: check for child return status and handle accoringly -> 500 if not 0
-    pid = waitpid(pid, &stat_loc, 0);
-    // while (pid == 0) {
-    //   std::cout << "waiting for child..." << std::endl;
-    //   usleep(1000000);
-    //   pid = waitpid(pid, NULL, WNOHANG);
-    // }
-    std::cout << "child exited. trying to read the pipe" << std::endl;
-    char buffer[1024] = {0};
-    while (read(pipe_fd[0], buffer, 1023) > 0) {
-      body_ += buffer;
-      memset(buffer, 0, sizeof(buffer));
-    }
-    close(pipe_fd[0]);
+    child_pipe_ = pipe_fd[0];
   }
 }
 
@@ -300,7 +307,7 @@ static inline FileInfo create_list_dir_entry(const std::string &uri, const std::
   return file;
 }
 
-inline bool compare_file(const FileInfo& a, const FileInfo& b) {
+inline bool compare_file(const FileInfo &a, const FileInfo &b) {
   if (a.is_dir && b.is_dir) {
     return a.name < b.name;
   } else {
@@ -309,7 +316,6 @@ inline bool compare_file(const FileInfo& a, const FileInfo& b) {
 }
 
 std::string HTTPResponse::create_list_dir_() {
-
   std::vector<FileInfo> files;
   std::ostringstream oss;
   DIR *dir = opendir(uri_.c_str());

@@ -4,7 +4,7 @@
 #include "Parser.hpp"
 #include "Settings.hpp"
 #include "Socket.hpp"
-#include "SocketInterface.hpp"
+#include "ISocket.hpp"
 #include <list>
 #include <map>
 #include <sys/poll.h>
@@ -30,9 +30,9 @@ private:
   void create_listen_socket_(const ServerBlock &config);
 
   std::list<pollfd_t> poll_list_;
-  std::map<int, SocketInterface> client_map_;
+  std::map<int, ISocket> client_map_;
   const HttpBlock &config_; // all settings from config
-  int poll_timeout_;
+  static const int poll_timeout_ = 100;
 
   friend class Socket;
 };

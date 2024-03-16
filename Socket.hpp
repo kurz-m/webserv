@@ -3,42 +3,42 @@
 
 #include <arpa/inet.h>
 #include <ctime>
+#include <list>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <string>
 #include <sys/poll.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-#include <list>
 
-#include "SocketInterface.hpp"
+#include "ISocket.hpp"
 
 class Server;
-class SocketInterface;
+class ISocket;
 
 class Socket {
 public:
-  enum status { READY, URECV, USEND, WAITCGI, CLOSED };
-
   Socket(pollfd_t &pollfd, const ServerBlock &config);
   Socket(const Socket &other);
   Socket &operator=(const Socket &other);
   virtual ~Socket() = 0;
 
-  // virtual bool handle() = 0;
-  virtual bool check_timeout() const = 0;
+  virtual bool check_timeout_() const = 0;
   virtual Socket *clone() const = 0;
-  virtual void handle(std::map<int, SocketInterface> &sock_map,
-                      std::list<pollfd_t> &poll_list) = 0;
+  virtual ISocket::status
+  handle(std::map<int, ISocket> &sock_map,
+         std::list<pollfd_t> &poll_list) = 0;
 
 protected:
   const ServerBlock &config_;
   pollfd_t &pollfd_;
-  status status_;
+  ISocket::status status_;
+
+  void check_poll_err_();
 
   friend class Server;
   friend class HTTPRequest;
-  friend class SocketInterface;
+  friend class ISocket;
 };
 
 #endif // __SOCKET_HPP__

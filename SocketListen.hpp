@@ -3,7 +3,7 @@
 
 #include "Server.hpp"
 #include "Socket.hpp"
-#include "SocketInterface.hpp"
+#include "ISocket.hpp"
 
 class SocketListen : public Socket {
 public:
@@ -13,9 +13,9 @@ public:
   SocketListen &operator=(const SocketListen &other);
   ~SocketListen();
 
-  void handle(std::map<int, SocketInterface> &client_map,
+  ISocket::status handle(std::map<int, ISocket> &client_map,
               std::list<pollfd_t> &poll_list);
-  bool check_timeout() const;
+  bool check_timeout_() const;
   SocketListen *clone() const;
 
 private:

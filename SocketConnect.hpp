@@ -20,22 +20,25 @@ public:
   SocketConnect &operator=(const SocketConnect &other);
   ~SocketConnect();
 
-  void handle(std::map<int, SocketInterface> &client_map,
+  ISocket::status handle(std::map<int, ISocket> &client_map,
               std::list<pollfd_t> &poll_list);
-  bool check_timeout() const;
 
   SocketConnect *clone() const;
 
 private:
   void receive_();
+  void respond_();
   void send_response_();
   void check_recv_();
   void resolve_uri_();
+  bool check_timeout_() const;
+  bool check_cgi_timeout_();
 
   HTTPRequest request_;
   HTTPResponse response_;
   int timeout_;
   std::time_t timestamp_;
+  std::time_t cgi_timestamp_;
 
   friend class Server;
 };

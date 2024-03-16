@@ -12,7 +12,7 @@
 extern sig_atomic_t g_signal;
 
 Server::Server(const HttpBlock &config)
-    : config_(config), poll_timeout_(2500) {}
+    : config_(config) {}
 
 Server::~Server() {}
 
@@ -68,7 +68,7 @@ void Server::create_listen_socket_(const ServerBlock &config) {
     pollfd_t pollfd = (pollfd_t){.fd = sockfd, .events = POLLIN, .revents = 0};
     poll_list_.push_back(pollfd);
     client_map_.insert(
-        std::make_pair(sockfd, SocketInterface(poll_list_.back(), config, *p)));
+        std::make_pair(sockfd, ISocket(poll_list_.back(), config, *p)));
     break;
   }
 
@@ -103,33 +103,16 @@ int Server::do_poll_() {
 void Server::event_handler_() {
   std::list<pollfd_t>::iterator it;
   for (it = poll_list_.begin(); it != poll_list_.end();) {
-    std::cout << "Fd: " << it->fd << " from polling" << std::endl;
-    if ((it->revents & POLLERR) | (it->revents & POLLNVAL)) {
-      std::cout << "client: " << it->fd << " connection error." << std::endl;
+    // std::cout << "Fd: " << it->fd << " from polling" << std::endl;
+    ISocket::status check =
+        client_map_.at(it->fd).handle(client_map_, poll_list_);
+    if (check == ISocket::CLOSED) {
+      std::cout << "client: " << it->fd << " closed." << std::endl;
       close(it->fd);
       client_map_.erase(it->fd);
       it = poll_list_.erase(it);
       continue;
     }
-    if (it->revents & POLLHUP) {
-      std::cout << "client: " << it->fd << " POLLHUP." << std::endl;
-      close(it->fd);
-      client_map_.erase(it->fd);
-      it = poll_list_.erase(it);
-      continue;
-    }
-    if (!(it->events & it->revents)) {
-      if (client_map_.at(it->fd).check_timeout()) {
-        std::cout << "client: " << it->fd << " Timeout." << std::endl;
-        close(it->fd);
-        client_map_.erase(it->fd);
-        it = poll_list_.erase(it);
-      } else {
-        ++it;
-      }
-      continue;
-    }
-    client_map_.at(it->fd).handle(client_map_, poll_list_);
     it->revents = RESET;
     ++it;
   }
@@ -138,11 +121,9 @@ void Server::event_handler_() {
 void Server::run() {
   while (g_signal == 0) {
     do_poll_();
-#ifdef __verbose__
-    std::cout << "polled" << std::endl;
-#endif
-    // if (num_events > 0) {
+// #ifdef __verbose__
+//     std::cout << "polled" << std::endl;
+// #endif
     event_handler_();
-    // }
   }
 }

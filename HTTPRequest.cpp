@@ -24,7 +24,7 @@ HTTPRequest &HTTPRequest::operator=(const HTTPRequest &other) {
   return *this;
 }
 
-Socket::status HTTPRequest::parse_header() {
+ISocket::status HTTPRequest::parse_header() {
   body_ = buffer_.substr(buffer_.find("\r\n\r\n") + 4);
   buffer_ = buffer_.substr(0, buffer_.find("\r\n\r\n"));
   std::istringstream iss(buffer_);
@@ -55,7 +55,7 @@ Socket::status HTTPRequest::parse_header() {
       std::cout << __LINE__ << "Client did not send the complete content yet"
                 << std::endl;
 #endif
-      return Socket::URECV;
+      return ISocket::URECV;
     }
   }
 #ifdef __verbose__
@@ -64,7 +64,7 @@ Socket::status HTTPRequest::parse_header() {
     std::cout << it->first << ": " << it->second << std::endl;
   }
 #endif
-  return Socket::READY;
+  return ISocket::PREPARE_SEND;
 }
 
 void HTTPRequest::parse_body() {}

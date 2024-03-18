@@ -108,9 +108,9 @@ ServerBlock Parser::parse_serverblock_() {
 }
 
 RouteBlock Parser::parse_routeblock_(const ServerBlock &server) {
-  if (expect_current_(Token::LOCATION) && expect_peek_(Token::STRING)) {
-    check_file_(peek_token_.literal);
-  }
+  // if (expect_current_(Token::LOCATION) && expect_peek_(Token::STRING)) {
+  //   check_file_(peek_token_.literal);
+  // }
   next_token_();
   RouteBlock route(server);
   route.path = current_token_.literal;
@@ -235,6 +235,7 @@ inline bool Parser::check_file_(const std::string &file) const {
   struct stat sb;
 
   if (stat(file.c_str(), &sb) < 0) {
+    // FIX: check what to do here together with Flo
     throw std::invalid_argument("given path/file is not valid");
   }
 
@@ -246,6 +247,7 @@ inline bool Parser::check_file_(const std::string &file) const {
     }
     return true;
   case S_IFDIR:
+    // TODO: this can be used for checking the index.html etc files if wanted
     // if (current_token_.type & (Token::STRING_BITS | Token::INT_BITS)) {
     //   throw std::invalid_argument("got a directory, wanted a file");
     //   return false;
@@ -290,8 +292,32 @@ inline method_e Parser::parse_http_method_() {
   return method;
 }
 
-inline void Parser::check_correct_syntax_() const {
+inline void Parser::check_correct_syntax_() {
   if (block_depth_ != 0) {
     throw std::invalid_argument("http block is not fully closed");
+  }
+  std::vector<ServerBlock>::iterator server_it = http_.servers.begin();
+  std::vector<RouteBlock>::iterator route_it;
+  while (server_it != http_.servers.end()) {
+    if (server_it->root.empty() || server_it->listen.empty()) {
+#ifdef __verbose__
+      // TODO: implement logging of server that got deleted
+#endif /** __verbose__ */
+      server_it = http_.servers.erase(server_it);
+      continue;
+    }
+    route_it = server_it->routes.begin();
+    while (route_it != server_it->routes.end()) {
+      std::string full_path = server_it->root + route_it->path;
+      if (check_file_(full_path) == false) {
+        route_it = server_it->routes.erase(route_it);
+        continue;
+#ifdef __verbose__
+        // TODO: implement logging of route that got deleted
+#endif /** __verbose__ */
+      }
+      ++route_it;
+    }
+    ++server_it;
   }
 }

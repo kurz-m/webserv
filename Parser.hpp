@@ -35,7 +35,7 @@ private:
   int parse_auto_index_();
   int parse_int_value_();
   method_e parse_http_method_();
-  void check_correct_syntax_() const;
+  void check_correct_syntax_();
 
 
   Lexer &lexer_;

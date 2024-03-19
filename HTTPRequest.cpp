@@ -1,4 +1,5 @@
 #include "HTTPRequest.hpp"
+#include "EventLogger.hpp"
 #include "Socket.hpp"
 #include <cstdlib>
 #include <iostream>
@@ -51,19 +52,15 @@ ISocket::status HTTPRequest::parse_header() {
     size_t cont_len = std::atoi(parsed_header_.at("Content-Length").c_str());
     if (cont_len > body_.length()) {
       // URECV
-#ifdef __verbose__
-      std::cout << __LINE__ << "Client did not send the complete content yet"
-                << std::endl;
-#endif
+      LOG_DEBUG("Client did not send the complete content yet");
       return ISocket::URECV;
     }
   }
-#ifdef __verbose__
   std::map<std::string, std::string>::iterator it;
   for (it = parsed_header_.begin(); it != parsed_header_.end(); ++it) {
-    std::cout << it->first << ": " << it->second << std::endl;
+    LOG_DEBUG(it->first + ": " + it->second);
   }
-#endif
+
   return ISocket::PREPARE_SEND;
 }
 

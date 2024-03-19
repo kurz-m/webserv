@@ -1,15 +1,11 @@
+#include "Parser.hpp"
+#include "EventLogger.hpp"
+#include "Lexer.hpp"
+#include "Token.hpp"
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
 #include <sys/stat.h>
-
-#include "Lexer.hpp"
-#include "Parser.hpp"
-#include "Token.hpp"
-
-#ifndef __verbose__
-#define __verbose__
-#endif
 
 #define RUN_LOOP 0
 
@@ -70,9 +66,6 @@ HttpBlock &Parser::parse_config() {
   } else {
     throw std::invalid_argument("wrong syntax for config file");
   }
-#ifdef __verbose__
-  // TODO: write a more sophisticated logger class that logs all the settings
-#endif
   check_correct_syntax_();
   return http_;
 }
@@ -297,27 +290,22 @@ inline void Parser::check_correct_syntax_() {
     throw std::invalid_argument("http block is not fully closed");
   }
   std::vector<ServerBlock>::iterator server_it = http_.servers.begin();
-  std::vector<RouteBlock>::iterator route_it;
+  // std::vector<RouteBlock>::iterator route_it;
   while (server_it != http_.servers.end()) {
     if (server_it->root.empty() || server_it->listen.empty()) {
-#ifdef __verbose__
-      // TODO: implement logging of server that got deleted
-#endif /** __verbose__ */
+      LOG_WARNING("server got erased: " + server_it->server_name);
       server_it = http_.servers.erase(server_it);
       continue;
     }
-    route_it = server_it->routes.begin();
-    while (route_it != server_it->routes.end()) {
-      std::string full_path = server_it->root + route_it->path;
-      if (check_file_(full_path) == false) {
-        route_it = server_it->routes.erase(route_it);
-        continue;
-#ifdef __verbose__
-        // TODO: implement logging of route that got deleted
-#endif /** __verbose__ */
-      }
-      ++route_it;
-    }
+    // route_it = server_it->routes.begin();
+    // while (route_it != server_it->routes.end()) {
+    //   std::string full_path = server_it->root + route_it->path;
+    //   if (check_file_(full_path) == false) {
+    //     route_it = server_it->routes.erase(route_it);
+    //     continue;
+    //   }
+    //   ++route_it;
+    // }
     ++server_it;
   }
 }

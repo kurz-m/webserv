@@ -1,7 +1,11 @@
 #include "SocketListen.hpp"
+#include "EventLogger.hpp"
 #include "Token.hpp"
 #include <cstdio>
+#include <cstring>
 #include <iostream>
+#include <cstdlib>
+#include <sstream>
 
 SocketListen::SocketListen(pollfd &pollfd, const ServerBlock &config,
                            const addrinfo_t &info)
@@ -24,15 +28,12 @@ SocketListen::~SocketListen() {}
 
 ISocket::status SocketListen::handle(std::map<int, ISocket> &client_map,
                                      std::list<pollfd_t> &poll_list) {
-
   if (pollfd_.revents & POLLIN) {
     try {
-#ifdef __verbose__
-      std::cout << "I am trying to establish a new connecion" << std::endl;
-#endif
+      LOG_INFO("I am trying to establish a new connecion");
       int sockfd = accept(pollfd_.fd, servinfo_.ai_addr, &servinfo_.ai_addrlen);
       if (sockfd < 0) {
-        perror("accept");
+        LOG_WARNING("accept: " + std::string(strerror(errno)));
         return ISocket::READY_RECV;
       }
 
@@ -41,7 +42,9 @@ ISocket::status SocketListen::handle(std::map<int, ISocket> &client_map,
       poll_list.push_back(pollfd);
       client_map.insert(
           std::make_pair(sockfd, ISocket(poll_list.back(), config_)));
-      std::cout << "accepted client fd: " << sockfd << std::endl;
+      std::ostringstream oss;
+      oss << "accepted client fd: " << sockfd;
+      LOG_INFO(oss.str());
     } catch (const std::exception &e) {
       std::cerr << "accept failed: " << e.what() << '\n';
     }

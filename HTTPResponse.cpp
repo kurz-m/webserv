@@ -1,6 +1,6 @@
 #include "HTTPResponse.hpp"
-#include "Settings.hpp"
 #include "EventLogger.hpp"
+#include "Settings.hpp"
 #include <algorithm>
 #include <cstring>
 #include <dirent.h>
@@ -81,9 +81,13 @@ bool ends_with(const std::string &str, const std::string &extension) {
 uint8_t HTTPResponse::check_uri_() {
   struct stat sb;
   const RouteBlock *route = config_.find(uri_);
-  // config_.index.sic
+  std::string endpoint;
+  std::string uri_stem;
 
-  if (uri_.find("/cgi-bin") != std::string::npos) {
+  uri_stem = uri_.substr(0, uri_.rfind('/'));
+  endpoint = uri_.substr(uri_.rfind('/') + 1, uri_.rfind('?'));
+
+  if (ends_with(endpoint, ".py") || ends_with(endpoint, ".php")) {
     return CGI;
   }
   uri_ = root_ + uri_;
@@ -223,7 +227,7 @@ ISocket::status HTTPResponse::kill_child() {
 }
 
 void HTTPResponse::read_child_pipe_() {
-  std::cout << "child exited. trying to read the pipe" << std::endl;
+  LOG_DEBUG("child exited. trying to read the pipe")
   char buffer[BUFFER_SIZE + 1] = {0};
   while (read(child_pipe_, buffer, BUFFER_SIZE) > 0) {
     body_ += buffer;
@@ -242,7 +246,7 @@ void HTTPResponse::create_pipe_(HTTPRequest &req) {
   if (cgi_pid_ == -1)
     throw std::runtime_error(std::strerror(errno));
   if (cgi_pid_ == 0) {
-    std::cout << "child executing ... " << std::endl;
+    LOG_DEBUG("child executing ... ")
     if (dup2(pipe_fd[1], STDOUT_FILENO) < 0)
       throw std::runtime_error(std::strerror(errno));
     close(pipe_fd[0]);

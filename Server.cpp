@@ -1,6 +1,7 @@
 #include "Server.hpp"
 #include "SocketListen.hpp"
 #include "Token.hpp"
+#include "EventLogger.hpp"
 #include <cerrno>
 #include <csignal>
 #include <cstdio>
@@ -99,11 +100,12 @@ int Server::do_poll_() {
 void Server::event_handler_() {
   std::list<pollfd_t>::iterator it;
   for (it = poll_list_.begin(); it != poll_list_.end();) {
-    // std::cout << "Fd: " << it->fd << " from polling" << std::endl;
     ISocket::status check =
         client_map_.at(it->fd).handle(client_map_, poll_list_);
     if (check == ISocket::CLOSED) {
-      std::cout << "client: " << it->fd << " closed." << std::endl;
+      std::ostringstream oss;
+      oss << "client: " << it->fd << " closed.";
+      LOG_DEBUG(oss.str())
       close(it->fd);
       client_map_.erase(it->fd);
       it = poll_list_.erase(it);

@@ -85,9 +85,11 @@ uint8_t HTTPResponse::check_uri_() {
   std::string uri_stem;
 
   uri_stem = uri_.substr(0, uri_.rfind('/'));
-  endpoint = uri_.substr(uri_.rfind('/') + 1, uri_.rfind('?'));
+  endpoint =
+      uri_.substr(uri_.rfind('/') + 1, uri_.rfind('?') - (uri_.rfind('/') + 1));
 
-  if (ends_with(endpoint, ".py") || ends_with(endpoint, ".php")) {
+  if (uri_stem.find("/cgi-bin") != std::string::npos &&
+      (ends_with(endpoint, ".py") || ends_with(endpoint, ".php"))) {
     return CGI;
   }
   uri_ = root_ + uri_;
@@ -199,6 +201,7 @@ ISocket::status HTTPResponse::check_child_status() {
     if (WIFEXITED(stat_loc)) {
       status_code_ = 200;
       read_child_pipe_();
+      LOG_DEBUG(buffer_)
       make_header_();
     } else {
       status_code_ = 500;
@@ -264,7 +267,7 @@ void HTTPResponse::execute_(HTTPRequest &req) {
   std::vector<std::string> tmp_env;
   std::string exec;
   char *env[6];
-  char *argv[2];
+  char *argv[3];
 
   size_t pos = uri_.find("?");
   if (pos != std::string::npos) {
@@ -290,8 +293,18 @@ void HTTPResponse::execute_(HTTPRequest &req) {
     env[i] = const_cast<char *>(tmp_env.at(i).c_str());
   }
   env[i] = NULL;
-  argv[0] = const_cast<char *>(exec.c_str());
-  argv[1] = NULL;
+  if (ends_with(exec, ".py")) {
+    argv[0] = const_cast<char *>("python");
+    argv[1] = const_cast<char *>(exec.c_str());
+  } else if (ends_with(exec, ".php")) {
+    argv[0] = const_cast<char *>("php");
+    argv[1] = const_cast<char *>(exec.c_str());
+  } else {
+    argv[0] = const_cast<char *>("exit");
+    argv[1] = const_cast<char*>("1");
+  }
+  argv[2] = NULL;
+  LOG_DEBUG("Exec: " + exec);
   execve(exec.c_str(), argv, env);
 }
 

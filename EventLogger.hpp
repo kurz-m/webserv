@@ -10,13 +10,12 @@ class EventLogger {
 public:
   EventLogger();
   EventLogger(const char *filename);
+  ~EventLogger();
 
-  void log(const std::string &message, const char *line, const char *file,
+  void log(const std::string &fmt, const int line, const char *file,
            log_e level);
 
 private:
-  ~EventLogger();
-
   static std::ofstream log_file_;
   static bool file_open_;
 };

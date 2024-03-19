@@ -43,3 +43,6 @@ helo/
 
 # python pyc files
 *.pyc
+
+# log files
+*.log

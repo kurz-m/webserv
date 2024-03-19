@@ -5,6 +5,14 @@
 #define __LOG_LEVEL__ INFO
 #endif
 
+#define CONCAT(X, Y) X ## Y
+#define UNIQUENAME(X) CONCAT(X, __LINE__)
+
+#define LOG_DEBUG(X) EventLogger UNIQUENAME(logger) ; UNIQUENAME(logger).log(X, __LINE__, __FILE__, DEBUG)
+#define LOG_INFO(X) EventLogger UNIQUENAME(logger) ; UNIQUENAME(logger).log(X, __LINE__, __FILE__, INFO)
+#define LOG_WARNING(X) EventLogger logger__LINE__; logger__LINE__.log(X, __LINE__, __FILE__, WARNING);
+#define LOG_ERROR(X) EventLogger logger__LINE__; logger__LINE__.log(X, __LINE__, __FILE__, ERROR);
+
 #include <fstream>
 #include <string>
 

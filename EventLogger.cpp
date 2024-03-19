@@ -4,6 +4,7 @@
 
 std::ofstream EventLogger::log_file_;
 bool EventLogger::file_open_;
+log_e EventLogger::log_level_;
 
 // #define RESET "\033[0m"
 // #define RED "\033[1;31m"
@@ -19,7 +20,7 @@ EventLogger::EventLogger() {}
 
 EventLogger::EventLogger(const char *filename) {
   file_open_ = false;
-  log_level_ = __LOG_LEVEL__;
+  log_level_ = log_e(__LOG_LEVEL__);
   log_file_.open(filename, std::ios::app);
   if (log_file_.is_open()) {
     file_open_ = true;

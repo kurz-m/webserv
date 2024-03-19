@@ -1,3 +1,6 @@
+#include "HTTPResponse.hpp"
+#include "Settings.hpp"
+#include "EventLogger.hpp"
 #include <algorithm>
 #include <cstring>
 #include <dirent.h>
@@ -8,9 +11,6 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <unistd.h>
-
-#include "HTTPResponse.hpp"
-#include "Settings.hpp"
 
 static const std::string proto_ = "HTTP/1.1";
 
@@ -128,7 +128,6 @@ ISocket::status HTTPResponse::prepare_for_send(HTTPRequest &req) {
     return call_cgi_(req);
   case (DIRECTORY | AUTO): // -> list dir
     body_ = create_list_dir_();
-    std::cout << body_ << std::endl;
     status_code_ = 200;
     break;
   case (DIRECTORY): // -> 403
@@ -152,6 +151,7 @@ ISocket::status HTTPResponse::prepare_for_send(HTTPRequest &req) {
     body_.assign(create_status_html(status_code_));
     break;
   }
+  LOG_DEBUG("Body: " + body_);
   make_header_();
   return ISocket::READY_SEND;
 }

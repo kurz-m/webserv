@@ -16,9 +16,6 @@ Server::Server(const HttpBlock &config) : config_(config) {}
 Server::~Server() {}
 
 void Server::startup() {
-#ifdef __verbose__
-  std::cout << "starting the server in __verbose__ mode" << std::endl;
-#endif
   std::vector<ServerBlock>::const_iterator it;
   for (it = config_.servers.begin(); it != config_.servers.end(); ++it) {
     create_listen_socket_(*it);
@@ -120,9 +117,6 @@ void Server::event_handler_() {
 void Server::run() {
   while (g_signal == 0) {
     do_poll_();
-    // #ifdef __verbose__
-    //     std::cout << "polled" << std::endl;
-    // #endif
     event_handler_();
   }
 }

@@ -1,4 +1,5 @@
 #include "SocketConnect.hpp"
+#include "EventLogger.hpp"
 #include <cstring>
 #include <iostream>
 #include <signal.h>
@@ -111,15 +112,11 @@ void SocketConnect::send_response_() {
     throw SendRecvError();
   }
   if (static_cast<size_t>(num_bytes) < response_.buffer_.size()) {
-#ifdef __verbose__
-    std::cout << "server did not send the full message yet" << std::endl;
-#endif
+    LOG_DEBUG("server: " + config_.server_name + " did not send the full message yet");
     status_ = ISocket::USEND;
     pollfd_.events = POLLOUT;
   } else {
-#ifdef __verbose__
-    std::cout << "server did send the full message" << std::endl;
-#endif
+    LOG_DEBUG("server: " + config_.server_name + " did send the full message");
     request_ = HTTPRequest(request_.config_);
     response_ = HTTPResponse(response_.config_);
     status_ = ISocket::READY_RECV;
@@ -129,17 +126,12 @@ void SocketConnect::send_response_() {
 
 void SocketConnect::check_recv_() {
   if (request_.buffer_.find("\r\n\r\n") == std::string::npos) {
-#ifdef __verbose__
-    std::cout << __LINE__ << "server could not find the end of the header"
-              << std::endl;
-#endif
+    LOG_DEBUG("server: " + config_.server_name + " could not find the end of the header");
     status_ = ISocket::URECV;
   }
   // TODO: check content length for finished body???
   else {
-#ifdef __verbose__
-    std::cout << __LINE__ << "server is parsing the header" << std::endl;
-#endif
+    LOG_DEBUG("server: " + config_.server_name + " is parsing the header");
     status_ = request_.parse_header();
   }
   switch (status_) {

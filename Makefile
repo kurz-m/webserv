@@ -20,6 +20,7 @@ TEST := printf "[$(BO)$(M)ⓘ TEST$(X)] %s\n"
 OBJ_DIR := obj-cache
 INC_DIRS := .
 SRC_DIRS := .
+LOG_LEVEL := $(LOG_LEVEL)
 
 # Tell the Makefile where headers and source files are
 vpath %.hpp $(INC_DIRS)
@@ -43,9 +44,21 @@ ifeq ($(DEBUG), 1)
 	CXXFLAGS += -g
 endif
 
-ifeq ($(VERBOSE), 1)
-	CXXFLAGS += -D__verbose__
+ifeq ($(LOG_LEVEL),)
+	CXXFLAGS += -D__LOG_LEVEL__=4
+else ifeq ($(LOG_LEVEL), 0)
+	CXXFLAGS += -D__LOG_LEVEL__=0
+else ifeq ($(LOG_LEVEL), 1)
+	CXXFLAGS += -D__LOG_LEVEL__=1
+else ifeq ($(LOG_LEVEL), 2)
+	CXXFLAGS += -D__LOG_LEVEL__=2
+else ifeq ($(LOG_LEVEL), 3)
+	CXXFLAGS += -D__LOG_LEVEL__=3
 endif
+
+# ifdef $(LOG_LEVEL)
+# 	CXXFLAGS += -D__LOG_LEVEL__=$(LOG_LEVEL)
+# endif
 
 ################################################################################
 ########                         COMPILING                      ################
@@ -59,7 +72,7 @@ $(NAME): $(OBJS)
 
 $(OBJ_DIR)/%.o: %.cpp | $(OBJ_DIR)
 	@$(LOG) "Compiling $(notdir $@)"
-	@$(CXX) $(CXXFLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 $(OBJ_DIR):
 	@$(LOG) "Creating object directory."

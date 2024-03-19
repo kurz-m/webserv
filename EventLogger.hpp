@@ -9,7 +9,7 @@ enum log_e { TEST, INFO, DEBUG, ERROR };
 class EventLogger {
 public:
   EventLogger();
-  EventLogger(const std::string &filename);
+  EventLogger(const char *filename);
 
   void log(const std::string &message, const char *line, const char *file,
            log_e level);
@@ -17,8 +17,8 @@ public:
 private:
   ~EventLogger();
 
-  std::ofstream open_file_(const char *filename);
   static std::ofstream log_file_;
+  static bool file_open_;
 };
 
 #endif

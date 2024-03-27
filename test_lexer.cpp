@@ -5,37 +5,37 @@
 #include <iostream>
 #include <string>
 
-std::string config_string = "http {\n\
-    # default_type                text/html;\n\
-    keepalive_timeout           10;\n\
-    server {\n\
-        listen                  8080;\n\
-        server_name             www.example.com;\n\
-        client_max_body_size    10000;\n\
-        root                    ./data/www;\n\
-        location / {\n\
-            index               index.html;\n\
-            allow               GET POST;\n\
-            deny                DELETE;\n\
-        }\n\
-        location /cgi-bin {\n\
-            autoindex           on;\n\
-            allow               GET\n\
-            deny                POST DELETE;\n\
-        }\n\
-    }\n\
-    server {\n\
-        listen                  3490;\n\
-        server_name             www.example2.com;\n\
-        client_max_body_size    10000;\n\
-        root                    ./data/www;\n\
-        location / {\n\
-            autoindex           on;\n\
-            allow               GET POST;\n\
-            deny                DELETE;\n\
-        }\n\
-    }\n\
-}";
+// std::string config_string = "http {\n\
+//     # default_type                text/html;\n\
+//     keepalive_timeout           10;\n\
+//     server {\n\
+//         listen                  8080;\n\
+//         server_name             www.example.com;\n\
+//         client_max_body_size    10000;\n\
+//         root                    ./data/www;\n\
+//         location / {\n\
+//             index               index.html;\n\
+//             allow               GET POST;\n\
+//             deny                DELETE;\n\
+//         }\n\
+//         location /cgi-bin {\n\
+//             autoindex           on;\n\
+//             allow               GET\n\
+//             deny                POST DELETE;\n\
+//         }\n\
+//     }\n\
+//     server {\n\
+//         listen                  3490;\n\
+//         server_name             www.example2.com;\n\
+//         client_max_body_size    10000;\n\
+//         root                    ./data/www;\n\
+//         location / {\n\
+//             autoindex           on;\n\
+//             allow               GET POST;\n\
+//             deny                DELETE;\n\
+//         }\n\
+//     }\n\
+// }";
 
 int main() {
   std::ifstream file("./config/default.conf");
@@ -44,7 +44,7 @@ int main() {
   buffer.assign(std::istreambuf_iterator<char>(file),
                 std::istreambuf_iterator<char>());
 
-  Lexer lex(config_string);
+  Lexer lex(buffer);
   Parser parser(lex);
   try {
     parser.parse_config();

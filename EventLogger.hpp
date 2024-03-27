@@ -34,7 +34,7 @@ enum log_e { DEBUG, INFO, WARNING, ERROR };
 class EventLogger {
 public:
   EventLogger();
-  EventLogger(const char *filename);
+  EventLogger(const std::string& filename);
   ~EventLogger();
 
   void log(const std::string &fmt, const int line, const char *file,

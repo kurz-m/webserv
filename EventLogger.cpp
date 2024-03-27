@@ -1,6 +1,7 @@
-#include <ctime>
-
 #include "EventLogger.hpp"
+#include <ctime>
+#include <unistd.h>
+#include <sstream>
 
 std::ofstream EventLogger::log_file_;
 bool EventLogger::file_open_;
@@ -18,10 +19,24 @@ log_e EventLogger::log_level_;
 
 EventLogger::EventLogger() {}
 
-EventLogger::EventLogger(const char *filename) {
+EventLogger::EventLogger(const std::string& filename) {
   file_open_ = false;
   log_level_ = log_e(__LOG_LEVEL__);
-  log_file_.open(filename, std::ios::app);
+  std::ostringstream oss;
+  std::string f_name = filename.substr(0, filename.find('.'));;
+  std::string f_ext = filename.substr(filename.find('.'));
+  oss << f_name;
+  if (access((oss.str() + f_ext).c_str(), F_OK) == 0) {
+    int i = 1;
+    oss << i;
+    while (access((oss.str() + f_ext).c_str(), F_OK) == 0){
+      i++;
+      oss.str("");
+      oss.clear();
+      oss << f_name << i;
+    }
+  }
+  log_file_.open((oss.str() + f_ext).c_str());
   if (log_file_.is_open()) {
     file_open_ = true;
   }

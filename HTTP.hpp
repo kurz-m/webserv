@@ -3,10 +3,6 @@
 
 #include <string>
 
-enum http_code {
-    
-};
-
 enum method_e {
     GET = (1 << 0),
     POST = (1 << 1),

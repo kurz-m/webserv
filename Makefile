@@ -37,7 +37,7 @@ OBJS := $(addprefix $(OBJ_DIR)/, $(SRCS:%.cpp=%.o))
 ########                           FLAGS                        ################
 ################################################################################
 
-CXXFLAGS ?= -Wextra -Wall -Werror -std=c++98 -MMD -MP $(addprefix -I, $(INC_DIRS))
+CXXFLAGS ?= -Wextra -Wall -Werror -O3 -std=c++98 -MMD -MP $(addprefix -I, $(INC_DIRS))
 LDFLAGS :=
 
 ifeq ($(DEBUG), 1)

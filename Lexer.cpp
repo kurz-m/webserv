@@ -67,12 +67,12 @@ Token Lexer::next_token() {
   return tok;
 }
 
-std::string Lexer::read_comment_() {
+inline std::string Lexer::read_comment_() {
   size_t position = position_;
-  while (ch_ != '\n') {
+  while (input_[read_position_] != '\n') {
     read_char_();
   }
-  return input_.substr(position, position_ - position);
+  return input_.substr(position, read_position_ - position);
 }
 
 void Lexer::read_char_() {

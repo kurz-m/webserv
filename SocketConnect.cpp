@@ -106,6 +106,7 @@ void SocketConnect::receive_() {
 }
 
 void SocketConnect::send_response_() {
+  LOG_DEBUG("Response Buffer: " + response_.buffer_);
   ssize_t num_bytes = send(pollfd_.fd, response_.buffer_.c_str(),
                            response_.buffer_.size(), MSG_DONTWAIT);
   if (num_bytes < 0) {

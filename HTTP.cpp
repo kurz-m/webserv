@@ -13,17 +13,18 @@ method_e method_to_enum(std::string &method) {
   return UNKNOWN;
 }
 
-void print_method(int& method) {
+const std::string print_method(const int &method) {
   if (method & GET) {
-    std::cout << "GET ";
+    return "GET";
   }
   if (method & POST) {
-    std::cout << "POST ";
+    return "POST";
   }
   if (method & PUT) {
-    std::cout << "PUT ";
+    return "PUT";
   }
   if (method & DELETE) {
-    std::cout << "DELETE ";
+    return "DELETE";
   }
+  return "NOT IMPLEMENTED";
 }

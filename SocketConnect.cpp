@@ -118,8 +118,8 @@ void SocketConnect::send_response_() {
   if (static_cast<size_t>(num_bytes) < response_.buffer_.size()) {
     LOG_DEBUG("server: " + config_.server_name + " did not send the full message yet");
     status_ = ISocket::USEND;
+    response_.buffer_ = response_.buffer_.substr(num_bytes);
     pollfd_.events = POLLOUT;
-    // TODO: clear buffer by the bytes already sent and try again.
   } else {
     LOG_DEBUG("server: " + config_.server_name + " did send the full message");
     request_ = HTTPRequest(request_.config_);

@@ -46,4 +46,4 @@ private:
   static log_e log_level_;
 };
 
-#endif
+#endif /* EventLogger.hpp */

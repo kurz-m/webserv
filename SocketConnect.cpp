@@ -85,6 +85,7 @@ bool SocketConnect::check_timeout_() const {
 
 void SocketConnect::receive_() {
   ssize_t n;
+  size_t tbr = 0;
   char buf[HTTPBase::MAX_BUFFER + 1] = {0};
   n = recv(pollfd_.fd, buf, HTTPBase::MAX_BUFFER, MSG_DONTWAIT);
   if (n < 0) {
@@ -95,8 +96,14 @@ void SocketConnect::receive_() {
     status_ = ISocket::CLOSED;
     return;
   }
-  request_.buffer_ += buf;
-  LOG_DEBUG("received: " + std::string(buf));
+  while (n > 0) {
+    tbr += n;
+    request_.buffer_ += buf;
+    std::memset(buf, 0, HTTPBase::MAX_BUFFER);
+    n = recv(pollfd_.fd, buf, HTTPBase::MAX_BUFFER, MSG_DONTWAIT);
+  }
+  request_.tbr_ = tbr;
+  LOG_DEBUG("received: " + request_.buffer_);
   timestamp_ = std::time(NULL);
   check_recv_();
 }
@@ -115,30 +122,16 @@ void SocketConnect::send_response_() {
     // TODO: clear buffer by the bytes already sent and try again.
   } else {
     LOG_DEBUG("server: " + config_.server_name + " did send the full message");
-    if (response_.status_code_ == 413) {
-      request_ = HTTPRequest(request_.config_);
-      response_ = HTTPResponse(response_.config_);
-      // close this Socket because otherwise we will continue reading the request
-      // body of the old request. TODO: this closes the socket to quickly and shows an error in postman.
-      status_ = ISocket::CLOSED; 
-    } else {
-      request_ = HTTPRequest(request_.config_);
-      response_ = HTTPResponse(response_.config_);
-      status_ = ISocket::READY_RECV;
-      pollfd_.events = POLLIN;
-    }
+    request_ = HTTPRequest(request_.config_);
+    response_ = HTTPResponse(response_.config_);
+    status_ = ISocket::READY_RECV;
+    pollfd_.events = POLLIN;
   }
 }
 
 void SocketConnect::check_recv_() {
-  if (request_.buffer_.find("\r\n\r\n") == std::string::npos) {
-    LOG_DEBUG("server: " + config_.server_name + ": header incomplete");
-    status_ = ISocket::URECV;
-  }
-  else {
-    LOG_DEBUG("server: " + config_.server_name + " is parsing the header");
-    status_ = request_.parse_header();
-  }
+  LOG_DEBUG("server: " + config_.server_name + " is parsing the header");
+  status_ = request_.parse_header();
   switch (status_) {
   case ISocket::PREPARE_SEND:
     pollfd_.events = POLLOUT;

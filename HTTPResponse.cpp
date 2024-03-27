@@ -151,11 +151,6 @@ void HTTPResponse::make_header_(const std::vector<std::string> &extra /*=
 }
 
 ISocket::status HTTPResponse::get_method_(HTTPRequest &req) {
-  if (status_code_ == 413) {
-    body_.assign(create_status_html(status_code_));
-    make_header_();
-    return ISocket::READY_SEND;
-  }
   uri_ = req.parsed_header_.at("URI");
   uint8_t mask = check_uri_();
   std::ifstream file;
@@ -229,6 +224,13 @@ ISocket::status HTTPResponse::post_method_(HTTPRequest &req) {
 }
 
 ISocket::status HTTPResponse::prepare_for_send(HTTPRequest &req) {
+  status_code_ = req.status_code_;
+  if (status_code_ == 413) {
+    status_code_ = 413;
+    body_.assign(create_status_html(status_code_));
+    make_header_();
+    return ISocket::READY_SEND;
+  }
   uri_ = req.parsed_header_.at("URI");
   LOG_INFO("Request Method: " + print_method(req.method_));
   const RouteBlock *route = config_.find(uri_);

@@ -58,8 +58,7 @@ ISocket::status HTTPRequest::parse_header() {
   if ((cont_len > 0 && cont_len > config_.client_max_body_size) ||
       (cont_len == 0 && body_.length() >= config_.client_max_body_size)) {
     status_code_ = 413;
-  }
-  if (cont_len > 0 && cont_len > body_.length()) {
+  } else if (cont_len > 0 && cont_len > body_.length()) {
     // URECV
     LOG_DEBUG("Client did not send the complete content yet");
     return ISocket::URECV;

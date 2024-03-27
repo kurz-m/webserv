@@ -6,6 +6,7 @@ std::map<int, std::string> HTTPBase::create_map_() {
   map[200] = "OK";
   map[201] = "Created";
   map[204] = "No Content";
+  map[303] = "See Other";
   map[400] = "Bad Request";
   map[401] = "Unauthorized";
   map[403] = "Forbidden";

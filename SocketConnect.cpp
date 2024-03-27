@@ -96,6 +96,7 @@ void SocketConnect::receive_() {
     return;
   }
   request_.buffer_ += buf;
+  LOG_DEBUG("received: " + std::string(buf));
   timestamp_ = std::time(NULL);
   check_recv_();
 }
@@ -111,6 +112,7 @@ void SocketConnect::send_response_() {
     LOG_DEBUG("server: " + config_.server_name + " did not send the full message yet");
     status_ = ISocket::USEND;
     pollfd_.events = POLLOUT;
+    // TODO: clear buffer by the bytes already sent and try again.
   } else {
     LOG_DEBUG("server: " + config_.server_name + " did send the full message");
     request_ = HTTPRequest(request_.config_);

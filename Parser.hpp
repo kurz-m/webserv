@@ -26,6 +26,7 @@ private:
   RouteBlock parse_routeblock_(const ServerBlock &server);
   bool expect_current_(const Token::token_type_t) const;
   bool expect_peek_(const Token::token_type_t) const;
+  void check_newline_();
 
   void parse_http_settings_(HttpBlock &http);
   void parse_server_settings_(ServerBlock &server);
@@ -36,6 +37,7 @@ private:
   int parse_int_value_();
   method_e parse_http_method_();
   void check_correct_syntax_();
+  void print_syntax_error_();
 
 
   Lexer &lexer_;

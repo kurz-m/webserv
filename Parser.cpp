@@ -11,7 +11,7 @@
 
 Parser::Parser(Lexer &lexer)
     : lexer_(lexer), block_depth_(0), server_count_(0), route_count_(0),
-      line_count_(0) {
+      line_count_(1) {
   next_token_();
   next_token_();
 }
@@ -26,6 +26,7 @@ Parser &Parser::operator=(const Parser &rhs) {
     http_ = rhs.http_;
     server_count_ = rhs.server_count_;
     route_count_ = rhs.route_count_;
+    line_count_ = rhs.line_count_;
   }
   return *this;
 }
@@ -37,6 +38,14 @@ inline void Parser::next_token_() {
   peek_token_ = lexer_.next_token();
 }
 
+inline void Parser::check_newline_() {
+  if (expect_peek_(Token::NEWLINE)) {
+    ++line_count_;
+    next_token_();
+  }
+  next_token_();
+}
+
 HttpBlock &Parser::parse_config() {
   if (!expect_current_(Token::HTTP)) {
     throw std::invalid_argument("provided config file has no http block");
@@ -46,11 +55,7 @@ HttpBlock &Parser::parse_config() {
   }
   ++block_depth_;
   next_token_();
-  next_token_();
-  if (expect_current_(Token::NEWLINE)) {
-    ++line_count_;
-    next_token_();
-  }
+  check_newline_();
 
   while (!expect_peek_(Token::EF)) {
     if (expect_current_(Token::SERVER)) {
@@ -59,16 +64,22 @@ HttpBlock &Parser::parse_config() {
     } else if (current_token_.type & Token::HTTP_SETTING) {
       parse_http_settings_(http_);
     } else if (expect_current_(Token::COMMENT)) {
-      next_token_();
+      check_newline_();
+      // if (expect_peek_(Token::NEWLINE)) {
+      //   ++line_count_;
+      //   next_token_();
+      // }
+      // next_token_();
       continue;
     } else {
       throw std::invalid_argument("wrong syntax for config file");
     }
-    if (expect_peek_(Token::NEWLINE)) {
-      ++line_count_;
-      next_token_();
-    }
-    next_token_();
+    check_newline_();
+    // if (expect_peek_(Token::NEWLINE)) {
+    //   ++line_count_;
+    //   next_token_();
+    // }
+    // next_token_();
   }
   if (expect_current_(Token::RBRACE)) {
     --block_depth_;
@@ -86,7 +97,7 @@ ServerBlock Parser::parse_serverblock_() {
     throw std::invalid_argument("wrong syntax for config file");
   }
   ++block_depth_;
-  next_token_();
+  check_newline_();
   ServerBlock server(http_);
   while ((current_token_.type & (Token::RBRACE | Token::EF)) == RUN_LOOP) {
     if (expect_current_(Token::LOCATION)) {
@@ -94,12 +105,12 @@ ServerBlock Parser::parse_serverblock_() {
     } else if (current_token_.type & Token::SERVER_SETTING) {
       parse_server_settings_(server);
     } else if (expect_current_(Token::COMMENT)) {
-      next_token_();
+      check_newline_();
       continue;
     } else {
       throw std::invalid_argument("wrong syntax for config file");
     }
-    next_token_();
+    check_newline_();
   }
   if (expect_current_(Token::RBRACE)) {
     --block_depth_;
@@ -119,14 +130,14 @@ RouteBlock Parser::parse_routeblock_(const ServerBlock &server) {
   if (expect_peek_(Token::LBRACE)) {
     ++block_depth_;
     next_token_();
-    next_token_();
+    check_newline_();
     while ((current_token_.type & (Token::RBRACE | Token::EF)) == RUN_LOOP) {
       if (expect_current_(Token::COMMENT)) {
-        next_token_();
+        check_newline_();
         continue;
       } else if (current_token_.type & Token::ROUTE_SETTING) {
         parse_route_settings_(route);
-        next_token_();
+        check_newline_();
       }
     }
   } else {
@@ -160,25 +171,17 @@ void Parser::parse_http_settings_(HttpBlock &http) {
     default:
       throw std::invalid_argument("unknown setting for http block provided");
     }
-    if (expect_peek_(Token::NEWLINE)) {
-      ++line_count_;
-      next_token_();
-    }
     next_token_();
   }
   if (!expect_current_(Token::SEMICOLON)) {
-    std::ostringstream oss;
-    oss << "Syntax error in line " << line_count_
-        << ". Expected Token::SEMICOLON, got Token::"
-        << Token::reverse_map.at(current_token_.type);
-    throw std::invalid_argument(oss.str());
+    print_syntax_error_();
   }
 }
 
 void Parser::parse_server_settings_(ServerBlock &server) {
   Token tok = current_token_;
   next_token_();
-  while (!expect_current_(Token::SEMICOLON)) {
+  while (current_token_.type & Token::RUN_PARSING) {
     switch (tok.type) {
     case Token::ALLOW:
       server.allow |= parse_http_method_();
@@ -215,6 +218,9 @@ void Parser::parse_server_settings_(ServerBlock &server) {
     }
     next_token_();
   }
+  if (!expect_current_(Token::SEMICOLON)) {
+    print_syntax_error_();
+  }
 }
 
 void Parser::parse_route_settings_(RouteBlock &route) {
@@ -223,7 +229,7 @@ void Parser::parse_route_settings_(RouteBlock &route) {
     route.allow = 0;
   }
   next_token_();
-  while (!expect_current_(Token::SEMICOLON)) {
+  while (current_token_.type & Token::RUN_PARSING) {
     switch (tok.type) {
     case Token::ALLOW:
       route.allow |= parse_http_method_();
@@ -241,6 +247,9 @@ void Parser::parse_route_settings_(RouteBlock &route) {
       throw std::invalid_argument("unknown setting for route block provided");
     }
     next_token_();
+  }
+  if (!expect_current_(Token::SEMICOLON)) {
+    print_syntax_error_();
   }
 }
 
@@ -328,4 +337,12 @@ inline void Parser::check_correct_syntax_() {
     // }
     ++server_it;
   }
+}
+
+inline void Parser::print_syntax_error_() {
+  std::ostringstream oss;
+  oss << "Syntax error in line " << line_count_
+      << ". Expected Token::SEMICOLON, got Token::"
+      << Token::reverse_map.at(current_token_.type);
+  throw std::invalid_argument(oss.str());
 }

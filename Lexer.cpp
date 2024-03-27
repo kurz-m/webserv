@@ -1,7 +1,8 @@
-#include "Lexer.hpp"
-#include "Token.hpp"
 #include <cctype>
 #include <cstddef>
+
+#include "Lexer.hpp"
+#include "Token.hpp"
 
 Lexer::Lexer(const std::string &input)
     : input_(input), position_(0), read_position_(0), ch_(0) {

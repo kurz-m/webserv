@@ -1,9 +1,10 @@
 #ifndef __LEXER_HPP__
 #define __LEXER_HPP__
 
-#include "Token.hpp"
 #include <cstddef>
 #include <string>
+
+#include "Token.hpp"
 
 class Lexer {
 public:
@@ -30,4 +31,4 @@ private:
   char ch_;
 };
 
-#endif //__LEXER_HPP__
+#endif /* Lexer.hpp */

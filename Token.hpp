@@ -7,45 +7,41 @@
 struct Token {
 public:
   enum token_type_t {
-    ILLEGAL = (1 << 0),
-    EF = (1 << 1),
+    ILLEGAL = (1 << 0), /**< Specifies an invalid token*/
+    EF = (1 << 1),      /**< Specifies end of file*/
 
-    STRING = (1 << 2),
-    NUMBER = (1 << 3),
-    // Directives
-    HTTP = (1 << 4),
-    SERVER = (1 << 5),
-    LOCATION = (1 << 6),
+    STRING = (1 << 2), /**< String value for token*/
+    NUMBER = (1 << 3), /**< Number value for token*/
 
-    // INT keywords
-    AUTOINDEX = (1 << 8),
-    ALLOW = (1 << 9),
-    DENY = (1 << 10),
-    KEEPALIVE_TIMEOUT = (1 << 11),
-    CLIENT_MAX_BODY_SIZE = (1 << 12),
+    HTTP = (1 << 4),     /**< Token for http block*/
+    SERVER = (1 << 5),   /**< Token for server block*/
+    LOCATION = (1 << 6), /**< Token for route block*/
 
-    // STRING keywords
-    DEFAULT_TYPE = (1 << 16),
-    LISTEN = (1 << 17),
-    ROOT = (1 << 18),
-    SERVER_NAME = (1 << 19),
-    INDEX = (1 << 20),
+    AUTOINDEX = (1 << 8),             /**< Token for autoindex setting*/
+    ALLOW = (1 << 9),                 /**< Token for allowed methods*/
+    DENY = (1 << 10),                 /**< Token for denied methods*/
+    KEEPALIVE_TIMEOUT = (1 << 11),    /**< Token for client keep alive setting*/
+    CLIENT_MAX_BODY_SIZE = (1 << 12), /**< Token for max client body size*/
 
-    // Bool
-    TRUE = (1 << 24),
-    FALSE = (1 << 25),
-    // Delimiter
-    LBRACE = (1 << 26),
-    RBRACE = (1 << 27),
-    SEMICOLON = (1 << 28),
-    COMMENT = (1 << 29),
-    NEWLINE = (1 << 30),
+    DEFAULT_TYPE = (1 << 16), /**< Token for default mime-type*/
+    LISTEN = (1 << 17),       /**< Token for listening port setting*/
+    ROOT = (1 << 18),         /**< Token for server root folder*/
+    SERVER_NAME = (1 << 19),  /**< Token for server name*/
+    INDEX = (1 << 20),        /**< Token for the index.html filename*/
 
-    // Block settings
-    HTTP_SETTING = 0x00051800,
-    SERVER_SETTING = 0x001F1F00,
-    ROUTE_SETTING = 0x00100700,
-    RUN_PARSING = 0x0300000C,
+    TRUE = (1 << 24),  /**< Token for specifying auto indexing*/
+    FALSE = (1 << 25), /**< Token for specifying auto indexing*/
+
+    LBRACE = (1 << 26),    /**< Token for opening a block*/
+    RBRACE = (1 << 27),    /**< Token for closing a block*/
+    SEMICOLON = (1 << 28), /**< Token for ending a line*/
+    COMMENT = (1 << 29),   /**< Token for commenting out a whole line*/
+    NEWLINE = (1 << 30),   /**< Token for newline character*/
+
+    HTTP_SETTING = 0x00051800,   /**< Token for possible http settings*/
+    SERVER_SETTING = 0x001F1F00, /**< Token for possible server settings*/
+    ROUTE_SETTING = 0x00100700,  /**< Token specifying possible route settings*/
+    RUN_PARSING = 0x0300000C,    /**< Token for the parsing loop conditiong*/
   };
 
   token_type_t type;
@@ -63,4 +59,4 @@ public:
   static token_type_t lookup_ident(std::string &);
 };
 
-#endif //__TOKEN_HPP__
+#endif /* Token.hpp */

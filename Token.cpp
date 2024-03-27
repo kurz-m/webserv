@@ -1,6 +1,6 @@
-#include "Token.hpp"
-
 #include <stdexcept>
+
+#include "Token.hpp"
 
 std::map<std::string, Token::token_type_t> Token::create_keywords() {
   std::map<std::string, token_type_t> loc_map;

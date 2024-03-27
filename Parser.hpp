@@ -32,7 +32,6 @@ private:
   void parse_server_settings_(ServerBlock &server);
   void parse_route_settings_(RouteBlock &route);
 
-  bool check_file_(const std::string &) const;
   int parse_auto_index_();
   int parse_int_value_();
   method_e parse_http_method_();
@@ -49,4 +48,4 @@ private:
   size_t line_count_;
 };
 
-#endif
+#endif /* Parser.hpp */

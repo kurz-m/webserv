@@ -1,17 +1,18 @@
-#include "Parser.hpp"
-#include "EventLogger.hpp"
-#include "Lexer.hpp"
-#include "Token.hpp"
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
 #include <sys/stat.h>
 
+#include "EventLogger.hpp"
+#include "Lexer.hpp"
+#include "Parser.hpp"
+#include "Token.hpp"
+
 #define RUN_LOOP 0
 
 Parser::Parser(Lexer &lexer)
-    : lexer_(lexer), block_depth_(0), server_count_(0), route_count_(0),
-      line_count_(1) {
+    : lexer_(lexer), current_token_(), peek_token_(), block_depth_(0), http_(),
+      server_count_(0), route_count_(0), line_count_(1) {
   next_token_();
   next_token_();
 }
@@ -243,31 +244,6 @@ void Parser::parse_route_settings_(RouteBlock &route) {
   }
 }
 
-inline bool Parser::check_file_(const std::string &file) const {
-  struct stat sb;
-
-  if (stat(file.c_str(), &sb) < 0) {
-    // FIX: check what to do here together with Flo
-    throw std::invalid_argument("given path/file is not valid");
-  }
-
-  switch (sb.st_mode & S_IFMT) {
-  case S_IFREG:
-    if (expect_current_(Token::LOCATION)) {
-      throw std::invalid_argument("file cannot be passed as route option");
-    }
-    return true;
-  case S_IFDIR:
-    // TODO: this can be used for checking the index.html etc files if wanted
-    // if (current_token_.type & (Token::STRING_BITS | Token::INT_BITS)) {
-    //   throw std::invalid_argument("got a directory, wanted a file");
-    //   return false;
-    // }
-    return true;
-  }
-  return false;
-}
-
 inline bool Parser::expect_current_(const Token::token_type_t tok) const {
   return current_token_.type == tok;
 }
@@ -309,22 +285,12 @@ inline void Parser::check_correct_syntax_() {
     print_syntax_error_("Missing closing block. Expected Token::RBRACE");
   }
   std::vector<ServerBlock>::iterator server_it = http_.servers.begin();
-  // std::vector<RouteBlock>::iterator route_it;
   while (server_it != http_.servers.end()) {
     if (server_it->root.empty() || server_it->listen.empty()) {
       LOG_WARNING("server got erased: " + server_it->server_name);
       server_it = http_.servers.erase(server_it);
       continue;
     }
-    // route_it = server_it->routes.begin();
-    // while (route_it != server_it->routes.end()) {
-    //   std::string full_path = server_it->root + route_it->path;
-    //   if (check_file_(full_path) == false) {
-    //     route_it = server_it->routes.erase(route_it);
-    //     continue;
-    //   }
-    //   ++route_it;
-    // }
     ++server_it;
   }
 }

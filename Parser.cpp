@@ -48,16 +48,16 @@ inline void Parser::check_newline_() {
 
 HttpBlock &Parser::parse_config() {
   if (!expect_current_(Token::HTTP)) {
-    throw std::invalid_argument("provided config file has no http block");
+    print_syntax_error_("Provided config file has no 'http' block");
   }
   if (!expect_peek_(Token::LBRACE)) {
-    throw std::invalid_argument("wrong syntax for config file");
+    print_syntax_error_("Wrong syntax. Expected Token::LBRACE");
   }
   ++block_depth_;
   next_token_();
   check_newline_();
 
-  while (!expect_peek_(Token::EF)) {
+  while (!expect_current_(Token::EF)) {
     if (expect_current_(Token::SERVER)) {
       http_.servers.push_back(parse_serverblock_());
       ++server_count_;
@@ -65,26 +65,12 @@ HttpBlock &Parser::parse_config() {
       parse_http_settings_(http_);
     } else if (expect_current_(Token::COMMENT)) {
       check_newline_();
-      // if (expect_peek_(Token::NEWLINE)) {
-      //   ++line_count_;
-      //   next_token_();
-      // }
-      // next_token_();
-      continue;
+    } else if (expect_current_(Token::RBRACE)) {
+      --block_depth_;
     } else {
-      throw std::invalid_argument("wrong syntax for config file");
+      print_syntax_error_("Wrong syntax. Found no valid setting");
     }
     check_newline_();
-    // if (expect_peek_(Token::NEWLINE)) {
-    //   ++line_count_;
-    //   next_token_();
-    // }
-    // next_token_();
-  }
-  if (expect_current_(Token::RBRACE)) {
-    --block_depth_;
-  } else {
-    throw std::invalid_argument("wrong syntax for config file");
   }
   check_correct_syntax_();
   return http_;
@@ -94,7 +80,7 @@ ServerBlock Parser::parse_serverblock_() {
   route_count_ = 0;
   next_token_();
   if (!expect_current_(Token::LBRACE)) {
-    throw std::invalid_argument("wrong syntax for config file");
+    print_syntax_error_("Wrong syntax. Expected Token::LBRACE");
   }
   ++block_depth_;
   check_newline_();
@@ -108,22 +94,20 @@ ServerBlock Parser::parse_serverblock_() {
       check_newline_();
       continue;
     } else {
-      throw std::invalid_argument("wrong syntax for config file");
+      print_syntax_error_(
+          "Wrong syntax. Found no valid setting for server block");
     }
     check_newline_();
   }
   if (expect_current_(Token::RBRACE)) {
     --block_depth_;
   } else if (expect_current_(Token::EF)) {
-    throw std::invalid_argument("missing closing block");
+    print_syntax_error_("Missing closing block. Expected Token::RBRACE");
   }
   return server;
 }
 
 RouteBlock Parser::parse_routeblock_(const ServerBlock &server) {
-  // if (expect_current_(Token::LOCATION) && expect_peek_(Token::STRING)) {
-  //   check_file_(peek_token_.literal);
-  // }
   next_token_();
   RouteBlock route(server);
   route.path = current_token_.literal;
@@ -138,15 +122,18 @@ RouteBlock Parser::parse_routeblock_(const ServerBlock &server) {
       } else if (current_token_.type & Token::ROUTE_SETTING) {
         parse_route_settings_(route);
         check_newline_();
+      } else {
+        print_syntax_error_(
+            "Wrong syntax. Found no valid setting for route block");
       }
     }
   } else {
-    throw std::invalid_argument("invalid syntax for config file");
+    print_syntax_error_("Wrong syntax. Expected Token::LBRACE");
   }
   if (expect_current_(Token::RBRACE)) {
     --block_depth_;
   } else if (expect_current_(Token::EF)) {
-    throw std::invalid_argument("missing closing block");
+    print_syntax_error_("Missing closing block. Expected Token::RBRACE");
   }
   return route;
 }
@@ -169,7 +156,8 @@ void Parser::parse_http_settings_(HttpBlock &http) {
       http.root = current_token_.literal;
       break;
     default:
-      throw std::invalid_argument("unknown setting for http block provided");
+      print_syntax_error_(
+          "Wrong syntax. Found no valid setting for http block");
     }
     next_token_();
   }
@@ -214,7 +202,8 @@ void Parser::parse_server_settings_(ServerBlock &server) {
       server.server_name = current_token_.literal;
       break;
     default:
-      throw std::invalid_argument("unknown setting for server block provided");
+      print_syntax_error_(
+          "Wrong syntax. Found no valid setting for server block");
     }
     next_token_();
   }
@@ -244,12 +233,13 @@ void Parser::parse_route_settings_(RouteBlock &route) {
       route.index = current_token_.literal;
       break;
     default:
-      throw std::invalid_argument("unknown setting for route block provided");
+      print_syntax_error_(
+          "Wrong syntax. Found no valid setting for route block");
     }
     next_token_();
   }
   if (!expect_current_(Token::SEMICOLON)) {
-    print_syntax_error_();
+    print_syntax_error_("");
   }
 }
 
@@ -265,7 +255,6 @@ inline bool Parser::check_file_(const std::string &file) const {
   case S_IFREG:
     if (expect_current_(Token::LOCATION)) {
       throw std::invalid_argument("file cannot be passed as route option");
-      return false;
     }
     return true;
   case S_IFDIR:
@@ -293,7 +282,8 @@ inline int Parser::parse_auto_index_() {
   } else if (expect_current_(Token::FALSE)) {
     return 0;
   }
-  throw std::invalid_argument("invalid option for auto indexing");
+  print_syntax_error_("Wrong syntax. Found no valid option for autoindex");
+  return 0;
 }
 
 inline int Parser::parse_int_value_() {
@@ -301,7 +291,7 @@ inline int Parser::parse_int_value_() {
   int tmp;
   stream >> tmp;
   if (stream.fail()) {
-    throw std::invalid_argument("expected a number, got a string");
+    print_syntax_error_("Expected a Token::NUMBER");
   }
   return tmp;
 }
@@ -309,14 +299,14 @@ inline int Parser::parse_int_value_() {
 inline method_e Parser::parse_http_method_() {
   method_e method = method_to_enum(current_token_.literal);
   if (method == UNKNOWN) {
-    throw std::invalid_argument("no valid http method provided");
+    print_syntax_error_("No valid 'http method' provided");
   }
   return method;
 }
 
 inline void Parser::check_correct_syntax_() {
   if (block_depth_ != 0) {
-    throw std::invalid_argument("http block is not fully closed");
+    print_syntax_error_("Missing closing block. Expected Token::RBRACE");
   }
   std::vector<ServerBlock>::iterator server_it = http_.servers.begin();
   // std::vector<RouteBlock>::iterator route_it;
@@ -339,10 +329,15 @@ inline void Parser::check_correct_syntax_() {
   }
 }
 
-inline void Parser::print_syntax_error_() {
+inline void Parser::print_syntax_error_(const std::string msg) {
   std::ostringstream oss;
-  oss << "Syntax error in line " << line_count_
-      << ". Expected Token::SEMICOLON, got Token::"
-      << Token::reverse_map.at(current_token_.type);
+  oss << "Syntax error in line " << line_count_ << ". ";
+  if (msg.size() == 0) {
+    oss << "Expected Token::SEMICOLON, got Token::"
+        << Token::reverse_map.at(current_token_.type) << ".";
+  } else {
+    oss << msg + ". Have Token::" << Token::reverse_map.at(current_token_.type)
+        << ". Literal: " + current_token_.literal + ".";
+  }
   throw std::invalid_argument(oss.str());
 }

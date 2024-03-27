@@ -37,8 +37,7 @@ private:
   int parse_int_value_();
   method_e parse_http_method_();
   void check_correct_syntax_();
-  void print_syntax_error_();
-
+  void print_syntax_error_(const std::string msg = "");
 
   Lexer &lexer_;
   Token current_token_;

@@ -10,7 +10,8 @@
 #define RUN_LOOP 0
 
 Parser::Parser(Lexer &lexer)
-    : lexer_(lexer), block_depth_(0), server_count_(0), route_count_(0) {
+    : lexer_(lexer), block_depth_(0), server_count_(0), route_count_(0),
+      line_count_(0) {
   next_token_();
   next_token_();
 }

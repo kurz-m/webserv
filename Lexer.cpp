@@ -37,6 +37,9 @@ Token Lexer::next_token() {
   case ';':
     tok = new_token_(Token::SEMICOLON, ch_);
     break;
+  case '\n':
+    tok = new_token_(Token::NEWLINE, ch_);
+    break;
   case '#':
     tok.type = Token::COMMENT;
     tok.literal = read_comment_();
@@ -90,7 +93,7 @@ Token Lexer::new_token_(Token::token_type_t tok_type, const char &ch) {
 }
 
 void Lexer::skip_whitespace_() {
-  while (ch_ == 32 || (ch_ > 8 && ch_ < 14)) {
+  while (ch_ == 32 || (ch_ > 8 && ch_ < 10) || (ch_ > 10 && ch_ < 14)) {
     read_char_();
   }
 }

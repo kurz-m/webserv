@@ -39,6 +39,7 @@ public:
     RBRACE = (1 << 27),
     SEMICOLON = (1 << 28),
     COMMENT = (1 << 29),
+    NEWLINE = (1 << 30),
 
     // Block settings
     HTTP_SETTING = 0x00051800,

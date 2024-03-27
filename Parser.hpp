@@ -45,6 +45,7 @@ private:
   HttpBlock http_;
   size_t server_count_;
   size_t route_count_;
+  size_t line_count_;
 };
 
 #endif

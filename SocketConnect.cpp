@@ -115,10 +115,18 @@ void SocketConnect::send_response_() {
     // TODO: clear buffer by the bytes already sent and try again.
   } else {
     LOG_DEBUG("server: " + config_.server_name + " did send the full message");
-    request_ = HTTPRequest(request_.config_);
-    response_ = HTTPResponse(response_.config_);
-    status_ = ISocket::READY_RECV;
-    pollfd_.events = POLLIN;
+    if (response_.status_code_ == 413) {
+      request_ = HTTPRequest(request_.config_);
+      response_ = HTTPResponse(response_.config_);
+      // close this Socket because otherwise we will continue reading the request
+      // body of the old request. TODO: this closes the socket to quickly and shows an error in postman.
+      status_ = ISocket::CLOSED; 
+    } else {
+      request_ = HTTPRequest(request_.config_);
+      response_ = HTTPResponse(response_.config_);
+      status_ = ISocket::READY_RECV;
+      pollfd_.events = POLLIN;
+    }
   }
 }
 

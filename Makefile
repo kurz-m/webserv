@@ -107,4 +107,4 @@ test:
 	$(CXX) $(CXXFLAGS) -g Token.cpp Lexer.cpp test_lexer.cpp -o lexer.test
 
 test-parser:
-	$(CXX) $(CXXFLAGS) -g Token.cpp Lexer.cpp Parser.cpp HTTP.cpp test_parser.cpp -o parser.test
+	$(CXX) $(CXXFLAGS) -g Token.cpp Settings.cpp EventLogger.cpp Lexer.cpp Parser.cpp HTTP.cpp test_lexer.cpp -o parser.test

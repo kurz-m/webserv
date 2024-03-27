@@ -45,6 +45,7 @@ public:
     HTTP_SETTING = 0x00051800,
     SERVER_SETTING = 0x001F1F00,
     ROUTE_SETTING = 0x00100700,
+    RUN_PARSING = 0x0300000C,
   };
 
   token_type_t type;

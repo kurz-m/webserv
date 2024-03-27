@@ -11,6 +11,7 @@ std::map<int, std::string> HTTPBase::create_map_() {
   map[403] = "Forbidden";
   map[404] = "Not Found";
   map[500] = "Internal Server Error";
+  map[501] = "Not Implemented";
   return map;
 }
 
@@ -42,7 +43,9 @@ void HTTPBase::reset() {
   body_.clear();
 }
 
-std::string HTTPBase::create_status_html(int status_code) const {
+std::string
+HTTPBase::create_status_html(int status_code,
+                             const std::string &message /* = "" */) const {
   std::ostringstream oss;
 
   oss << status_code << " " << status_map_.at(status_code);
@@ -53,7 +56,7 @@ std::string HTTPBase::create_status_html(int status_code) const {
          "<body>"
          "<center><h1>" +
          oss.str() +
-         "</h1></center>"
+         "</h1><div>" + message + "</div></center>"
          "<hr><center>webserv by makurz and flauer</center>"
          "</body>"
          "</html>";

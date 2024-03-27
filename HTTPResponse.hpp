@@ -30,13 +30,14 @@ private:
   std::time_t cgi_timestamp_;
   std::vector<pid_t> killed_childs_;
 
-  void make_header_();
+  void make_header_(const std::vector<std::string> &extra =
+                        std::vector<std::string>());
   uint8_t check_uri_();
   void read_file_(std::ifstream &file);
 
   // HTTP Methods
-  ISocket::status get_method_(HTTPRequest& req);
-  ISocket::status post_method_();
+  ISocket::status get_method_(HTTPRequest &req);
+  ISocket::status post_method_(HTTPRequest& req);
   ISocket::status delete_method_();
 
   // cgi functionality
@@ -45,10 +46,8 @@ private:
   void create_pipe_(HTTPRequest &req);
   void read_child_pipe_();
 
-  template <typename T>
-  uint8_t check_list_dir_(const T &curr_conf);
-  template <typename T>
-  bool check_method_(const T &curr_conf, method_e method);
+  template <typename T> uint8_t check_list_dir_(const T &curr_conf);
+  template <typename T> bool check_method_(const T &curr_conf, method_e method);
   std::string create_list_dir_();
 
   static const int timeout_ = 10;

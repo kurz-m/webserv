@@ -12,6 +12,6 @@ enum method_e {
 };
 
 method_e method_to_enum(std::string& method);
-void print_method(int& method);
+const std::string print_method(const int& method);
 
 #endif

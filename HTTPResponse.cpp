@@ -2,6 +2,7 @@
 #include "EventLogger.hpp"
 #include "Settings.hpp"
 #include <algorithm>
+#include <cstdio>
 #include <cstring>
 #include <dirent.h>
 #include <fstream>
@@ -11,7 +12,6 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <cstdio>
 
 static const std::string proto_ = "HTTP/1.1";
 
@@ -98,7 +98,6 @@ uint8_t HTTPResponse::check_uri_() {
       (ends_with(endpoint, ".py") || ends_with(endpoint, ".php"))) {
     return CGI;
   }
-  // uri_ = root_ + uri_;
   if (stat((root_ + uri_).c_str(), &sb) < 0) {
     return FAIL;
   }
@@ -120,18 +119,23 @@ void HTTPResponse::read_file_(std::ifstream &file) {
                std::istreambuf_iterator<char>());
 }
 
-void HTTPResponse::make_header_() {
+void HTTPResponse::make_header_(const std::vector<std::string> &extra /*=
+                        std::vector<std::string>()*/) {
   std::ostringstream oss;
   oss << proto_ << " " << status_code_ << " " << status_map_.at(status_code_)
       << "\r\n";
   oss << "Content-Type: text/html\r\n";
   oss << "Content-Length: " << body_.length() << "\r\n";
+  std::vector<std::string>::const_iterator it;
+  for (it = extra.begin(); it != extra.end(); ++it) {
+    oss << *it << "\r\n";
+  }
   oss << "\r\n";
   buffer_ = oss.str();
   buffer_ += body_;
 }
 
-ISocket::status HTTPResponse::get_method_(HTTPRequest& req) {
+ISocket::status HTTPResponse::get_method_(HTTPRequest &req) {
   uint8_t mask = check_uri_();
   std::ifstream file;
   switch (mask) {
@@ -142,7 +146,6 @@ ISocket::status HTTPResponse::get_method_(HTTPRequest& req) {
     status_code_ = 200;
     break;
   case (DIRECTORY): // -> 403
-    // Return 403
     status_code_ = 403;
     body_.assign(create_status_html(status_code_));
     break;
@@ -170,45 +173,62 @@ ISocket::status HTTPResponse::get_method_(HTTPRequest& req) {
 ISocket::status HTTPResponse::delete_method_() {
   if (remove((root_ + uri_).c_str())) {
     status_code_ = 404;
+    body_.assign(create_status_html(status_code_, "Requested File not found!"));
   } else {
     status_code_ = 200;
+    body_.assign(create_status_html(status_code_, "File deleted"));
   }
-  body_.assign(create_status_html(status_code_));
   make_header_();
   return ISocket::READY_SEND;
 }
 
-ISocket::status HTTPResponse::post_method_() {
-  status_code_ = 403;
-  body_.assign(create_status_html(status_code_));
-  make_header_();
+ISocket::status HTTPResponse::post_method_(HTTPRequest& req) {
+  std::string filename = root_ + uri_;
+  if (access((filename).c_str(), F_OK) == 0) {
+    status_code_ = 303;
+    std::vector<std::string> extra;
+    extra.push_back("Location: " + uri_);
+    body_.assign(create_status_html(status_code_));
+    make_header_(extra);
+  } else {
+    std::ofstream file(filename.c_str());
+    if (!file.is_open()) {
+      status_code_ = 500;
+    } else {
+      status_code_ = 201;
+      file << req.body_;
+    }
+    body_.assign(create_status_html(status_code_));
+    make_header_();
+  }
   return ISocket::READY_SEND;
 }
 
 ISocket::status HTTPResponse::prepare_for_send(HTTPRequest &req) {
   uri_ = req.parsed_header_.at("URI");
+  LOG_INFO("Request Method: " + print_method(req.method_));
   const RouteBlock *route = config_.find(uri_);
   if (route) {
     if (!check_method_(*route, req.method_)) {
       req.method_ = UNKNOWN;
     }
   } else {
-    if(!check_method_(config_, req.method_)) {
+    if (!check_method_(config_, req.method_)) {
       req.method_ = UNKNOWN;
     }
   }
   switch (req.method_) {
-    case GET:
-      return get_method_(req);
-    case POST:
-      return post_method_();
-    case DELETE:
-      return delete_method_();
-    default:
-      status_code_ = 403;
-      body_.assign(create_status_html(status_code_));
-      make_header_();
-      return ISocket::READY_SEND;
+  case GET:
+    return get_method_(req);
+  case POST:
+    return post_method_(req);
+  case DELETE:
+    return delete_method_();
+  default:
+    status_code_ = 501;
+    body_.assign(create_status_html(status_code_));
+    make_header_();
+    return ISocket::READY_SEND;
   }
 }
 
@@ -351,7 +371,7 @@ void HTTPResponse::execute_(HTTPRequest &req) {
     argv[1] = const_cast<char *>(exec.c_str());
   } else {
     argv[0] = const_cast<char *>("exit");
-    argv[1] = const_cast<char*>("1");
+    argv[1] = const_cast<char *>("1");
   }
   argv[2] = NULL;
   LOG_DEBUG("Exec: " + exec);

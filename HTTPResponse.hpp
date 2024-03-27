@@ -33,6 +33,7 @@ private:
   void make_header_(const std::vector<std::string> &extra =
                         std::vector<std::string>());
   uint8_t check_uri_();
+  bool check_cgi();
   void read_file_(std::ifstream &file);
 
   // HTTP Methods

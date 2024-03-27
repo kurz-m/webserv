@@ -22,7 +22,6 @@ public:
 
 private:
   ISocket::status status_;
-  int status_code_;
   std::string root_;
   std::string uri_;
   pid_t cgi_pid_;

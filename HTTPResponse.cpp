@@ -17,7 +17,7 @@
 static const std::string proto_ = "HTTP/1.1";
 
 HTTPResponse::HTTPResponse(const ServerBlock &config)
-    : HTTPBase(config), status_(), status_code_(0), uri_(), cgi_pid_(),
+    : HTTPBase(config), status_(), uri_(), cgi_pid_(),
       child_pipe_(), cgi_timestamp_() {
   root_ = config_.root;
 }
@@ -34,14 +34,13 @@ HTTPResponse::~HTTPResponse() {
 }
 
 HTTPResponse::HTTPResponse(const HTTPResponse &cpy)
-    : HTTPBase(cpy), status_code_(cpy.status_code_), root_(cpy.root_),
+    : HTTPBase(cpy), root_(cpy.root_),
       uri_(cpy.uri_) {}
 
 HTTPResponse &HTTPResponse::operator=(const HTTPResponse &other) {
   HTTPBase::operator=(other);
   if (this != &other) {
     status_ = other.status_;
-    status_code_ = other.status_code_;
     root_ = other.root_;
     uri_ = other.uri_;
     cgi_pid_ = other.cgi_pid_;
@@ -152,6 +151,7 @@ void HTTPResponse::make_header_(const std::vector<std::string> &extra /*=
 }
 
 ISocket::status HTTPResponse::get_method_(HTTPRequest &req) {
+  uri_ = req.parsed_header_.at("URI");
   uint8_t mask = check_uri_();
   std::ifstream file;
   switch (mask) {
@@ -224,6 +224,12 @@ ISocket::status HTTPResponse::post_method_(HTTPRequest &req) {
 }
 
 ISocket::status HTTPResponse::prepare_for_send(HTTPRequest &req) {
+  if (req.body_.length() > config_.client_max_body_size) {
+    status_code_ = 413;
+    body_.assign(create_status_html(status_code_));
+    make_header_();
+    return ISocket::READY_SEND;
+  }
   uri_ = req.parsed_header_.at("URI");
   LOG_INFO("Request Method: " + print_method(req.method_));
   const RouteBlock *route = config_.find(uri_);

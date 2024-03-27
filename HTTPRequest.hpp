@@ -18,8 +18,9 @@ public:
 private:
   std::map<std::string, std::string> parsed_header_;
   method_e method_;
+  size_t tbr_;
 
-  friend class Socket;
+  friend class SocketConnect;
   friend class HTTPResponse;
 };
 

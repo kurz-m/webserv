@@ -85,6 +85,7 @@ bool SocketConnect::check_timeout_() const {
 
 void SocketConnect::receive_() {
   ssize_t n;
+  size_t tbr = 0;
   char buf[HTTPBase::MAX_BUFFER + 1] = {0};
   n = recv(pollfd_.fd, buf, HTTPBase::MAX_BUFFER, MSG_DONTWAIT);
   if (n < 0) {
@@ -95,12 +96,14 @@ void SocketConnect::receive_() {
     status_ = ISocket::CLOSED;
     return;
   }
-  // TODO: limit client max body size. maybe read header and body separately?
   while (n > 0) {
+    tbr += n;
     request_.buffer_ += buf;
-    std::memset(buf, 0, sizeof(buf));
+    std::memset(buf, 0, HTTPBase::MAX_BUFFER);
     n = recv(pollfd_.fd, buf, HTTPBase::MAX_BUFFER, MSG_DONTWAIT);
   }
+  request_.tbr_ = tbr;
+  LOG_DEBUG("received: " + request_.buffer_);
   timestamp_ = std::time(NULL);
   check_recv_();
 }
@@ -116,6 +119,7 @@ void SocketConnect::send_response_() {
     LOG_DEBUG("server: " + config_.server_name + " did not send the full message yet");
     status_ = ISocket::USEND;
     pollfd_.events = POLLOUT;
+    // TODO: clear buffer by the bytes already sent and try again.
   } else {
     LOG_DEBUG("server: " + config_.server_name + " did send the full message");
     request_ = HTTPRequest(request_.config_);
@@ -126,15 +130,8 @@ void SocketConnect::send_response_() {
 }
 
 void SocketConnect::check_recv_() {
-  if (request_.buffer_.find("\r\n\r\n") == std::string::npos) {
-    LOG_DEBUG("server: " + config_.server_name + " could not find the end of the header");
-    status_ = ISocket::URECV;
-  }
-  // TODO: check content length for finished body???
-  else {
-    LOG_DEBUG("server: " + config_.server_name + " is parsing the header");
-    status_ = request_.parse_header();
-  }
+  LOG_DEBUG("server: " + config_.server_name + " is parsing the header");
+  status_ = request_.parse_header();
   switch (status_) {
   case ISocket::PREPARE_SEND:
     pollfd_.events = POLLOUT;

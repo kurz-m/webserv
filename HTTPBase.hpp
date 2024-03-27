@@ -25,6 +25,7 @@ protected:
 
   std::string buffer_;
   std::string body_;
+  int status_code_;
 
   static std::map<int, std::string> create_map_();
   const static std::map<int, std::string> status_map_;

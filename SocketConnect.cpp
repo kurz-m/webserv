@@ -95,12 +95,7 @@ void SocketConnect::receive_() {
     status_ = ISocket::CLOSED;
     return;
   }
-  // TODO: limit client max body size. maybe read header and body separately?
-  while (n > 0) {
-    request_.buffer_ += buf;
-    std::memset(buf, 0, sizeof(buf));
-    n = recv(pollfd_.fd, buf, HTTPBase::MAX_BUFFER, MSG_DONTWAIT);
-  }
+  request_.buffer_ += buf;
   timestamp_ = std::time(NULL);
   check_recv_();
 }
@@ -127,10 +122,9 @@ void SocketConnect::send_response_() {
 
 void SocketConnect::check_recv_() {
   if (request_.buffer_.find("\r\n\r\n") == std::string::npos) {
-    LOG_DEBUG("server: " + config_.server_name + " could not find the end of the header");
+    LOG_DEBUG("server: " + config_.server_name + ": header incomplete");
     status_ = ISocket::URECV;
   }
-  // TODO: check content length for finished body???
   else {
     LOG_DEBUG("server: " + config_.server_name + " is parsing the header");
     status_ = request_.parse_header();

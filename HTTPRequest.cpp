@@ -26,8 +26,13 @@ HTTPRequest &HTTPRequest::operator=(const HTTPRequest &other) {
 }
 
 ISocket::status HTTPRequest::parse_header() {
-  body_ = buffer_.substr(buffer_.find("\r\n\r\n") + 4);
-  buffer_ = buffer_.substr(0, buffer_.find("\r\n\r\n"));
+  size_t end_of_header_pos = buffer_.find("\r\n\r\n");
+  if (end_of_header_pos == std::string::npos) {
+    LOG_DEBUG("Client did not send the complete content yet");
+    return ISocket::URECV;
+  }
+  body_ = buffer_.substr(end_of_header_pos + 4);
+  buffer_ = buffer_.substr(0, end_of_header_pos);
   std::istringstream iss(buffer_);
   std::string line;
   std::getline(iss, line);
@@ -48,13 +53,16 @@ ISocket::status HTTPRequest::parse_header() {
   }
   if (parsed_header_.find("Content-Length") == parsed_header_.end()) {
     parsed_header_.insert(std::make_pair("Content-Length", "0"));
-  } else {
-    size_t cont_len = std::atoi(parsed_header_.at("Content-Length").c_str());
-    if (cont_len > body_.length()) {
-      // URECV
-      LOG_DEBUG("Client did not send the complete content yet");
-      return ISocket::URECV;
-    }
+  }
+  size_t cont_len = std::atoi(parsed_header_.at("Content-Length").c_str());
+  if ((cont_len > 0 && cont_len > config_.client_max_body_size) ||
+      (cont_len == 0 && body_.length() >= config_.client_max_body_size)) {
+    status_code_ = 413;
+  }
+  if (cont_len > 0 && cont_len > body_.length()) {
+    // URECV
+    LOG_DEBUG("Client did not send the complete content yet");
+    return ISocket::URECV;
   }
   std::map<std::string, std::string>::iterator it;
   for (it = parsed_header_.begin(); it != parsed_header_.end(); ++it) {

@@ -84,6 +84,21 @@ bool ends_with(const std::string &str, const std::string &extension) {
   return std::equal(extension.rbegin(), extension.rend(), str.rbegin());
 }
 
+bool HTTPResponse::check_cgi() {
+  const RouteBlock *route = config_.find(uri_);
+  std::string endpoint;
+  std::string uri_stem;
+
+  uri_stem = uri_.substr(0, uri_.rfind('/'));
+  endpoint =
+      uri_.substr(uri_.rfind('/') + 1, uri_.rfind('?') - (uri_.rfind('/') + 1));
+
+  if (uri_stem.find("/cgi-bin") != std::string::npos &&
+      (ends_with(endpoint, ".py") || ends_with(endpoint, ".php"))) {
+    return true;
+  }
+}
+
 uint8_t HTTPResponse::check_uri_() {
   struct stat sb;
   const RouteBlock *route = config_.find(uri_);
@@ -183,6 +198,9 @@ ISocket::status HTTPResponse::delete_method_() {
 }
 
 ISocket::status HTTPResponse::post_method_(HTTPRequest& req) {
+  if (check_cgi()) {
+    return call_cgi_(req);
+  }
   std::string filename = root_ + uri_;
   if (access((filename).c_str(), F_OK) == 0) {
     status_code_ = 303;

@@ -11,6 +11,7 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <cstdio>
 
 static const std::string proto_ = "HTTP/1.1";
 
@@ -61,7 +62,7 @@ enum uri_state {
 template <typename T>
 uint8_t HTTPResponse::check_list_dir_(const T &curr_conf) {
   if (curr_conf.index.length() > 0) {
-    uri_ = root_ + "/" + curr_conf.index;
+    uri_ = "/" + curr_conf.index;
     return DIRECTORY | INDEX;
   }
   switch (curr_conf.autoindex) {
@@ -70,6 +71,11 @@ uint8_t HTTPResponse::check_list_dir_(const T &curr_conf) {
   default:
     return DIRECTORY;
   }
+}
+
+template <typename T>
+bool HTTPResponse::check_method_(const T &curr_conf, method_e method) {
+  return (method & curr_conf.allow) ? true : false;
 }
 
 bool ends_with(const std::string &str, const std::string &extension) {
@@ -92,8 +98,8 @@ uint8_t HTTPResponse::check_uri_() {
       (ends_with(endpoint, ".py") || ends_with(endpoint, ".php"))) {
     return CGI;
   }
-  uri_ = root_ + uri_;
-  if (stat(uri_.c_str(), &sb) < 0) {
+  // uri_ = root_ + uri_;
+  if (stat((root_ + uri_).c_str(), &sb) < 0) {
     return FAIL;
   }
   switch (sb.st_mode & S_IFMT) {
@@ -125,8 +131,7 @@ void HTTPResponse::make_header_() {
   buffer_ += body_;
 }
 
-ISocket::status HTTPResponse::prepare_for_send(HTTPRequest &req) {
-  uri_ = req.parsed_header_.at("URI");
+ISocket::status HTTPResponse::get_method_(HTTPRequest& req) {
   uint8_t mask = check_uri_();
   std::ifstream file;
   switch (mask) {
@@ -143,7 +148,7 @@ ISocket::status HTTPResponse::prepare_for_send(HTTPRequest &req) {
     break;
   case (DIRECTORY | INDEX): // -> index.html file
   case (FIL):               // -> send file
-    file.open(uri_.c_str());
+    file.open((root_ + uri_).c_str());
     if (file.is_open()) {
       status_code_ = 200;
       read_file_(file);
@@ -160,6 +165,51 @@ ISocket::status HTTPResponse::prepare_for_send(HTTPRequest &req) {
   LOG_DEBUG("Body: " + body_);
   make_header_();
   return ISocket::READY_SEND;
+}
+
+ISocket::status HTTPResponse::delete_method_() {
+  if (remove((root_ + uri_).c_str())) {
+    status_code_ = 404;
+  } else {
+    status_code_ = 200;
+  }
+  body_.assign(create_status_html(status_code_));
+  make_header_();
+  return ISocket::READY_SEND;
+}
+
+ISocket::status HTTPResponse::post_method_() {
+  status_code_ = 403;
+  body_.assign(create_status_html(status_code_));
+  make_header_();
+  return ISocket::READY_SEND;
+}
+
+ISocket::status HTTPResponse::prepare_for_send(HTTPRequest &req) {
+  uri_ = req.parsed_header_.at("URI");
+  const RouteBlock *route = config_.find(uri_);
+  if (route) {
+    if (!check_method_(*route, req.method_)) {
+      req.method_ = UNKNOWN;
+    }
+  } else {
+    if(!check_method_(config_, req.method_)) {
+      req.method_ = UNKNOWN;
+    }
+  }
+  switch (req.method_) {
+    case GET:
+      return get_method_(req);
+    case POST:
+      return post_method_();
+    case DELETE:
+      return delete_method_();
+    default:
+      status_code_ = 403;
+      body_.assign(create_status_html(status_code_));
+      make_header_();
+      return ISocket::READY_SEND;
+  }
 }
 
 bool HTTPResponse::check_cgi_timeout() {
@@ -367,7 +417,7 @@ inline bool compare_file(const FileInfo &a, const FileInfo &b) {
 std::string HTTPResponse::create_list_dir_() {
   std::vector<FileInfo> files;
   std::ostringstream oss;
-  DIR *dir = opendir(uri_.c_str());
+  DIR *dir = opendir((root_ + uri_).c_str());
   if (dir == NULL) {
     return oss.str();
   }
@@ -378,7 +428,7 @@ std::string HTTPResponse::create_list_dir_() {
     if (dir_name == ".") {
       continue;
     } else {
-      files.push_back(create_list_dir_entry(uri_, dir_name));
+      files.push_back(create_list_dir_entry((root_ + uri_), dir_name));
     }
   }
   std::sort(files.begin(), files.end(), compare_file);

@@ -146,8 +146,6 @@ void SocketConnect::check_recv_() {
   }
 }
 
-void SocketConnect::resolve_uri_() {}
-
 const char *SocketConnect::SendRecvError::what() const throw() {
   return "Send or Recv returned -1!";
 }

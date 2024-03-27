@@ -30,7 +30,6 @@ private:
   void respond_();
   void send_response_();
   void check_recv_();
-  void resolve_uri_();
   bool check_timeout_() const;
 
   HTTPRequest request_;

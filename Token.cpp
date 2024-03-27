@@ -27,21 +27,30 @@ const std::map<std::string, Token::token_type_t> Token::keyword_map =
 
 std::map<Token::token_type_t, std::string> Token::create_reverse() {
   std::map<Token::token_type_t, std::string> loc_map;
-  loc_map.insert(std::make_pair(HTTP, "http"));
-  loc_map.insert(std::make_pair(SERVER, "server"));
-  loc_map.insert(std::make_pair(LOCATION, "location"));
-  loc_map.insert(std::make_pair(SERVER_NAME, "server_name"));
-  loc_map.insert(std::make_pair(DEFAULT_TYPE, "default_type"));
-  loc_map.insert(std::make_pair(KEEPALIVE_TIMEOUT, "keepalive_timeout"));
-  loc_map.insert(std::make_pair(LISTEN, "listen"));
-  loc_map.insert(std::make_pair(CLIENT_MAX_BODY_SIZE, "client_max_body_size"));
-  loc_map.insert(std::make_pair(ROOT, "root"));
-  loc_map.insert(std::make_pair(AUTOINDEX, "autoindex"));
-  loc_map.insert(std::make_pair(ALLOW, "allow"));
-  loc_map.insert(std::make_pair(DENY, "deny"));
-  loc_map.insert(std::make_pair(TRUE, "on"));
-  loc_map.insert(std::make_pair(FALSE, "off"));
-  loc_map.insert(std::make_pair(INDEX, "index"));
+  loc_map.insert(std::make_pair(ILLEGAL, "ILLEGAL"));
+  loc_map.insert(std::make_pair(EF, "End Of File"));
+  loc_map.insert(std::make_pair(STRING, "STRING"));
+  loc_map.insert(std::make_pair(NUMBER, "NUMBER"));
+  loc_map.insert(std::make_pair(HTTP, "HTTP"));
+  loc_map.insert(std::make_pair(SERVER, "SERVER"));
+  loc_map.insert(std::make_pair(LOCATION, "LOCATION"));
+  loc_map.insert(std::make_pair(SERVER_NAME, "SERVER_NAME"));
+  loc_map.insert(std::make_pair(DEFAULT_TYPE, "DEFAULT_TYPE"));
+  loc_map.insert(std::make_pair(KEEPALIVE_TIMEOUT, "KEEPALIVE_TIMEOUT"));
+  loc_map.insert(std::make_pair(LISTEN, "LISTEN"));
+  loc_map.insert(std::make_pair(CLIENT_MAX_BODY_SIZE, "CLIENT_MAX_BODY_SIZE"));
+  loc_map.insert(std::make_pair(ROOT, "ROOT"));
+  loc_map.insert(std::make_pair(AUTOINDEX, "AUTOINDEX"));
+  loc_map.insert(std::make_pair(ALLOW, "ALLOW"));
+  loc_map.insert(std::make_pair(DENY, "DENY"));
+  loc_map.insert(std::make_pair(TRUE, "ON"));
+  loc_map.insert(std::make_pair(FALSE, "OFF"));
+  loc_map.insert(std::make_pair(INDEX, "INDEX"));
+  loc_map.insert(std::make_pair(LBRACE, "LBRACE"));
+  loc_map.insert(std::make_pair(RBRACE, "RBRACE"));
+  loc_map.insert(std::make_pair(SEMICOLON, "SEMICOLON"));
+  loc_map.insert(std::make_pair(COMMENT, "COMMENT"));
+  loc_map.insert(std::make_pair(NEWLINE, "NEWLINE"));
   return loc_map;
 }
 

@@ -47,6 +47,10 @@ HttpBlock &Parser::parse_config() {
   ++block_depth_;
   next_token_();
   next_token_();
+  if (expect_current_(Token::NEWLINE)) {
+    ++line_count_;
+    next_token_();
+  }
 
   while (!expect_peek_(Token::EF)) {
     if (expect_current_(Token::SERVER)) {
@@ -59,6 +63,10 @@ HttpBlock &Parser::parse_config() {
       continue;
     } else {
       throw std::invalid_argument("wrong syntax for config file");
+    }
+    if (expect_peek_(Token::NEWLINE)) {
+      ++line_count_;
+      next_token_();
     }
     next_token_();
   }
@@ -135,7 +143,7 @@ RouteBlock Parser::parse_routeblock_(const ServerBlock &server) {
 void Parser::parse_http_settings_(HttpBlock &http) {
   Token tok = current_token_;
   next_token_();
-  while (!expect_current_(Token::SEMICOLON)) {
+  while (current_token_.type & Token::RUN_PARSING) {
     switch (tok.type) {
     case Token::CLIENT_MAX_BODY_SIZE:
       http.client_max_body_size = parse_int_value_();
@@ -152,7 +160,18 @@ void Parser::parse_http_settings_(HttpBlock &http) {
     default:
       throw std::invalid_argument("unknown setting for http block provided");
     }
+    if (expect_peek_(Token::NEWLINE)) {
+      ++line_count_;
+      next_token_();
+    }
     next_token_();
+  }
+  if (!expect_current_(Token::SEMICOLON)) {
+    std::ostringstream oss;
+    oss << "Syntax error in line " << line_count_
+        << ". Expected Token::SEMICOLON, got Token::"
+        << Token::reverse_map.at(current_token_.type);
+    throw std::invalid_argument(oss.str());
   }
 }
 

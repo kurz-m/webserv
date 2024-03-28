@@ -224,7 +224,8 @@ ISocket::status HTTPResponse::post_method_(HTTPRequest &req) {
 }
 
 ISocket::status HTTPResponse::prepare_for_send(HTTPRequest &req) {
-  if (req.body_.length() > config_.client_max_body_size) {
+  size_t body_size = req.tbr_ - req.header_.length();
+  if (body_size > config_.client_max_body_size) {
     status_code_ = 413;
     body_.assign(create_status_html(status_code_));
     make_header_();

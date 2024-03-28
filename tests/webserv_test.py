@@ -2,8 +2,10 @@ import subprocess
 import requests
 import pytest
 import signal
+import time
+from threading import Thread
 from pathlib import Path
-from typing import Generator, Any
+from typing import Generator, Any, List
 
 
 @pytest.fixture(scope="module")
@@ -39,3 +41,23 @@ def test_large_body(get_webserv_backend) -> None:
 def test_cgi(get_webserv_backend) -> None:
   res = requests.get("http://localhost:8080/cgi-bin/test.py")
   assert res.status_code == 200
+
+def test_stress(get_webserv_backend) -> None:
+  global running
+  running = True
+  
+  def test_worker() -> None:
+    global running
+    while running:
+       res = requests.get("http://localhost:8080/")
+       assert res.status_code == 200
+  
+  threads: List[Thread] = []
+  for i in range(200):
+    thread_ = Thread(target=test_worker)
+    thread_.start()
+    threads.append(thread_)
+  time.sleep(30)
+  running = False
+  for thread in threads:
+    thread.join()

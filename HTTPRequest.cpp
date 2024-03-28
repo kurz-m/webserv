@@ -2,18 +2,20 @@
 #include "EventLogger.hpp"
 #include "Socket.hpp"
 #include <cstdlib>
+#include <cstring>
 #include <iostream>
 #include <sstream>
 #include <string>
-#include <cstring>
 
 HTTPRequest::HTTPRequest(const ServerBlock &config)
-    : HTTPBase(config), parsed_header_(), method_(UNKNOWN) {}
+    : HTTPBase(config), parsed_header_(), method_(UNKNOWN), tbr_(0),
+      header_parsed_(false) {}
 
 HTTPRequest::~HTTPRequest() {}
 
 HTTPRequest::HTTPRequest(const HTTPRequest &cpy)
-    : HTTPBase(cpy), parsed_header_(), method_(UNKNOWN) {
+    : HTTPBase(cpy), parsed_header_(), method_(UNKNOWN), tbr_(0),
+      header_parsed_(false) {
   *this = cpy;
 }
 
@@ -22,41 +24,45 @@ HTTPRequest &HTTPRequest::operator=(const HTTPRequest &other) {
   if (this != &other) {
     parsed_header_ = other.parsed_header_;
     method_ = other.method_;
+    tbr_ = other.tbr_;
+    header_parsed_ = other.header_parsed_;
   }
   return *this;
 }
 
 ISocket::status HTTPRequest::parse_header() {
-  size_t end_of_header_pos = buffer_.find("\r\n\r\n");
-  if (end_of_header_pos == std::string::npos) {
-    LOG_DEBUG("server: " + config_.server_name + ": header incomplete");
-    return ISocket::URECV;
-  }
-  body_ = buffer_.substr(end_of_header_pos + 4);
-  buffer_ = buffer_.substr(0, end_of_header_pos);
-  std::istringstream iss(buffer_);
-  std::string line;
-  std::getline(iss, line);
-  std::istringstream new_iss(line);
-  line.erase(line.find("\r"));
-  std::string method;
-  new_iss >> method;
-  method_ = method_to_enum(method);
-  new_iss >> parsed_header_["URI"] >> parsed_header_["PROTOCOL"];
-  while (std::getline(iss, line)) {
-    size_t pos = line.find(":");
-    if (pos == std::string::npos) {
-      continue;
+  if (!header_parsed_) {
+    size_t end_of_header_pos = buffer_.find("\r\n\r\n");
+    if (end_of_header_pos == std::string::npos) {
+      LOG_DEBUG("server: " + config_.server_name + ": header incomplete");
+      return ISocket::URECV;
     }
-    std::string key = line.substr(0, pos);
-    std::string value = line.substr(pos + 1);
-    parsed_header_.insert(std::make_pair(key, value));
-  }
-  if (parsed_header_.find("Content-Length") == parsed_header_.end()) {
-    parsed_header_.insert(std::make_pair("Content-Length", "0"));
+    header_ = buffer_.substr(0, end_of_header_pos + 4);
+    std::istringstream iss(header_);
+    std::string line;
+    std::getline(iss, line);
+    std::istringstream new_iss(line);
+    line.erase(line.find("\r"));
+    std::string method;
+    new_iss >> method;
+    method_ = method_to_enum(method);
+    new_iss >> parsed_header_["URI"] >> parsed_header_["PROTOCOL"];
+    while (std::getline(iss, line)) {
+      size_t pos = line.find(":");
+      if (pos == std::string::npos) {
+        continue;
+      }
+      std::string key = line.substr(0, pos);
+      std::string value = line.substr(pos + 1);
+      parsed_header_.insert(std::make_pair(key, value));
+    }
+    if (parsed_header_.find("Content-Length") == parsed_header_.end()) {
+      parsed_header_.insert(std::make_pair("Content-Length", "0"));
+    }
+    header_parsed_ = true;
   }
   size_t cont_len = std::atoi(parsed_header_.at("Content-Length").c_str());
-  if (cont_len > 0 && cont_len > (tbr_ - end_of_header_pos + 4)) {
+  if (cont_len > 0 && cont_len > (tbr_ - header_.length())) {
     LOG_DEBUG("server: " + config_.server_name + ": body incomplete");
     return ISocket::URECV;
   }

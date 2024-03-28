@@ -11,6 +11,7 @@ enum method_e {
     UNKNOWN = (1 << 4),
 };
 
+
 method_e method_to_enum(std::string& method);
 const std::string print_method(const int& method);
 

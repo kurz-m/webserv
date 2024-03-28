@@ -19,17 +19,18 @@ std::map<int, std::string> create_map_() {
 
 std::map<std::string, std::string> create_mimetype_map() {
   std::map<std::string, std::string> map;
-  map[".aac"] = "audio/aac";
-  map[".html"] = "text/html";
-  map[".jpg"] = "image/jpeg";
-  map[".jpeg"] = "image/jpeg";
-  map[".json"] = "application/json";
-  map[".png"] = "image/png";
-  map[".pdf"] = "application/pdf";
+  map[".html"]  = "text/html";
+  map[".txt"]   = "text/plain";
+  map[".jpg"]   = "image/jpeg";
+  map[".jpeg"]  = "image/jpeg";
+  map[".png"]   = "image/png";
+  map[".pdf"]   = "application/pdf";
+  map[".json"]  = "application/json";
+  map[".aac"]   = "audio/aac";
+  return map;
 }
 
-const std::map<int, std::string> HTTPBase::status_map_ =
-    create_map_();
+const std::map<int, std::string> HTTPBase::status_map_ = create_map_();
 
 const std::map<std::string, std::string> HTTPBase::mime_map_ =
     create_mimetype_map();

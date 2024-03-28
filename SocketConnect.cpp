@@ -85,7 +85,6 @@ bool SocketConnect::check_timeout_() const {
 
 void SocketConnect::receive_() {
   ssize_t n;
-  size_t tbr = 0;
   char buf[HTTPBase::MAX_BUFFER + 1] = {0};
   n = recv(pollfd_.fd, buf, HTTPBase::MAX_BUFFER, MSG_DONTWAIT);
   if (n < 0) {
@@ -97,12 +96,12 @@ void SocketConnect::receive_() {
     return;
   }
   while (n > 0) {
-    tbr += n;
-    request_.buffer_ += buf;
+    request_.tbr_ += n;
+    // request_.buffer_.resize(request_.tbr_);
+    request_.buffer_ += std::string().assign(buf, HTTPBase::MAX_BUFFER);
     std::memset(buf, 0, HTTPBase::MAX_BUFFER);
     n = recv(pollfd_.fd, buf, HTTPBase::MAX_BUFFER, MSG_DONTWAIT);
   }
-  request_.tbr_ = tbr;
   LOG_DEBUG("received: " + request_.buffer_);
   timestamp_ = std::time(NULL);
   check_recv_();

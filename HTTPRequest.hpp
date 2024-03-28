@@ -19,6 +19,7 @@ private:
   std::map<std::string, std::string> parsed_header_;
   method_e method_;
   size_t tbr_;
+  bool header_parsed_;
 
   friend class SocketConnect;
   friend class HTTPResponse;

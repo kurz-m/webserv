@@ -21,10 +21,10 @@ const std::map<int, std::string> HTTPBase::status_map_ =
     HTTPBase::create_map_();
 
 HTTPBase::HTTPBase(const ServerBlock &config)
-    : buffer_(), body_(), status_code_(), config_(config) {}
+    : buffer_(), body_(), header_(), status_code_(), config_(config) {}
 
 HTTPBase::HTTPBase(const HTTPBase &cpy)
-    : buffer_(), body_(), status_code_(), config_(cpy.config_) {
+    : buffer_(), body_(), header_(), status_code_(), config_(cpy.config_) {
   *this = cpy;
 }
 
@@ -32,6 +32,7 @@ HTTPBase &HTTPBase::operator=(const HTTPBase &other) {
   if (this != &other) {
     buffer_ = other.buffer_;
     body_ = other.body_;
+    header_ = other.header_;
     status_code_ = other.status_code_;
   }
   return *this;
@@ -44,6 +45,7 @@ void HTTPBase::parse_buffer_() {}
 void HTTPBase::reset() {
   buffer_.clear();
   body_.clear();
+  header_.clear();
   status_code_ = 0;
 }
 

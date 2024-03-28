@@ -41,7 +41,9 @@ webserv
 .DS_Store
 helo/
 
-# python pyc files
+# python files
+.venv/
+*/__pycache__/
 *.pyc
 
 # log files

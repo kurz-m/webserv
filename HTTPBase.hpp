@@ -28,8 +28,8 @@ protected:
   std::string header_;
   int status_code_;
 
-  static std::map<int, std::string> create_map_();
   const static std::map<int, std::string> status_map_;
+  const static std::map<std::string, std::string> mime_map_;
   const static size_t MAX_BUFFER = 1024;
   const ServerBlock &config_; // all settings from config
 

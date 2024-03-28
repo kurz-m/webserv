@@ -1,7 +1,7 @@
 #include "HTTPBase.hpp"
 #include <sstream>
 
-std::map<int, std::string> HTTPBase::create_map_() {
+std::map<int, std::string> create_map_() {
   std::map<int, std::string> map;
   map[200] = "OK";
   map[201] = "Created";
@@ -17,8 +17,22 @@ std::map<int, std::string> HTTPBase::create_map_() {
   return map;
 }
 
+std::map<std::string, std::string> create_mimetype_map() {
+  std::map<std::string, std::string> map;
+  map[".aac"] = "audio/aac";
+  map[".html"] = "text/html";
+  map[".jpg"] = "image/jpeg";
+  map[".jpeg"] = "image/jpeg";
+  map[".json"] = "application/json";
+  map[".png"] = "image/png";
+  map[".pdf"] = "application/pdf";
+}
+
 const std::map<int, std::string> HTTPBase::status_map_ =
-    HTTPBase::create_map_();
+    create_map_();
+
+const std::map<std::string, std::string> HTTPBase::mime_map_ =
+    create_mimetype_map();
 
 HTTPBase::HTTPBase(const ServerBlock &config)
     : buffer_(), body_(), header_(), status_code_(), config_(config) {}
@@ -61,8 +75,8 @@ HTTPBase::create_status_html(int status_code,
          "</title></head>"
          "<body>"
          "<center><h1>" +
-         oss.str() +
-         "</h1><div>" + message + "</div></center>"
+         oss.str() + "</h1><div>" + message +
+         "</div></center>"
          "<hr><center>webserv by makurz and flauer</center>"
          "</body>"
          "</html>";

@@ -30,7 +30,7 @@ protected:
 
   const static std::map<int, std::string> status_map_;
   const static std::map<std::string, std::string> mime_map_;
-  const static size_t MAX_BUFFER = 1024;
+  const static size_t MAX_BUFFER = 1 * 1024 * 1024;
   const ServerBlock &config_; // all settings from config
 
   friend class SocketConnect;

@@ -87,20 +87,13 @@ void SocketConnect::receive_() {
   ssize_t n;
   char buf[HTTPBase::MAX_BUFFER + 1] = {0};
   n = recv(pollfd_.fd, buf, HTTPBase::MAX_BUFFER, MSG_DONTWAIT);
-  if (n < 0) {
-    std::cerr << "recv failed!" << std::endl;
-    throw std::exception();
-  }
-  if (n == 0) {
+  if (n <= 0) {
+    LOG_WARNING("Receive Failed!")
     status_ = ISocket::CLOSED;
     return;
   }
-  while (n > 0) {
-    request_.tbr_ += n;
-    request_.buffer_.append(buf, static_cast<size_t>(n));
-    std::memset(buf, 0, HTTPBase::MAX_BUFFER);
-    n = recv(pollfd_.fd, buf, HTTPBase::MAX_BUFFER, MSG_DONTWAIT);
-  }
+  request_.tbr_ += n;
+  request_.buffer_.append(buf, static_cast<size_t>(n));
   // LOG_DEBUG("received: " + request_.buffer_);
   timestamp_ = std::time(NULL);
   check_recv_();

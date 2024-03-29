@@ -29,12 +29,17 @@
 #include <fstream>
 #include <string>
 
-enum log_e { DEBUG, INFO, WARNING, ERROR };
+enum log_e {
+  DEBUG,   /**<Level 0: Debug information in development*/
+  INFO,    /**<Level 1: General information*/
+  WARNING, /**<Level 2: Warning messages for non-critical events*/
+  ERROR,   /**<Level 3: Error messages for error in setup*/
+};
 
 class EventLogger {
 public:
   EventLogger();
-  EventLogger(const std::string& filename);
+  EventLogger(const std::string &filename);
   ~EventLogger();
 
   void log(const std::string &fmt, const int line, const char *file,

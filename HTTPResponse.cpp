@@ -157,6 +157,11 @@ void HTTPResponse::make_header_(const std::vector<std::string> &extra /*=
 std::string HTTPResponse::get_mime_type_() {
   std::string extension;
   try {
+    extension = uri_.substr(0, uri_.find('?'));
+  } catch (std::exception &e) {
+    extension = uri_;
+  }
+  try {
     extension = uri_.substr(uri_.rfind('.'));
   } catch (std::exception &e) {
     return "text/html";

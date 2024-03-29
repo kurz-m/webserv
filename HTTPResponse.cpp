@@ -260,7 +260,8 @@ ISocket::status HTTPResponse::post_method_(HTTPRequest &req) {
       status_code_ = 500;
     } else {
       status_code_ = 201;
-      file << req.body_;
+      file.write(req.body_.c_str(), req.body_.size());
+      // file << req.body_;
     }
     body_.assign(create_status_html(status_code_));
     make_header_();

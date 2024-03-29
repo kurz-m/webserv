@@ -97,18 +97,18 @@ void SocketConnect::receive_() {
   }
   while (n > 0) {
     request_.tbr_ += n;
-    // request_.buffer_.resize(request_.tbr_);
-    request_.buffer_ += std::string().assign(buf, HTTPBase::MAX_BUFFER);
+
+    request_.buffer_.append(buf, static_cast<size_t>(n));
     std::memset(buf, 0, HTTPBase::MAX_BUFFER);
     n = recv(pollfd_.fd, buf, HTTPBase::MAX_BUFFER, MSG_DONTWAIT);
   }
-  LOG_DEBUG("received: " + request_.buffer_);
+  // LOG_DEBUG("received: " + request_.buffer_);
   timestamp_ = std::time(NULL);
   check_recv_();
 }
 
 void SocketConnect::send_response_() {
-  LOG_DEBUG("Response Buffer: " + response_.buffer_);
+  // LOG_DEBUG("Response Buffer: " + response_.buffer_);
   ssize_t num_bytes = send(pollfd_.fd, response_.buffer_.c_str(),
                            response_.buffer_.size(), MSG_DONTWAIT);
   if (num_bytes < 0) {

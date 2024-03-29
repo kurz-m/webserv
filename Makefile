@@ -42,6 +42,8 @@ LDFLAGS :=
 
 ifeq ($(DEBUG), 1)
 	CXXFLAGS += -g
+else
+	CXXFLAGS += -O3
 endif
 
 ifeq ($(LOG_LEVEL),)

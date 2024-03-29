@@ -489,9 +489,13 @@ static inline FileInfo create_list_dir_entry(const std::string &root,
                                              const std::string &path) {
   FileInfo file;
   std::string full_path = root + uri + "/" + path;
+  std::string link_href = uri + "/" + path;
+  if (uri == "/") {
+    link_href = uri + path;
+  }
   std::ostringstream oss;
   char m_time[30] = {0};
-  oss << "<tr><td><a href=\"" << uri + "/" + path << "\">" << path
+  oss << "<tr><td><a href=\"" << link_href << "\">" << path
       << "</a></td><td>";
   struct stat sb;
   if (stat(full_path.c_str(), &sb) < 0) {

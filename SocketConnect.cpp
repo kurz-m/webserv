@@ -97,7 +97,6 @@ void SocketConnect::receive_() {
   }
   while (n > 0) {
     request_.tbr_ += n;
-
     request_.buffer_.append(buf, static_cast<size_t>(n));
     std::memset(buf, 0, HTTPBase::MAX_BUFFER);
     n = recv(pollfd_.fd, buf, HTTPBase::MAX_BUFFER, MSG_DONTWAIT);

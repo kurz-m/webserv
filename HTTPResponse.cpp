@@ -18,7 +18,7 @@ static const std::string proto_ = "HTTP/1.1";
 
 HTTPResponse::HTTPResponse(const ServerBlock &config)
     : HTTPBase(config), status_(), uri_(), cgi_pid_(), child_pipe_(),
-      cgi_timestamp_(), killed_childs_() /*, header_map_() */ {
+      cgi_timestamp_(), killed_childs_(), mime_type_() {
   root_ = config_.root;
 }
 
@@ -36,7 +36,7 @@ HTTPResponse::~HTTPResponse() {
 HTTPResponse::HTTPResponse(const HTTPResponse &cpy)
     : HTTPBase(cpy), root_(cpy.root_), uri_(cpy.uri_), cgi_pid_(cpy.cgi_pid_),
       child_pipe_(cpy.child_pipe_), cgi_timestamp_(cpy.cgi_timestamp_),
-      killed_childs_(cpy.killed_childs_) /*, header_map_(cpy.header_map_) */ {}
+      killed_childs_(cpy.killed_childs_), mime_type_(cpy.mime_type_) {}
 
 HTTPResponse &HTTPResponse::operator=(const HTTPResponse &other) {
   HTTPBase::operator=(other);
@@ -48,7 +48,7 @@ HTTPResponse &HTTPResponse::operator=(const HTTPResponse &other) {
     child_pipe_ = other.child_pipe_;
     cgi_timestamp_ = other.cgi_timestamp_;
     killed_childs_ = other.killed_childs_;
-    // header_map_ = other.header_map_;
+    mime_type_ = other.mime_type_;
   }
   return *this;
 }
@@ -133,17 +133,12 @@ uint8_t HTTPResponse::check_uri_() {
   return FAIL;
 }
 
-// void HTTPResponse::read_file_(std::ifstream &file) {
-//   body_.assign(std::istreambuf_iterator<char>(file),
-//                std::istreambuf_iterator<char>());
-// }
-
 void HTTPResponse::make_header_(const std::vector<std::string> &extra /*=
                         std::vector<std::string>()*/) {
   std::ostringstream oss;
   oss << proto_ << " " << status_code_ << " " << status_map_.at(status_code_)
       << "\r\n";
-  oss << "Content-Type: " << get_mime_type_() << "\r\n";
+  oss << "Content-Type: " << mime_type_ << "\r\n";
   oss << "Content-Length: " << body_.length() << "\r\n";
   std::vector<std::string>::const_iterator it;
   for (it = extra.begin(); it != extra.end(); ++it) {
@@ -177,26 +172,16 @@ std::string HTTPResponse::get_mime_type_() {
 }
 
 void HTTPResponse::read_file_() {
-  std::ifstream file((root_ + uri_).c_str());
-  if (file.is_open()) {
-    status_code_ = 200;
-    body_.assign(std::istreambuf_iterator<char>(file),
-                 std::istreambuf_iterator<char>());
-  } else {
-    status_code_ = 404;
-    body_.assign(create_status_html(status_code_));
-  }
-}
-
-void HTTPResponse::read_file_binary_() {
   LOG_DEBUG((root_ + uri_))
   std::ifstream file((root_ + uri_).c_str(), std::ios_base::binary);
   std::ostringstream oss;
   if (!file.good()) {
     status_code_ = 404;
     body_.assign(create_status_html(status_code_));
+    mime_type_ = "text/html";
     return;
   }
+  mime_type_ = get_mime_type_();
   oss << file.rdbuf();
   body_ = oss.str();
   status_code_ = 200;
@@ -212,18 +197,21 @@ ISocket::status HTTPResponse::get_method_(HTTPRequest &req) {
   case (DIRECTORY | AUTO): // -> list dir
     body_ = create_list_dir_();
     status_code_ = 200;
+    mime_type_ = "text/html";
     break;
   case (DIRECTORY): // -> 403
     status_code_ = 403;
     body_.assign(create_status_html(status_code_));
+    mime_type_ = "text/html";
     break;
   case (DIRECTORY | INDEX): // -> index.html file
   case (FIL):               // -> send file
-    read_file_binary_();
+    read_file_();
     break;
   case (FAIL): // -> 404
     status_code_ = 404;
     body_.assign(create_status_html(status_code_));
+    mime_type_ = "text/html";
     break;
   }
   LOG_DEBUG("Body: " + body_);
@@ -239,6 +227,7 @@ ISocket::status HTTPResponse::delete_method_() {
     status_code_ = 200;
     body_.assign(create_status_html(status_code_, "File deleted"));
   }
+  mime_type_ = "text/html";
   make_header_();
   return ISocket::READY_SEND;
 }
@@ -253,6 +242,7 @@ ISocket::status HTTPResponse::post_method_(HTTPRequest &req) {
     std::vector<std::string> extra;
     extra.push_back("Location: " + uri_);
     body_.assign(create_status_html(status_code_));
+    mime_type_ = "text/html";
     make_header_(extra);
   } else {
     std::ofstream file(filename.c_str());
@@ -264,6 +254,7 @@ ISocket::status HTTPResponse::post_method_(HTTPRequest &req) {
       // file << req.body_;
     }
     body_.assign(create_status_html(status_code_));
+    mime_type_ = "text/html";
     make_header_();
   }
   return ISocket::READY_SEND;
@@ -274,6 +265,7 @@ ISocket::status HTTPResponse::prepare_for_send(HTTPRequest &req) {
   if (body_size > config_.client_max_body_size) {
     status_code_ = 413;
     body_.assign(create_status_html(status_code_));
+    mime_type_ = "text/html";
     make_header_();
     return ISocket::READY_SEND;
   }
@@ -282,11 +274,11 @@ ISocket::status HTTPResponse::prepare_for_send(HTTPRequest &req) {
   const RouteBlock *route = config_.find(uri_);
   if (route) {
     if (!check_method_(*route, req.method_)) {
-      req.method_ = UNKNOWN;
+      req.method_ = FORBIDDEN;
     }
   } else {
     if (!check_method_(config_, req.method_)) {
-      req.method_ = UNKNOWN;
+      req.method_ = FORBIDDEN;
     }
   }
   switch (req.method_) {
@@ -296,9 +288,16 @@ ISocket::status HTTPResponse::prepare_for_send(HTTPRequest &req) {
     return post_method_(req);
   case DELETE:
     return delete_method_();
+  case FORBIDDEN:
+    status_code_ = 403;
+    body_.assign(create_status_html(status_code_));
+    mime_type_ = "text/html";
+    make_header_();
+    return ISocket::READY_SEND;
   default:
     status_code_ = 501;
     body_.assign(create_status_html(status_code_));
+    mime_type_ = "text/html";
     make_header_();
     return ISocket::READY_SEND;
   }
@@ -313,11 +312,13 @@ ISocket::status HTTPResponse::call_cgi_(HTTPRequest &req) {
   if (access((root_ + exec).c_str(), F_OK) != 0) {
     status_code_ = 404;
     body_.assign(create_status_html(status_code_));
+    mime_type_ = "text/html";
     make_header_();
     return ISocket::READY_SEND;
   } else if (access((root_ + exec).c_str(), X_OK) != 0) {
     status_code_ = 403;
     body_.assign(create_status_html(status_code_));
+    mime_type_ = "text/html";
     make_header_();
     return ISocket::READY_SEND;
   }
@@ -337,17 +338,20 @@ ISocket::status HTTPResponse::check_child_status() {
   } else if (pid_check < 0) {
     status_code_ = 500;
     body_.assign(create_status_html(status_code_));
+    mime_type_ = "text/html";
     make_header_();
     return ISocket::READY_SEND;
   } else {
     if (WIFEXITED(stat_loc)) {
       status_code_ = 200;
       read_child_pipe_();
+      mime_type_ = "text/html";
       LOG_DEBUG(buffer_)
       make_header_();
     } else {
       status_code_ = 500;
       body_.assign(create_status_html(status_code_));
+      mime_type_ = "text/html";
       make_header_();
     }
     return ISocket::READY_SEND;
@@ -367,6 +371,7 @@ ISocket::status HTTPResponse::kill_child() {
   cgi_pid_ = 0;
   status_code_ = 500;
   body_ = create_status_html(500);
+  mime_type_ = "text/html";
   make_header_();
   return ISocket::READY_SEND;
 }

@@ -17,8 +17,8 @@
 static const std::string proto_ = "HTTP/1.1";
 
 HTTPResponse::HTTPResponse(const ServerBlock &config)
-    : HTTPBase(config), status_(), uri_(), cgi_pid_(),
-      child_pipe_(), cgi_timestamp_() {
+    : HTTPBase(config), status_(), uri_(), cgi_pid_(), child_pipe_(),
+      cgi_timestamp_() {
   root_ = config_.root;
 }
 
@@ -34,8 +34,7 @@ HTTPResponse::~HTTPResponse() {
 }
 
 HTTPResponse::HTTPResponse(const HTTPResponse &cpy)
-    : HTTPBase(cpy), root_(cpy.root_),
-      uri_(cpy.uri_) {}
+    : HTTPBase(cpy), root_(cpy.root_), uri_(cpy.uri_) {}
 
 HTTPResponse &HTTPResponse::operator=(const HTTPResponse &other) {
   HTTPBase::operator=(other);
@@ -50,13 +49,14 @@ HTTPResponse &HTTPResponse::operator=(const HTTPResponse &other) {
   return *this;
 }
 
+/* Enum for defining how to handle the incoming request URI */
 enum uri_state {
-  DIRECTORY = (1 << 0),
-  FIL = (1 << 1),
-  FAIL = (1 << 2),
-  AUTO = (1 << 3),
-  INDEX = (1 << 4),
-  CGI = (1 << 5),
+  DIRECTORY = (1 << 0), /**<URI is pointing to a directory*/
+  FIL = (1 << 1),       /**<URI is pointing to a file*/
+  FAIL = (1 << 2),      /**<URI is pointing to a non-existing file*/
+  AUTO = (1 << 3),      /**<Autoindex is set to on in config file*/
+  INDEX = (1 << 4),     /**<Indexfile is set in the config file*/
+  CGI = (1 << 5),       /**<URI is pointing to a cgi file*/
 };
 
 template <typename T>

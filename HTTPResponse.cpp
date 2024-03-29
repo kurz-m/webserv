@@ -18,7 +18,7 @@ static const std::string proto_ = "HTTP/1.1";
 
 HTTPResponse::HTTPResponse(const ServerBlock &config)
     : HTTPBase(config), status_(), uri_(), cgi_pid_(), child_pipe_(),
-      cgi_timestamp_() {
+      cgi_timestamp_(), killed_childs_() /*, header_map_() */ {
   root_ = config_.root;
 }
 
@@ -34,7 +34,9 @@ HTTPResponse::~HTTPResponse() {
 }
 
 HTTPResponse::HTTPResponse(const HTTPResponse &cpy)
-    : HTTPBase(cpy), root_(cpy.root_), uri_(cpy.uri_) {}
+    : HTTPBase(cpy), root_(cpy.root_), uri_(cpy.uri_), cgi_pid_(cpy.cgi_pid_),
+      child_pipe_(cpy.child_pipe_), cgi_timestamp_(cpy.cgi_timestamp_),
+      killed_childs_(cpy.killed_childs_) /*, header_map_(cpy.header_map_) */ {}
 
 HTTPResponse &HTTPResponse::operator=(const HTTPResponse &other) {
   HTTPBase::operator=(other);
@@ -45,6 +47,8 @@ HTTPResponse &HTTPResponse::operator=(const HTTPResponse &other) {
     cgi_pid_ = other.cgi_pid_;
     child_pipe_ = other.child_pipe_;
     cgi_timestamp_ = other.cgi_timestamp_;
+    killed_childs_ = other.killed_childs_;
+    // header_map_ = other.header_map_;
   }
   return *this;
 }
@@ -129,17 +133,17 @@ uint8_t HTTPResponse::check_uri_() {
   return FAIL;
 }
 
-void HTTPResponse::read_file_(std::ifstream &file) {
-  body_.assign(std::istreambuf_iterator<char>(file),
-               std::istreambuf_iterator<char>());
-}
+// void HTTPResponse::read_file_(std::ifstream &file) {
+//   body_.assign(std::istreambuf_iterator<char>(file),
+//                std::istreambuf_iterator<char>());
+// }
 
 void HTTPResponse::make_header_(const std::vector<std::string> &extra /*=
                         std::vector<std::string>()*/) {
   std::ostringstream oss;
   oss << proto_ << " " << status_code_ << " " << status_map_.at(status_code_)
       << "\r\n";
-  oss << "Content-Type: text/html\r\n";
+  oss << "Content-Type: " << get_mime_type_() << "\r\n";
   oss << "Content-Length: " << body_.length() << "\r\n";
   std::vector<std::string>::const_iterator it;
   for (it = extra.begin(); it != extra.end(); ++it) {
@@ -150,10 +154,52 @@ void HTTPResponse::make_header_(const std::vector<std::string> &extra /*=
   buffer_ += body_;
 }
 
+std::string HTTPResponse::get_mime_type_() {
+  std::string extension;
+  try {
+    extension = uri_.substr(uri_.rfind('.'));
+  } catch (std::exception &e) {
+    return "text/html";
+  }
+  std::string ret;
+  try {
+    ret = mime_map_.at(extension);
+  } catch (std::out_of_range &e) {
+    // default for unknown types
+    ret = "application/octet-stream";
+  }
+  return ret;
+}
+
+void HTTPResponse::read_file_() {
+  std::ifstream file((root_ + uri_).c_str());
+  if (file.is_open()) {
+    status_code_ = 200;
+    body_.assign(std::istreambuf_iterator<char>(file),
+                 std::istreambuf_iterator<char>());
+  } else {
+    status_code_ = 404;
+    body_.assign(create_status_html(status_code_));
+  }
+}
+
+void HTTPResponse::read_file_binary_() {
+  std::ifstream file((root_ + uri_).c_str(),
+                     std::ios_base::in | std::ios_base::binary);
+  if (file.is_open()) {
+    status_code_ = 200;
+    body_.assign(std::istreambuf_iterator<char>(file),
+                 std::istreambuf_iterator<char>());
+  } else {
+    status_code_ = 404;
+    body_.assign(create_status_html(status_code_));
+  }
+}
+
 ISocket::status HTTPResponse::get_method_(HTTPRequest &req) {
   uri_ = req.parsed_header_.at("URI");
   uint8_t mask = check_uri_();
-  std::ifstream file;
+  // std::ifstream file;
   switch (mask) {
   case CGI:
     return call_cgi_(req);
@@ -167,14 +213,7 @@ ISocket::status HTTPResponse::get_method_(HTTPRequest &req) {
     break;
   case (DIRECTORY | INDEX): // -> index.html file
   case (FIL):               // -> send file
-    file.open((root_ + uri_).c_str());
-    if (file.is_open()) {
-      status_code_ = 200;
-      read_file_(file);
-    } else {
-      status_code_ = 404;
-      body_.assign(create_status_html(status_code_));
-    }
+    read_file_binary_();
     break;
   case (FAIL): // -> 404
     status_code_ = 404;

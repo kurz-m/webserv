@@ -484,13 +484,15 @@ struct FileInfo {
   bool is_dir;
 };
 
-static inline FileInfo create_list_dir_entry(const std::string &uri,
+static inline FileInfo create_list_dir_entry(const std::string &root,
+                                             const std::string &uri,
                                              const std::string &path) {
   FileInfo file;
-  std::string full_path = uri + "/" + path;
+  std::string full_path = root + uri + "/" + path;
   std::ostringstream oss;
   char m_time[30] = {0};
-  oss << "<tr><td><a href=\"" << path << "\">" << path << "</a></td><td>";
+  oss << "<tr><td><a href=\"" << uri + "/" + path << "\">" << path
+      << "</a></td><td>";
   struct stat sb;
   if (stat(full_path.c_str(), &sb) < 0) {
     std::cerr << "something wrong here" << std::endl;
@@ -536,7 +538,7 @@ std::string HTTPResponse::create_list_dir_() {
     if (dir_name == ".") {
       continue;
     } else {
-      files.push_back(create_list_dir_entry((root_ + uri_), dir_name));
+      files.push_back(create_list_dir_entry(root_, uri_, dir_name));
     }
   }
   std::sort(files.begin(), files.end(), compare_file);

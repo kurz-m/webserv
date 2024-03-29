@@ -214,7 +214,7 @@ ISocket::status HTTPResponse::get_method_(HTTPRequest &req) {
     mime_type_ = "text/html";
     break;
   }
-  LOG_DEBUG("Body: " + body_);
+  // LOG_DEBUG("Body: " + body_);
   make_header_();
   return ISocket::READY_SEND;
 }

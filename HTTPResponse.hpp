@@ -29,7 +29,6 @@ private:
   std::time_t cgi_timestamp_;
   std::vector<pid_t> killed_childs_;
   std::string mime_type_;
-  // std::map<std::string, std::string> header_map_;
 
   void make_header_(const std::vector<std::string> &extra =
                         std::vector<std::string>());
@@ -37,7 +36,6 @@ private:
   void read_file_();
   uint8_t check_uri_();
   bool check_cgi();
-  // void read_file_(std::ifstream &file);
 
   // HTTP Methods
   ISocket::status get_method_(HTTPRequest &req);

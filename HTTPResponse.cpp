@@ -189,16 +189,17 @@ void HTTPResponse::read_file_() {
 }
 
 void HTTPResponse::read_file_binary_() {
-  std::ifstream file((root_ + uri_).c_str(),
-                     std::ios_base::in | std::ios_base::binary);
-  if (file.is_open()) {
-    status_code_ = 200;
-    body_.assign(std::istreambuf_iterator<char>(file),
-                 std::istreambuf_iterator<char>());
-  } else {
+  LOG_DEBUG((root_ + uri_))
+  std::ifstream file((root_ + uri_).c_str(), std::ios_base::binary);
+  std::ostringstream oss;
+  if (!file.good()) {
     status_code_ = 404;
     body_.assign(create_status_html(status_code_));
+    return;
   }
+  oss << file.rdbuf();
+  body_ = oss.str();
+  status_code_ = 200;
 }
 
 ISocket::status HTTPResponse::get_method_(HTTPRequest &req) {

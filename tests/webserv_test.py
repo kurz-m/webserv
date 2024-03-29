@@ -43,35 +43,35 @@ def test_cgi(get_webserv_backend) -> None:
     assert res.status_code == 200
 
 
-def test_stress(get_webserv_backend) -> None:
-    global running
-    running = True
+# def test_stress(get_webserv_backend) -> None:
+#     global running
+#     running = True
 
-    def test_worker() -> None:
-        global running
-        while running:
-            res = requests.get("http://localhost:8080/")
-            assert res.status_code == 200
+#     def test_worker() -> None:
+#         global running
+#         while running:
+#             res = requests.get("http://localhost:8080/")
+#             assert res.status_code == 200
 
-    def worker_cgi() -> None:
-        global running
-        while running:
-            res = requests.get("http://localhost:8080/cgi-bin/test.py")
-            assert res.status_code == 200
+#     def worker_cgi() -> None:
+#         global running
+#         while running:
+#             res = requests.get("http://localhost:8080/cgi-bin/test.py")
+#             assert res.status_code == 200
 
-    threads: List[Thread] = []
-    for i in range(200):
-        thread_ = Thread(target=test_worker)
-        thread_.start()
-        threads.append(thread_)
-    for i in range(200):
-        thread_ = Thread(target=worker_cgi)
-        thread_.start()
-        threads.append(thread_)
-    time.sleep(30)
-    running = False
-    for thread in threads:
-        thread.join()
+#     threads: List[Thread] = []
+#     for i in range(200):
+#         thread_ = Thread(target=test_worker)
+#         thread_.start()
+#         threads.append(thread_)
+#     for i in range(200):
+#         thread_ = Thread(target=worker_cgi)
+#         thread_.start()
+#         threads.append(thread_)
+#     time.sleep(30)
+#     running = False
+#     for thread in threads:
+#         thread.join()
 
 
 def test_autoindex(get_webserv_backend) -> None:

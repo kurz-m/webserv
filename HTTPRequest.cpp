@@ -59,7 +59,14 @@ ISocket::status HTTPRequest::parse_header() {
     if (parsed_header_.find("Content-Length") == parsed_header_.end()) {
       parsed_header_.insert(std::make_pair("Content-Length", "0"));
     }
+    if (parsed_header_.find("Connection") == parsed_header_.end()) {
+      parsed_header_.insert(std::make_pair("Connection", "keep-alive"));
+    }
     header_parsed_ = true;
+  }
+  keep_alive_ = true;
+  if (parsed_header_.at("Connection") == "closed") {
+    keep_alive_ = false;
   }
   size_t cont_len = std::atoi(parsed_header_.at("Content-Length").c_str());
   if (cont_len > 0 && cont_len > (tbr_ - header_.length())) {

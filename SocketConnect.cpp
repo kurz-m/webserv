@@ -113,10 +113,14 @@ void SocketConnect::send_response_() {
     pollfd_.events = POLLOUT;
   } else {
     LOG_DEBUG("server: " + config_.server_name + " did send the full message");
-    request_ = HTTPRequest(request_.config_);
-    response_ = HTTPResponse(response_.config_);
-    status_ = ISocket::READY_RECV;
-    pollfd_.events = POLLIN;
+    if (request_.keep_alive_) {
+      request_ = HTTPRequest(request_.config_);
+      response_ = HTTPResponse(response_.config_);
+      status_ = ISocket::READY_RECV;
+      pollfd_.events = POLLIN;
+    } else {
+      status_ = ISocket::CLOSED;
+    }
   }
 }
 

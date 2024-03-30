@@ -20,6 +20,7 @@ private:
   method_e method_;
   size_t tbr_;
   bool header_parsed_;
+  bool keep_alive_;
 
   friend class SocketConnect;
   friend class HTTPResponse;

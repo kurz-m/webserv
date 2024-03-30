@@ -36,8 +36,8 @@ public:
    * elements and can also change and adapt the events we want for the next call
    * to poll.
    *
-   * \param[in] pollfd - reference to a pollfd_t struct.
-   * \param[in] config - const reference to a ServerBlock.
+   * \param[in] pollfd reference to a pollfd_t struct.
+   * \param[in] config const reference to a ServerBlock.
    */
   Socket(pollfd_t &pollfd, const ServerBlock &config);
 
@@ -47,14 +47,14 @@ public:
    * Constructor takes a const reference to another base Socket class and copies
    * all the elements to a new Socket, thereby making a deep copy.
    *
-   * \param other - const reference to a Socket.
+   * \param other const reference to a Socket.
    */
   Socket(const Socket &other);
 
   /**
    * Copy assignment operator of the base Socket class.
    *
-   * \param other - const reference to a Socket.
+   * \param other const reference to a Socket.
    */
   Socket &operator=(const Socket &other);
 
@@ -69,7 +69,7 @@ public:
   /**
    * A pure virtual member function to check the Socket timeout.
    *
-   * \return bool - true or false if socket has a timeout.
+   * \return true or false if socket has a timeout, respectively.
    *
    */
   virtual bool check_timeout_() const = 0;
@@ -85,12 +85,12 @@ public:
   /**
    * Pure virtual function to handle the poll events.
    *
-   * \param[in] sock_map - map with pairs of sockfd and corresponding Socket
-   * \param[in] poll_list - list with the pollfd_t structs
+   * \param[in] sock_map map with pairs of sockfd and corresponding Socket
+   * \param[in] poll_list list with the pollfd_t structs
    *
    * \sa SocketListen::handle()
    * \sa SocketConnect::handle()
-   * \return ISocket::status - current status of the Socket
+   * \return Current status of the Socket
    */
   virtual ISocket::status handle(std::map<int, ISocket> &sock_map,
                                  std::list<pollfd_t> &poll_list) = 0;

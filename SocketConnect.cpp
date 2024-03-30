@@ -6,7 +6,7 @@
 #include "EventLogger.hpp"
 #include "SocketConnect.hpp"
 
-SocketConnect::SocketConnect(const pollfd_t &pollfd, const ServerBlock &config,
+SocketConnect::SocketConnect(pollfd_t &pollfd, const ServerBlock &config,
                              int timeout /*  = DEFAULT_TIMEOUT */)
     : Socket(pollfd, config), request_(config), response_(config),
       timeout_(timeout), timestamp_(std::time(NULL)) {}
@@ -102,8 +102,8 @@ void SocketConnect::receive_() {
 
 void SocketConnect::send_response_() {
   // LOG_DEBUG("Response Buffer: " + response_.buffer_);
-  ssize_t num_bytes = send(pollfd_.fd, response_.buffer_.c_str(),
-                           response_.buffer_.size(), 0);
+  ssize_t num_bytes =
+      send(pollfd_.fd, response_.buffer_.c_str(), response_.buffer_.size(), 0);
   if (num_bytes < 0) {
     throw SendRecvError();
   }

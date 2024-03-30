@@ -1,6 +1,7 @@
 #include "HTTPRequest.hpp"
 #include "EventLogger.hpp"
 #include "Socket.hpp"
+#include <algorithm>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
@@ -9,15 +10,14 @@
 
 HTTPRequest::HTTPRequest(const ServerBlock &config)
     : HTTPBase(config), parsed_header_(), method_(UNKNOWN), tbr_(0),
-      header_parsed_(false) {}
+      header_parsed_(false), keep_alive_(true) {}
 
 HTTPRequest::~HTTPRequest() {}
 
 HTTPRequest::HTTPRequest(const HTTPRequest &cpy)
-    : HTTPBase(cpy), parsed_header_(), method_(UNKNOWN), tbr_(0),
-      header_parsed_(false) {
-  *this = cpy;
-}
+    : HTTPBase(cpy), parsed_header_(cpy.parsed_header_), method_(cpy.method_),
+      tbr_(cpy.tbr_), header_parsed_(cpy.header_parsed_),
+      keep_alive_(cpy.keep_alive_) {}
 
 HTTPRequest &HTTPRequest::operator=(const HTTPRequest &other) {
   HTTPBase::operator=(other);
@@ -26,6 +26,7 @@ HTTPRequest &HTTPRequest::operator=(const HTTPRequest &other) {
     method_ = other.method_;
     tbr_ = other.tbr_;
     header_parsed_ = other.header_parsed_;
+    keep_alive_ = other.keep_alive_;
   }
   return *this;
 }
@@ -42,7 +43,7 @@ ISocket::status HTTPRequest::parse_header() {
     std::string line;
     std::getline(iss, line);
     std::istringstream new_iss(line);
-    line.erase(line.find("\r"));
+    line.erase(std::find(line.begin(), line.end(), '\r'));
     std::string method;
     new_iss >> method;
     method_ = method_to_enum(method);
@@ -54,6 +55,8 @@ ISocket::status HTTPRequest::parse_header() {
       }
       std::string key = line.substr(0, pos);
       std::string value = line.substr(pos + 1);
+      value.erase(std::find(value.begin(), value.end(), ' '));
+      value.erase(std::find(value.begin(), value.end(), '\r'));
       parsed_header_.insert(std::make_pair(key, value));
     }
     if (parsed_header_.find("Content-Length") == parsed_header_.end()) {
@@ -64,8 +67,7 @@ ISocket::status HTTPRequest::parse_header() {
     }
     header_parsed_ = true;
   }
-  keep_alive_ = true;
-  if (parsed_header_.at("Connection") == "closed") {
+  if (parsed_header_.at("Connection") == "close") {
     keep_alive_ = false;
   }
   size_t cont_len = std::atoi(parsed_header_.at("Content-Length").c_str());

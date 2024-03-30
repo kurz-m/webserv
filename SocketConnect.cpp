@@ -3,6 +3,7 @@
 #include <cstring>
 #include <iostream>
 #include <signal.h>
+#include <sstream>
 
 SocketConnect::SocketConnect(pollfd &pollfd, const ServerBlock &config,
                              int timeout /*  = DEFAULT_TIMEOUT */)
@@ -112,13 +113,17 @@ void SocketConnect::send_response_() {
     response_.buffer_ = response_.buffer_.substr(num_bytes);
     pollfd_.events = POLLOUT;
   } else {
-    LOG_DEBUG("server: " + config_.server_name + " did send the full message");
+    std::ostringstream oss;
+    oss << pollfd_.fd;
+    LOG_DEBUG("Client FD: " + oss.str() + " did send the full message");
     if (request_.keep_alive_) {
+      LOG_DEBUG("Client FD: " + oss.str() + " keep-alive is true")
       request_ = HTTPRequest(request_.config_);
       response_ = HTTPResponse(response_.config_);
       status_ = ISocket::READY_RECV;
       pollfd_.events = POLLIN;
     } else {
+      LOG_DEBUG("Client FD: " + oss.str() + " keep-alive is false")
       status_ = ISocket::CLOSED;
     }
   }

@@ -86,7 +86,7 @@ bool SocketConnect::check_timeout_() const {
 void SocketConnect::receive_() {
   ssize_t n;
   char buf[HTTPBase::MAX_BUFFER + 1] = {0};
-  n = recv(pollfd_.fd, buf, HTTPBase::MAX_BUFFER, MSG_DONTWAIT);
+  n = recv(pollfd_.fd, buf, HTTPBase::MAX_BUFFER, 0);
   if (n <= 0) {
     LOG_WARNING("Receive Failed!")
     status_ = ISocket::CLOSED;
@@ -102,7 +102,7 @@ void SocketConnect::receive_() {
 void SocketConnect::send_response_() {
   // LOG_DEBUG("Response Buffer: " + response_.buffer_);
   ssize_t num_bytes = send(pollfd_.fd, response_.buffer_.c_str(),
-                           response_.buffer_.size(), MSG_DONTWAIT);
+                           response_.buffer_.size(), 0);
   if (num_bytes < 0) {
     throw SendRecvError();
   }

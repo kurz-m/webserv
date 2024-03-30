@@ -6,6 +6,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <sstream>
+#include <fcntl.h>
 
 SocketListen::SocketListen(pollfd &pollfd, const ServerBlock &config,
                            const addrinfo_t &info)
@@ -45,6 +46,7 @@ ISocket::status SocketListen::handle(std::map<int, ISocket> &client_map,
       std::ostringstream oss;
       oss << "accepted client fd: " << sockfd;
       LOG_INFO(oss.str());
+      fcntl(sockfd, F_SETFL, O_NONBLOCK | FD_CLOEXEC);
     } catch (const std::exception &e) {
       std::cerr << "accept failed: " << e.what() << '\n';
     }

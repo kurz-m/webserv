@@ -9,6 +9,7 @@
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
+#include <fcntl.h>
 
 extern sig_atomic_t g_signal;
 
@@ -62,6 +63,7 @@ void Server::create_listen_socket_(const ServerBlock &config) {
       close(sockfd);
       continue;
     }
+    fcntl(sockfd, F_SETFL, O_NONBLOCK | FD_CLOEXEC);
     pollfd_t pollfd = (pollfd_t){.fd = sockfd, .events = POLLIN, .revents = 0};
     poll_list_.push_back(pollfd);
     client_map_.insert(

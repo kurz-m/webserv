@@ -2,11 +2,11 @@
 #include "SocketConnect.hpp"
 #include "SocketListen.hpp"
 
-ISocket::ISocket(const pollfd_t &pollfd, const ServerBlock &config,
+ISocket::ISocket(pollfd_t &pollfd, const ServerBlock &config,
                  const addrinfo_t &info) {
   sock_ = new SocketListen(pollfd, config, info);
 }
-ISocket::ISocket(const pollfd_t &pollfd, const ServerBlock &config,
+ISocket::ISocket(pollfd_t &pollfd, const ServerBlock &config,
                  int timeout /* = DEFAULT_TIMEOUT */) {
   sock_ = new SocketConnect(pollfd, config, timeout);
 }

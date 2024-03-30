@@ -1,9 +1,9 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <fcntl.h>
 #include <iostream>
 #include <sstream>
-#include <fcntl.h>
 
 #include "EventLogger.hpp"
 #include "SocketListen.hpp"

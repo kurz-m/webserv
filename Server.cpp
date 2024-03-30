@@ -1,7 +1,3 @@
-#include "Server.hpp"
-#include "SocketListen.hpp"
-#include "Token.hpp"
-#include "EventLogger.hpp"
 #include <cerrno>
 #include <csignal>
 #include <cstdio>
@@ -10,6 +6,11 @@
 #include <sstream>
 #include <stdexcept>
 #include <fcntl.h>
+
+#include "EventLogger.hpp"
+#include "Server.hpp"
+#include "SocketListen.hpp"
+#include "Token.hpp"
 
 extern sig_atomic_t g_signal;
 
@@ -107,7 +108,7 @@ void Server::event_handler_() {
     if (check == ISocket::CLOSED) {
       std::ostringstream oss;
       oss << "client: " << it->fd << " closed.";
-      LOG_DEBUG(oss.str())
+      LOG_DEBUG(oss.str());
       close(it->fd);
       client_map_.erase(it->fd);
       it = poll_list_.erase(it);

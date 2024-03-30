@@ -1,5 +1,5 @@
-#ifndef __SOCKET_LISTEN_HPP__
-#define __SOCKET_LISTEN_HPP__
+#ifndef __SOCKET_LISTEN_HPP
+#define __SOCKET_LISTEN_HPP
 
 #include "Server.hpp"
 #include "Socket.hpp"
@@ -24,4 +24,4 @@ private:
   friend class Server;
 };
 
-#endif // __SOCKET_LISTEN_HPP__
+#endif /* SocketListen.hpp */

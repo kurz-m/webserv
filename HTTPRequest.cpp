@@ -1,12 +1,13 @@
-#include "HTTPRequest.hpp"
-#include "EventLogger.hpp"
-#include "Socket.hpp"
 #include <algorithm>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
 #include <sstream>
 #include <string>
+
+#include "EventLogger.hpp"
+#include "HTTPRequest.hpp"
+#include "Socket.hpp"
 
 HTTPRequest::HTTPRequest(const ServerBlock &config)
     : HTTPBase(config), parsed_header_(), method_(UNKNOWN), tbr_(0),
@@ -85,6 +86,6 @@ ISocket::status HTTPRequest::parse_header() {
 }
 
 void HTTPRequest::parse_body() {
-  LOG_DEBUG("parse body")
+  LOG_DEBUG("parse body");
   body_ = buffer_.substr(header_.size());
 }

@@ -1,5 +1,5 @@
-#ifndef __HTTP_RESPONSE_HPP__
-#define __HTTP_RESPONSE_HPP__
+#ifndef __HTTP_RESPONSE_HPP
+#define __HTTP_RESPONSE_HPP
 
 #include "HTTPBase.hpp"
 #include "HTTPRequest.hpp"
@@ -55,4 +55,4 @@ private:
   static const int timeout_ = 10;
 };
 
-#endif // __HTTP_RESPONSE_HPP__
+#endif /* HTTPResponse.hpp */

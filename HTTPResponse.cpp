@@ -1,6 +1,3 @@
-#include "HTTPResponse.hpp"
-#include "EventLogger.hpp"
-#include "Settings.hpp"
 #include <algorithm>
 #include <cstdio>
 #include <cstring>
@@ -14,6 +11,10 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include "EventLogger.hpp"
+#include "HTTPResponse.hpp"
+#include "Settings.hpp"
+
 static const std::string proto_ = "HTTP/1.1";
 
 HTTPResponse::HTTPResponse(const ServerBlock &config)
@@ -26,9 +27,7 @@ HTTPResponse::~HTTPResponse() {
   if (killed_childs_.size() > 0) {
     std::vector<pid_t>::const_iterator it;
     for (it = killed_childs_.begin(); it != killed_childs_.end(); ++it) {
-      if (!waitpid(*it, NULL, WNOHANG)) {
-        throw std::runtime_error("child wont be killed!");
-      }
+      waitpid(*it, NULL, WNOHANG);
     }
   }
 }
@@ -172,7 +171,7 @@ std::string HTTPResponse::get_mime_type_() {
 }
 
 void HTTPResponse::read_file_() {
-  LOG_DEBUG((root_ + uri_))
+  LOG_DEBUG((root_ + uri_));
   std::ifstream file((root_ + uri_).c_str(), std::ios_base::binary);
   std::ostringstream oss;
   if (!file.good()) {
@@ -346,7 +345,7 @@ ISocket::status HTTPResponse::check_child_status() {
       status_code_ = 200;
       read_child_pipe_();
       mime_type_ = "text/html";
-      LOG_DEBUG(buffer_)
+      LOG_DEBUG(buffer_);
       make_header_();
     } else {
       status_code_ = 500;
@@ -377,7 +376,7 @@ ISocket::status HTTPResponse::kill_child() {
 }
 
 void HTTPResponse::read_child_pipe_() {
-  LOG_DEBUG("child exited. trying to read the pipe")
+  LOG_DEBUG("child exited. trying to read the pipe");
   char buffer[BUFFER_SIZE + 1] = {0};
   while (read(child_pipe_, buffer, BUFFER_SIZE) > 0) {
     body_ += buffer;
@@ -397,7 +396,7 @@ void HTTPResponse::create_pipe_(HTTPRequest &req) {
   if (cgi_pid_ == -1)
     throw std::runtime_error(std::strerror(errno));
   if (cgi_pid_ == 0) {
-    LOG_DEBUG("child executing ... ")
+    LOG_DEBUG("child executing ... ");
     if (dup2(pipe_fd[1], STDOUT_FILENO) < 0 ||
         dup2(pipe_fd2[0], STDIN_FILENO) < 0)
       throw std::runtime_error(std::strerror(errno));
@@ -495,8 +494,7 @@ static inline FileInfo create_list_dir_entry(const std::string &root,
   }
   std::ostringstream oss;
   char m_time[30] = {0};
-  oss << "<tr><td><a href=\"" << link_href << "\">" << path
-      << "</a></td><td>";
+  oss << "<tr><td><a href=\"" << link_href << "\">" << path << "</a></td><td>";
   struct stat sb;
   if (stat(full_path.c_str(), &sb) < 0) {
     std::cerr << "something wrong here" << std::endl;

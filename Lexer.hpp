@@ -1,5 +1,5 @@
-#ifndef __LEXER_HPP__
-#define __LEXER_HPP__
+#ifndef __LEXER_HPP
+#define __LEXER_HPP
 
 #include <cstddef>
 #include <string>

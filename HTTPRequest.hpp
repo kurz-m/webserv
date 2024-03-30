@@ -1,5 +1,5 @@
-#ifndef __HTTPREQUEST_HPP__
-#define __HTTPREQUEST_HPP__
+#ifndef __HTTPREQUEST_HPP
+#define __HTTPREQUEST_HPP
 
 #include "HTTPBase.hpp"
 #include "Settings.hpp"
@@ -26,4 +26,4 @@ private:
   friend class HTTPResponse;
 };
 
-#endif // __HTTPREQUEST_HPP__
+#endif /* HTTPRequest.hpp */

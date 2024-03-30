@@ -9,7 +9,9 @@ Lexer::Lexer(const std::string &input)
   read_char_();
 }
 
-Lexer::Lexer(const Lexer &rhs) { *this = rhs; }
+Lexer::Lexer(const Lexer &rhs)
+    : input_(rhs.input_), position_(rhs.position_),
+      read_position_(rhs.read_position_), ch_(rhs.ch_) {}
 
 Lexer &Lexer::operator=(const Lexer &rhs) {
   if (this != &rhs) {

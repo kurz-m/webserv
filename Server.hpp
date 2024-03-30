@@ -1,15 +1,16 @@
-#ifndef __SERVER_HPP__
-#define __SERVER_HPP__
+#ifndef __SERVER_HPP
+#define __SERVER_HPP
 
-#include "Parser.hpp"
-#include "Settings.hpp"
-#include "Socket.hpp"
-#include "ISocket.hpp"
 #include <list>
 #include <map>
 #include <sys/poll.h>
 #include <unistd.h>
 #include <vector>
+
+#include "ISocket.hpp"
+#include "Parser.hpp"
+#include "Settings.hpp"
+#include "Socket.hpp"
 
 #define RESET 0
 
@@ -37,4 +38,4 @@ private:
   friend class Socket;
 };
 
-#endif // __SERVER_HPP__
+#endif /* Server.hpp */

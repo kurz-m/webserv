@@ -1,21 +1,20 @@
-#include "SocketListen.hpp"
-#include "EventLogger.hpp"
-#include "Token.hpp"
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <iostream>
-#include <cstdlib>
 #include <sstream>
 #include <fcntl.h>
 
-SocketListen::SocketListen(pollfd &pollfd, const ServerBlock &config,
+#include "EventLogger.hpp"
+#include "SocketListen.hpp"
+#include "Token.hpp"
+
+SocketListen::SocketListen(pollfd_t &pollfd, const ServerBlock &config,
                            const addrinfo_t &info)
     : Socket(pollfd, config), servinfo_(info) {}
 
 SocketListen::SocketListen(const SocketListen &cpy)
-    : Socket(cpy), servinfo_(cpy.servinfo_) {
-  *this = cpy;
-}
+    : Socket(cpy), servinfo_(cpy.servinfo_) {}
 
 SocketListen &SocketListen::operator=(const SocketListen &other) {
   if (this != &other) {

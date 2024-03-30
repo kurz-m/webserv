@@ -1,11 +1,10 @@
-#ifndef __SETTINGS_HPP__
-#define __SETTINGS_HPP__
+#ifndef __SETTINGS_HPP
+#define __SETTINGS_HPP
 
-#include "Token.hpp"
-
-#include "Token.hpp"
 #include <string>
 #include <vector>
+
+#include "Token.hpp"
 
 struct HttpBlock;
 struct ServerBlock;
@@ -55,4 +54,4 @@ typedef struct HttpBlock {
 
 } HttpBlock;
 
-#endif // !__SETTINGS_HPP__
+#endif /* Settings.hpp */

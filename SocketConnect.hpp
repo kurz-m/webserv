@@ -1,5 +1,5 @@
-#ifndef __SOCKET_CONNECT_HPP__
-#define __SOCKET_CONNECT_HPP__
+#ifndef __SOCKET_CONNECT_HPP
+#define __SOCKET_CONNECT_HPP
 
 #include <list>
 
@@ -40,4 +40,4 @@ private:
   friend class Server;
 };
 
-#endif // __SOCKET_CONNECT_HPP__
+#endif /* SocketConnect.hpp */

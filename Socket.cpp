@@ -1,18 +1,17 @@
-#include "Socket.hpp"
-#include "EventLogger.hpp"
 #include <cstdio>
 #include <fstream>
 #include <iostream>
-#include <stdexcept>
 #include <sstream>
+#include <stdexcept>
+
+#include "EventLogger.hpp"
+#include "Socket.hpp"
 
 Socket::Socket(pollfd &pollfd, const ServerBlock &config)
     : config_(config), pollfd_(pollfd), status_(ISocket::READY_RECV) {}
 
 Socket::Socket(const Socket &other)
-    : config_(other.config_), pollfd_(other.pollfd_) {
-  *this = other;
-}
+    : config_(other.config_), pollfd_(other.pollfd_), status_(other.status_) {}
 
 Socket &Socket::operator=(const Socket &other) {
   if (this != &other) {
@@ -31,7 +30,7 @@ void Socket::check_poll_err_() {
   if (pollfd_.revents & (POLLERR | POLLNVAL | POLLHUP)) {
     std::ostringstream oss;
     oss << "client: " << pollfd_.fd << " connection error.";
-    LOG_WARNING(oss.str())
+    LOG_WARNING(oss.str());
     status_ = ISocket::CLOSED;
   }
   if (!(pollfd_.events & pollfd_.revents)) {

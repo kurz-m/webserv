@@ -1,5 +1,5 @@
-#ifndef __HTTP_HPP__
-#define __HTTP_HPP__
+#ifndef __HTTP_HPP
+#define __HTTP_HPP
 
 #include <string>
 
@@ -15,4 +15,4 @@ enum method_e {
 method_e method_to_enum(std::string &method);
 const std::string print_method(const int &method);
 
-#endif
+#endif /* HTTP.hpp */

@@ -1,19 +1,19 @@
-#include "SocketConnect.hpp"
-#include "EventLogger.hpp"
 #include <cstring>
 #include <iostream>
 #include <signal.h>
 #include <sstream>
 
-SocketConnect::SocketConnect(pollfd &pollfd, const ServerBlock &config,
+#include "EventLogger.hpp"
+#include "SocketConnect.hpp"
+
+SocketConnect::SocketConnect(const pollfd_t &pollfd, const ServerBlock &config,
                              int timeout /*  = DEFAULT_TIMEOUT */)
     : Socket(pollfd, config), request_(config), response_(config),
       timeout_(timeout), timestamp_(std::time(NULL)) {}
 
 SocketConnect::SocketConnect(const SocketConnect &cpy)
-    : Socket(cpy), request_(cpy.request_), response_(cpy.response_) {
-  *this = cpy;
-}
+    : Socket(cpy), request_(cpy.request_), response_(cpy.response_),
+      timeout_(cpy.timeout_), timestamp_(cpy.timestamp_) {}
 
 SocketConnect &SocketConnect::operator=(const SocketConnect &other) {
   if (this != &other) {
@@ -89,7 +89,7 @@ void SocketConnect::receive_() {
   char buf[HTTPBase::MAX_BUFFER + 1] = {0};
   n = recv(pollfd_.fd, buf, HTTPBase::MAX_BUFFER, 0);
   if (n <= 0) {
-    LOG_WARNING("Receive Failed!")
+    LOG_WARNING("Receive Failed!");
     status_ = ISocket::CLOSED;
     return;
   }
@@ -108,7 +108,8 @@ void SocketConnect::send_response_() {
     throw SendRecvError();
   }
   if (static_cast<size_t>(num_bytes) < response_.buffer_.size()) {
-    LOG_DEBUG("server: " + config_.server_name + " did not send the full message yet");
+    LOG_DEBUG("server: " + config_.server_name +
+              " did not send the full message yet");
     status_ = ISocket::USEND;
     response_.buffer_ = response_.buffer_.substr(num_bytes);
     pollfd_.events = POLLOUT;
@@ -117,13 +118,13 @@ void SocketConnect::send_response_() {
     oss << pollfd_.fd;
     LOG_DEBUG("Client FD: " + oss.str() + " did send the full message");
     if (request_.keep_alive_) {
-      LOG_DEBUG("Client FD: " + oss.str() + " keep-alive is true")
+      LOG_DEBUG("Client FD: " + oss.str() + " keep-alive is true");
       request_ = HTTPRequest(request_.config_);
       response_ = HTTPResponse(response_.config_);
       status_ = ISocket::READY_RECV;
       pollfd_.events = POLLIN;
     } else {
-      LOG_DEBUG("Client FD: " + oss.str() + " keep-alive is false")
+      LOG_DEBUG("Client FD: " + oss.str() + " keep-alive is false");
       status_ = ISocket::CLOSED;
     }
   }

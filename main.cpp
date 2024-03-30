@@ -1,13 +1,14 @@
-#include "Lexer.hpp"
-#include "Parser.hpp"
-#include "Server.hpp"
-#include "Settings.hpp"
-#include "EventLogger.hpp"
 #include <csignal>
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <vector>
+
+#include "EventLogger.hpp"
+#include "Lexer.hpp"
+#include "Parser.hpp"
+#include "Server.hpp"
+#include "Settings.hpp"
 
 sig_atomic_t g_signal = 0;
 
@@ -15,9 +16,7 @@ void print_usage() {
   std::cout << "Usage: \n\t./webserv [path/to/config]" << std::endl;
 }
 
-void signal_handler(int signo) {
-  g_signal = signo;
-}
+void signal_handler(int signo) { g_signal = signo; }
 
 void setup_signal_handler() {
   sigaction_t act;
@@ -41,7 +40,7 @@ int main(int argc, char **argv) {
   }
   std::ifstream file(config_path);
   if (!file.is_open()) {
-    LOG_ERROR("could not open config file!")
+    LOG_ERROR("could not open config file!");
     std::cerr << "could not open config file!" << std::endl;
     return 1;
   }

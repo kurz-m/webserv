@@ -1,5 +1,5 @@
-#ifndef __SOCKET_INTERFACE_HPP__
-#define __SOCKET_INTERFACE_HPP__
+#ifndef __SOCKET_INTERFACE_HPP
+#define __SOCKET_INTERFACE_HPP
 
 #include <list>
 
@@ -47,4 +47,4 @@ private:
   friend class Server;
 };
 
-#endif
+#endif /* ISocket.hpp */

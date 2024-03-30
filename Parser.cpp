@@ -17,7 +17,11 @@ Parser::Parser(Lexer &lexer)
   next_token_();
 }
 
-Parser::Parser(const Parser &rhs) : lexer_(rhs.lexer_) { *this = rhs; }
+Parser::Parser(const Parser &rhs)
+    : lexer_(rhs.lexer_), current_token_(rhs.current_token_),
+      peek_token_(rhs.peek_token_), block_depth_(rhs.block_depth_),
+      http_(rhs.http_), server_count_(rhs.server_count_),
+      route_count_(rhs.route_count_), line_count_(rhs.line_count_) {}
 
 Parser &Parser::operator=(const Parser &rhs) {
   if (this != &rhs) {

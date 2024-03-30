@@ -1,30 +1,30 @@
-#ifndef __EVENT_LOGGER_HPP__
-#define __EVENT_LOGGER_HPP__
+#ifndef __EVENT_LOGGER_HPP
+#define __EVENT_LOGGER_HPP
 
 #ifndef __LOG_LEVEL__
 #define __LOG_LEVEL__ INFO
 #endif
 
 #define LOG_DEBUG(X)                                                           \
-  {                                                                            \
+  do {                                                                         \
     EventLogger logger;                                                        \
     logger.log(X, __LINE__, __FILE__, DEBUG);                                  \
-  }
+  } while (0)
 #define LOG_INFO(X)                                                            \
-  {                                                                            \
+  do {                                                                         \
     EventLogger logger;                                                        \
     logger.log(X, __LINE__, __FILE__, INFO);                                   \
-  }
+  } while (0)
 #define LOG_WARNING(X)                                                         \
-  {                                                                            \
+  do {                                                                         \
     EventLogger logger;                                                        \
     logger.log(X, __LINE__, __FILE__, WARNING);                                \
-  }
+  } while (0)
 #define LOG_ERROR(X)                                                           \
-  {                                                                            \
+  do {                                                                         \
     EventLogger logger;                                                        \
     logger.log(X, __LINE__, __FILE__, ERROR);                                  \
-  }
+  } while (0)
 
 #include <fstream>
 #include <string>

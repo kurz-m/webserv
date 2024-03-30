@@ -1,5 +1,6 @@
-#include "HTTPBase.hpp"
 #include <sstream>
+
+#include "HTTPBase.hpp"
 
 std::map<int, std::string> create_map_() {
   std::map<int, std::string> map;
@@ -19,14 +20,14 @@ std::map<int, std::string> create_map_() {
 
 std::map<std::string, std::string> create_mimetype_map() {
   std::map<std::string, std::string> map;
-  map[".html"]  = "text/html";
-  map[".txt"]   = "text/plain";
-  map[".jpg"]   = "image/jpeg";
-  map[".jpeg"]  = "image/jpeg";
-  map[".png"]   = "image/png";
-  map[".pdf"]   = "application/pdf";
-  map[".json"]  = "application/json";
-  map[".aac"]   = "audio/aac";
+  map[".html"] = "text/html";
+  map[".txt"] = "text/plain";
+  map[".jpg"] = "image/jpeg";
+  map[".jpeg"] = "image/jpeg";
+  map[".png"] = "image/png";
+  map[".pdf"] = "application/pdf";
+  map[".json"] = "application/json";
+  map[".aac"] = "audio/aac";
   return map;
 }
 
@@ -39,9 +40,8 @@ HTTPBase::HTTPBase(const ServerBlock &config)
     : buffer_(), body_(), header_(), status_code_(), config_(config) {}
 
 HTTPBase::HTTPBase(const HTTPBase &cpy)
-    : buffer_(), body_(), header_(), status_code_(), config_(cpy.config_) {
-  *this = cpy;
-}
+    : buffer_(cpy.buffer_), body_(cpy.body_), header_(cpy.header_),
+      status_code_(cpy.status_code_), config_(cpy.config_) {}
 
 HTTPBase &HTTPBase::operator=(const HTTPBase &other) {
   if (this != &other) {

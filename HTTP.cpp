@@ -1,6 +1,7 @@
-#include "HTTP.hpp"
 #include <algorithm>
 #include <iostream>
+
+#include "HTTP.hpp"
 
 method_e method_to_enum(std::string &method) {
   const std::string method_arr[4] = {"GET", "POST", "PUT", "DELETE"};

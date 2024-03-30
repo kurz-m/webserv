@@ -1,5 +1,5 @@
-#ifndef __SOCKET_HPP__
-#define __SOCKET_HPP__
+#ifndef __SOCKET_HPP
+#define __SOCKET_HPP
 
 #include <arpa/inet.h>
 #include <ctime>
@@ -41,4 +41,4 @@ protected:
   friend class ISocket;
 };
 
-#endif // __SOCKET_HPP__
+#endif /* Socket.hpp */

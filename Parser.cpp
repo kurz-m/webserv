@@ -173,6 +173,7 @@ void Parser::parse_http_settings_(HttpBlock &http) {
 
 void Parser::parse_server_settings_(ServerBlock &server) {
   Token tok = current_token_;
+
   next_token_();
   while (current_token_.type & Token::RUN_PARSING) {
     switch (tok.type) {
@@ -198,6 +199,7 @@ void Parser::parse_server_settings_(ServerBlock &server) {
       server.keepalive_timeout = parse_int_value_();
       break;
     case Token::LISTEN:
+      parse_int_value_();
       server.listen = current_token_.literal;
       break;
     case Token::ROOT:
@@ -309,5 +311,5 @@ inline void Parser::print_syntax_error_(const std::string msg) {
     oss << msg + ". Have Token::" << Token::reverse_map.at(current_token_.type)
         << ". Literal: " + current_token_.literal + ".";
   }
-  throw std::invalid_argument(oss.str());
+  throw NotFoundError(oss.str());
 }

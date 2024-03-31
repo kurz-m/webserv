@@ -128,7 +128,10 @@ void SocketConnect::send_response_() {
 }
 
 void SocketConnect::check_recv_() {
-  LOG_DEBUG("server: " + config_.server_name + " is parsing the header");
+  std::ostringstream oss;
+  oss << " is currently parsing the header from Client FD: ";
+  oss << pollfd_.fd;
+  LOG_DEBUG("Servername: " + config_.server_name + oss.str());
   status_ = request_.parse_header();
   switch (status_) {
   case ISocket::PREPARE_SEND:

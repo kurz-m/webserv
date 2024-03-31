@@ -6,7 +6,7 @@
 
 std::ofstream EventLogger::log_file_;
 bool EventLogger::file_open_;
-log_e EventLogger::log_level_;
+EventLogger::log_e EventLogger::log_level_;
 
 // #define RESET "\033[0m"
 // #define RED "\033[1;31m"

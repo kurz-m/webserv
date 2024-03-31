@@ -24,7 +24,7 @@ enum method_e {
  * This function is used as a helper function for converting the
  * given std::string to the method_e enum.
  *
- * \param[in] std::string Reference to a method as string.
+ * \param std::string Reference to a method as string.
  * \return Enum for the parsed http method.
  */
 method_e method_to_enum(std::string &method);
@@ -34,7 +34,7 @@ method_e method_to_enum(std::string &method);
  *
  * The purpose of the function is only to print the given enum.
  *
- * \param[in] method An enum representing a http method.
+ * \param method An enum representing a http method.
  * \return The string representation of the http method.
  *
  */

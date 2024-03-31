@@ -36,8 +36,8 @@ public:
    * elements and can also change and adapt the events we want for the next call
    * to poll.
    *
-   * \param[in] pollfd Reference to a pollfd_t struct.
-   * \param[in] config Const reference to a ServerBlock.
+   * \param pollfd Reference to a pollfd_t struct.
+   * \param config Const reference to a ServerBlock.
    */
   Socket(pollfd_t &pollfd, const ServerBlock &config);
 
@@ -85,8 +85,8 @@ public:
   /**
    * Pure virtual function to handle the poll events.
    *
-   * \param[in] sock_map Map with pairs of sockfd and corresponding Socket.
-   * \param[in] poll_list List with the pollfd_t structs.
+   * \param sock_map Map with pairs of sockfd and corresponding Socket.
+   * \param poll_list List with the pollfd_t structs.
    *
    * \sa SocketListen::handle()
    * \sa SocketConnect::handle()

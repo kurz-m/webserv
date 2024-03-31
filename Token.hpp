@@ -136,7 +136,7 @@ public:
    * keyword_map to find the corresponding Token type. If encountered, it
    * returns the found one, otherwise it returns Token::STRING.
    *
-   * \param[in] ident string literal of the current lexical analysis.
+   * \param ident string literal of the current lexical analysis.
    * \return token_type_t Type of the found keyword or STRING.
    *
    */

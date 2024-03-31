@@ -110,3 +110,18 @@ test:
 
 test-parser:
 	$(CXX) $(CXXFLAGS) -g Token.cpp Settings.cpp EventLogger.cpp Lexer.cpp Parser.cpp HTTP.cpp test_lexer.cpp -o parser.test
+
+help: ## Display this help menu
+	@echo "Webserv Project Manual\n"
+	@echo "Compilation Options:"
+	@echo "make [DEBUG=X] [LOG_LEVEL=x]"
+	@echo "  DEBUG=0:  Compile without debug symbols (default)"
+	@echo "  DEBUG=1:  Compile with debug symbols"
+	@echo "  LOG_LEVEL=0 (DEBUG):   Log all messages"
+	@echo "  LOG_LEVEL=1 (INFO):    Log errors, warnings, and info"
+	@echo "  LOG_LEVEL=2 (WARNING): Log errors and warnings"
+	@echo "  LOG_LEVEL=3 (ERROR):   Log only errors"
+	@echo "  LOG_LEVEL=4 (NONE):    Log no message (default)"
+	@echo "\nExecution Options:"
+	@echo "Usage: ./webserv [config_file]"
+	@echo "  config_file: Optional path to configuration file. Defaults to 'config/default.conf'\n"

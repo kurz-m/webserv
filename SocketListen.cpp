@@ -26,7 +26,7 @@ SocketListen &SocketListen::operator=(const SocketListen &other) {
 
 SocketListen::~SocketListen() {}
 
-ISocket::status SocketListen::handle(std::map<int, ISocket> &client_map,
+ISocket::status SocketListen::handle(std::map<int, ISocket> &sock_map,
                                      std::list<pollfd_t> &poll_list) {
   if (pollfd_.revents & POLLIN) {
     try {
@@ -40,7 +40,7 @@ ISocket::status SocketListen::handle(std::map<int, ISocket> &client_map,
       pollfd_t pollfd =
           (pollfd_t){.fd = sockfd, .events = POLLIN, .revents = 0};
       poll_list.push_back(pollfd);
-      client_map.insert(
+      sock_map.insert(
           std::make_pair(sockfd, ISocket(poll_list.back(), config_)));
       std::ostringstream oss;
       oss << "accepted client fd: " << sockfd;

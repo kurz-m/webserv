@@ -61,7 +61,7 @@ public:
    * ISocket::READY_RECV because its sole purpose is to establish new client
    * connections.
    */
-  ISocket::status handle(std::map<int, ISocket> &client_map,
+  ISocket::status handle(std::map<int, ISocket> &sock_map,
                          std::list<pollfd_t> &poll_list);
 
   /**

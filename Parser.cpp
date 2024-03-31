@@ -173,6 +173,7 @@ void Parser::parse_http_settings_(HttpBlock &http) {
 
 void Parser::parse_server_settings_(ServerBlock &server) {
   Token tok = current_token_;
+  int tmp = 0;
 
   next_token_();
   while (current_token_.type & Token::RUN_PARSING) {
@@ -199,8 +200,11 @@ void Parser::parse_server_settings_(ServerBlock &server) {
       server.keepalive_timeout = parse_int_value_();
       break;
     case Token::LISTEN:
-      parse_int_value_();
+      tmp = parse_int_value_();
       server.listen = current_token_.literal;
+      if (tmp < 1024) {
+        print_syntax_error_("Ports 0 - 1023 are reserved system ports");
+      }
       break;
     case Token::ROOT:
       server.root = current_token_.literal;

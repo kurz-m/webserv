@@ -15,10 +15,6 @@ HttpBlock::HttpBlock()
     : client_max_body_size(1024), default_type(), keepalive_timeout(10),
       root() {}
 
-const char *NotFoundError::what() const throw() {
-  return "Requested Setting or Route not found!";
-}
-
 const RouteBlock *ServerBlock::find(const std::string &uri) const {
   const RouteBlock *ret = NULL;
   std::vector<RouteBlock>::const_iterator it;

@@ -1,6 +1,7 @@
 #ifndef __SETTINGS_HPP
 #define __SETTINGS_HPP
 
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -9,9 +10,9 @@
 struct HttpBlock;
 struct ServerBlock;
 
-class NotFoundError : public std::exception {
+class NotFoundError : public std::runtime_error {
 public:
-  const char *what() const throw();
+  NotFoundError(const std::string &msg) : std::runtime_error(msg) {}
 };
 
 typedef struct RouteBlock {

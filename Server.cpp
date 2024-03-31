@@ -67,14 +67,14 @@ void Server::create_listen_socket_(const ServerBlock &config) {
     fcntl(sockfd, F_SETFL, O_NONBLOCK | FD_CLOEXEC);
     pollfd_t pollfd = (pollfd_t){.fd = sockfd, .events = POLLIN, .revents = 0};
     poll_list_.push_back(pollfd);
-    client_map_.insert(
+    sock_map_.insert(
         std::make_pair(sockfd, ISocket(poll_list_.back(), config, *p)));
     break;
   }
 
   // freeaddrinfo(servinfo);
 
-  if (client_map_.size() < 1) {
+  if (sock_map_.size() < 1) {
     throw std::runtime_error("could not bind and listen to any port!");
   }
 }
@@ -104,13 +104,13 @@ void Server::event_handler_() {
   std::list<pollfd_t>::iterator it;
   for (it = poll_list_.begin(); it != poll_list_.end();) {
     ISocket::status check =
-        client_map_.at(it->fd).handle(client_map_, poll_list_);
+        sock_map_.at(it->fd).handle(sock_map_, poll_list_);
     if (check == ISocket::CLOSED) {
       std::ostringstream oss;
       oss << "client: " << it->fd << " closed.";
       LOG_DEBUG(oss.str());
       close(it->fd);
-      client_map_.erase(it->fd);
+      sock_map_.erase(it->fd);
       it = poll_list_.erase(it);
       continue;
     }

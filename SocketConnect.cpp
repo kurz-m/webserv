@@ -84,7 +84,9 @@ void SocketConnect::receive_() {
   char buf[HTTPBase::MAX_BUFFER + 1] = {0};
   n = recv(pollfd_.fd, buf, HTTPBase::MAX_BUFFER, 0);
   if (n <= 0) {
-    LOG_WARNING("Receive Failed!");
+    std::ostringstream oss;
+    oss << pollfd_.fd;
+    LOG_WARNING("Sock FD: " + oss.str() + " Receive Failed!");
     status_ = ISocket::CLOSED;
     return;
   }

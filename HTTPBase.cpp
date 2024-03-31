@@ -55,8 +55,6 @@ HTTPBase &HTTPBase::operator=(const HTTPBase &other) {
 
 HTTPBase::~HTTPBase() {}
 
-void HTTPBase::parse_buffer_() {}
-
 void HTTPBase::reset() {
   buffer_.clear();
   body_.clear();

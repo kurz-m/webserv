@@ -29,7 +29,7 @@ void setup_signal_handler() {
 int main(int argc, char **argv) {
   setup_signal_handler();
   std::string buffer;
-  EventLogger logger("webserv.log");
+  EventLogger logger("logs/webserv.log");
   const char *config_path = "./config/default.conf";
   if (argc > 2) {
     print_usage();

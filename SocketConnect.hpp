@@ -27,8 +27,13 @@ public:
    * This constructor is used as the default constructor taking a reference to
    * its correpsonding pollfd_t element in the pollfd_list from the server and a
    * constant reference to a ServerBlock which defines all its properties.
-   * Furthermore, it it takes an optional timeout argument which specifies the
+   * Furthermore, it takes an optional timeout argument which specifies the
    * keep-alive time the socket is left open without any interaction.
+   *
+   * \param pollfd Reference to its corresponding pollfd element in the
+   * pollfd_list of the server.
+   * \param config Const reference to a ServerBlock configuration.
+   * \param timeout Defines the connection timeout of the socket.
    */
   SocketConnect(pollfd_t &pollfd, const ServerBlock &config,
                 int timeout = DEFAULT_TIMEOUT);
@@ -36,17 +41,17 @@ public:
   /**
    * Copy constructor for the SocketConnect class.
    *
-   * Constructor takes a const reference to another SocketConnect class and
+   * Constructor takes a const reference to another SocketConnect instance and
    * copies all the elements to a new Socket, thereby making a deep copy.
    *
-   * \param other const reference to a SocketConnect.
+   * \param other Const reference to a SocketConnect instance.
    */
   SocketConnect(const SocketConnect &cpy);
 
   /**
    * Copy assignment operator of the SocketConnect class.
    *
-   * \param other const reference to a SocketConnect.
+   * \param other Const reference to a SocketConnect instance.
    */
   SocketConnect &operator=(const SocketConnect &other);
 
@@ -61,10 +66,11 @@ public:
    * This function is used like a small statemachine which calls the appropriate
    * function with respect to the status_ of the SocketConnect.
    *
-   * \throws std::runtime_error unexpected status_ after prepare_for_send().
+   * \throws std::runtime_error unexpected SocketConnect::status_ after
+   * HTTPResponse::prepare_for_send().
    *
-   * \param std::map<int, ISocket> reference to the socket map of the server.
-   * \param std::list<pollfd_t> reference to the pollfd list of the server.
+   * \param std::map<int, ISocket> Reference to the socket map of the server.
+   * \param std::list<pollfd_t> Reference to the pollfd list of the server.
    * \return Status after handling the current iteration.
    */
   ISocket::status handle(std::map<int, ISocket> &client_map,
@@ -115,7 +121,7 @@ private:
    * to POLLIN. Furthermore, it also distinguishes if the connection is
    * 'keep-alive' or 'close' to set the status_ accordingly.
    *
-   * \throws SendRecvError() send() has an error.
+   * \throws SendRecvError() If send() has an error.
    */
   void send_response_();
 

@@ -29,12 +29,12 @@ EventLogger::EventLogger(const std::string &filename) {
   oss << f_name;
   if (access((oss.str() + f_ext).c_str(), F_OK) == 0) {
     int i = 1;
-    oss << i;
+    oss << "_" << i;
     while (access((oss.str() + f_ext).c_str(), F_OK) == 0) {
       i++;
       oss.str("");
       oss.clear();
-      oss << f_name << i;
+      oss << f_name + "_" << i;
     }
   }
   log_file_.open((oss.str() + f_ext).c_str());

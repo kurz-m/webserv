@@ -20,7 +20,7 @@ TEST := printf "[$(BO)$(M)ⓘ TEST$(X)] %s\n"
 OBJ_DIR := obj-cache
 INC_DIRS := .
 SRC_DIRS := .
-LOG_LEVEL := $(LOG_LEVEL)
+LOG_DIR := logs
 
 # Tell the Makefile where headers and source files are
 vpath %.hpp $(INC_DIRS)
@@ -39,6 +39,7 @@ OBJS := $(addprefix $(OBJ_DIR)/, $(SRCS:%.cpp=%.o))
 
 CXXFLAGS ?= -Wextra -Wall -Werror -std=c++98 -MMD -MP $(addprefix -I, $(INC_DIRS))
 LDFLAGS :=
+LOG_LEVEL := $(LOG_LEVEL)
 
 ifeq ($(DEBUG), 1)
 	CXXFLAGS += -g
@@ -66,24 +67,28 @@ endif
 ########                         COMPILING                      ################
 ################################################################################
 
-all: $(NAME)
+all: $(NAME) | $(LOG_DIR) ## Default target for compiling webserv
 
-$(NAME): $(OBJS)
+$(NAME): $(OBJS) ## Rule for linking the object files to the webserv binary
 	@$(LOG) "Linking object files to $@"
 	@$(CXX) $^ $(LDFLAGS) -o $@
 
-$(OBJ_DIR)/%.o: %.cpp | $(OBJ_DIR)
+$(OBJ_DIR)/%.o: %.cpp | $(OBJ_DIR) ## Rule for compiling the object files
 	@$(LOG) "Compiling $(notdir $@)"
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-$(OBJ_DIR):
+$(OBJ_DIR): ## Create the object directory
 	@$(LOG) "Creating object directory."
+	@mkdir -p $@
+
+$(LOG_DIR): ## Create the log directory (logs)
+	@$(LOG) "Creating log directory."
 	@mkdir -p $@
 
 debug: CXXFLAGS += -g
 debug: fclean all
 
-clean:
+clean: ## Cleans the object files from obj-cache
 	@if [ -d "$(OBJ_DIR)" ]; then \
 		$(LOG) "Cleaning $(notdir $(OBJ_DIR))"; \
 		rm -rf $(OBJ_DIR); \
@@ -91,7 +96,7 @@ clean:
 		$(LOG) "No objects to clean."; \
 	fi
 
-fclean: clean
+fclean: clean ## Cleans the object files and binaries
 	@if [ -f "$(NAME)" ]; then \
 		$(LOG) "Cleaning $(notdir $(NAME))"; \
 		rm -f $(NAME); \
@@ -105,13 +110,16 @@ re: fclean all
 
 .PHONY: all fclean clean re debug
 
-test:
-	$(CXX) $(CXXFLAGS) -g Token.cpp Lexer.cpp test_lexer.cpp -o lexer.test
+################################################################################
+########                        HELP TARGET                     ################
+################################################################################
 
-test-parser:
-	$(CXX) $(CXXFLAGS) -g Token.cpp Settings.cpp EventLogger.cpp Lexer.cpp Parser.cpp HTTP.cpp test_lexer.cpp -o parser.test
+MAKEFILE_LIST := Makefile
 
-help: ## Display this help menu
+display: ## Prints help for targets with comments
+	@cat $(MAKEFILE_LIST) | grep -E '^[a-zA-Z_-]+:.*?## .*$$' | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
+
+help: ## Display the help menu
 	@echo "Webserv Project Manual\n"
 	@echo "Compilation Options:"
 	@echo "make [DEBUG=X] [LOG_LEVEL=x]"

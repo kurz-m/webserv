@@ -2,7 +2,7 @@
 
 #include "Token.hpp"
 
-std::map<std::string, Token::token_type_t> Token::create_keywords() {
+const std::map<std::string, Token::token_type_t> Token::create_keywords() {
   std::map<std::string, token_type_t> loc_map;
   loc_map.insert(std::make_pair("http", HTTP));
   loc_map.insert(std::make_pair("server", SERVER));
@@ -25,7 +25,7 @@ std::map<std::string, Token::token_type_t> Token::create_keywords() {
 const std::map<std::string, Token::token_type_t> Token::keyword_map =
     create_keywords();
 
-std::map<Token::token_type_t, std::string> Token::create_reverse() {
+const std::map<Token::token_type_t, std::string> Token::create_reverse() {
   std::map<Token::token_type_t, std::string> loc_map;
   loc_map.insert(std::make_pair(ILLEGAL, "ILLEGAL"));
   loc_map.insert(std::make_pair(EF, "End Of File"));

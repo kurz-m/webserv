@@ -96,7 +96,7 @@ public:
    *
    * \return std::map<std::string, token_type_t> keyword map
    */
-  static std::map<std::string, token_type_t> create_keywords();
+  const static std::map<std::string, token_type_t> create_keywords();
 
   /**
    * Lookup table for all specified keywords.
@@ -116,7 +116,7 @@ public:
    *
    * \return std::map<token_type_t, std::string> reverse map
    */
-  static std::map<token_type_t, std::string> create_reverse();
+  const static std::map<token_type_t, std::string> create_reverse();
 
   /**
    * Reverse lookup table for all specified keywords.

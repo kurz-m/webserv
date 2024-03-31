@@ -29,7 +29,7 @@ class ISocket;
 class Socket {
 public:
   /**
-   * Parameterized Constructor for the base Socket class.
+   * Parameterized constructor for the base Socket class.
    *
    * This constructor is taking a reference to a pollfd_t struct living in
    * the pollfds list of the server. This way we can directly access the list

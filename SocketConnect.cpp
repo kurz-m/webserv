@@ -28,11 +28,6 @@ SocketConnect &SocketConnect::operator=(const SocketConnect &other) {
 
 SocketConnect::~SocketConnect() {}
 
-/// @brief handle the Socket. 2 Cases: reading data and sending data.
-/// When first called, the Socket first receives the request data and processes
-/// it to check, if the request is complete.
-/// @param client_map unused
-/// @param poll_list unused
 ISocket::status SocketConnect::handle(std::map<int, ISocket> &client_map,
                                       std::list<pollfd_t> &poll_list) {
   (void)client_map;

@@ -28,16 +28,16 @@ SocketConnect &SocketConnect::operator=(const SocketConnect &other) {
 
 SocketConnect::~SocketConnect() {}
 
-ISocket::status SocketConnect::handle(std::map<int, ISocket> &client_map,
+ISocket::status SocketConnect::handle(std::map<int, ISocket> &sock_map,
                                       std::list<pollfd_t> &poll_list) {
-  (void)client_map;
+  (void)sock_map;
   (void)poll_list;
 
   switch (status_) {
   case ISocket::PREPARE_SEND:
     status_ = response_.prepare_for_send(request_);
     if (status_ == ISocket::READY_SEND) {
-      handle(client_map, poll_list);
+      handle(sock_map, poll_list);
     } else if (status_ == ISocket::WAITCGI) {
       pollfd_.events = 0;
     } else { // error

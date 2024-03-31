@@ -73,7 +73,7 @@ public:
    * \param std::list<pollfd_t> Reference to the pollfd list of the server.
    * \return Status after handling the current iteration.
    */
-  ISocket::status handle(std::map<int, ISocket> &client_map,
+  ISocket::status handle(std::map<int, ISocket> &sock_map,
                          std::list<pollfd_t> &poll_list);
 
   /**

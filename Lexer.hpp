@@ -49,14 +49,14 @@ private:
    * Constructor takes a const reference to another Lexer instance and
    * copies all the elements to a new Lexer, thereby making a deep copy.
    *
-   * \param other Const reference to a Lexer instance.
+   * \param rhs Const reference to a Lexer instance.
    */
   Lexer(const Lexer &);
 
   /**
    * Copy assignment operator of the Lexer class.
    *
-   * \param other Const reference to a Lexer instance.
+   * \param rhs Const reference to a Lexer instance.
    */
   Lexer &operator=(const Lexer &);
 

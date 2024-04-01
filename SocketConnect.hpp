@@ -16,6 +16,10 @@
  */
 class SocketConnect : public Socket {
 public:
+
+  /**
+   * Derived Error class which will be thrown if send or recv fails.
+   */
   class SendRecvError : public std::exception {
   public:
     const char *what() const throw();

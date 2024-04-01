@@ -10,11 +10,40 @@
 
 class Lexer;
 
+/**
+ * A class for parsing the webserv settings specified in the config file.
+ *
+ * The Parser class is used for parsing the webserv config file specified during
+ * the program calling or falls back to a default config file. It makes a
+ * lexical analysis of the tokens returned by the Lexer.
+ */
 class Parser {
 public:
+  /**
+   * Parameterized constructor for the Parser class.
+   *
+   * This constructor is taking a reference to a Lexer instance. Furthermore, it
+   * calls next_token_() twice, to establish the starting point for the current
+   * token and the peek token.
+   *
+   * \param input Reference to a Lexer instance.
+   */
   Parser(Lexer &);
+
+  /**
+   * Destructor of the Parser class.
+   */
   ~Parser();
 
+  /**
+   * Main public interface to the Parser which returns the parsed config.
+   *
+   * parse_config() is the main interface other functions can work with when
+   * using the Parser. It contains all the logic for creating a HttpBlock
+   * struct, which can have multiple server and route blocks.
+   *
+   * \return The parsed config file within a HttpBlock struct.
+   */
   HttpBlock &parse_config();
 
 private:

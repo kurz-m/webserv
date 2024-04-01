@@ -76,7 +76,7 @@ ISocket::status HTTPRequest::parse_header() {
     LOG_DEBUG("server: " + config_.server_name + ": body incomplete");
     return ISocket::URECV;
   }
-  parse_body();
+  parse_body_();
   std::map<std::string, std::string>::iterator it;
   for (it = parsed_header_.begin(); it != parsed_header_.end(); ++it) {
     LOG_DEBUG(it->first + ": " + it->second);
@@ -85,7 +85,7 @@ ISocket::status HTTPRequest::parse_header() {
   return ISocket::PREPARE_SEND;
 }
 
-void HTTPRequest::parse_body() {
+void HTTPRequest::parse_body_() {
   LOG_DEBUG("parse body");
   body_ = buffer_.substr(header_.size());
 }

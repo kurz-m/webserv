@@ -16,10 +16,10 @@ void print_usage() {
   std::cout << "Usage: \n\t./webserv [path/to/config]" << std::endl;
 }
 
-void signal_handler(int signo) { g_signal = signo; }
+static void signal_handler(int signo) { g_signal = signo; }
 
-void setup_signal_handler() {
-  sigaction_t act;
+static void setup_signal_handler() {
+  struct sigaction act;
 
   sigemptyset(&act.sa_mask);
   act.sa_handler = signal_handler;

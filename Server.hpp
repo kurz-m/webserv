@@ -15,11 +15,6 @@
 #define RESET 0
 
 /**
- * typedef the sigaction struct to sigaction_t for easier use.
- */
-typedef struct sigaction sigaction_t;
-
-/**
  * The main class for the webserver..
  *
  * This class is the main entry point to the webserver after the configuration

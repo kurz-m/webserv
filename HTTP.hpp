@@ -4,10 +4,10 @@
 #include <string>
 
 /**
- * Header file for http methods.
+ * Enum for specifying different http methods.
  *
- * This file serves as a helper to implement the different methods
- * specified in the RFC 9110.
+ * This enum defines the different http methods that are taken from RFC 9110 and
+ * implemented in this specific webserver.
  */
 enum method_e {
   GET = (1 << 0),       /**< Represents the http get method*/

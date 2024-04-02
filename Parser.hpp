@@ -75,6 +75,10 @@ private:
    */
   void next_token_();
 
+  /** \name Block Parsing
+   * Private member functions for parsing the different blocks.
+   */
+  /**@{*/
   /**
    * Private member function to parse a ServerBlock.
    *
@@ -102,7 +106,12 @@ private:
    * \return Returns the parsed RouteBlock
    */
   RouteBlock parse_routeblock_(const ServerBlock &server);
+  /**@}*/
 
+  /** \name Setting Parsing
+   * Private member functions for parsing block settings.
+   */
+  /**@{*/
   /**
    * Private member function to parse a single setting in a http block.
    *
@@ -132,32 +141,12 @@ private:
    * \param route Reference to an RouteBlock.
    */
   void parse_route_settings_(RouteBlock &route);
+  /**@}*/
 
-  /**
-   * Small private member function to check the current token type.
-   *
-   * \param tok The expected token type of the current token.
-   * \return true if the input is equal the current token, otherwise false.
+  /** \name Single Option Parsing
+   * Private member functions for parsing single block configuration options.
    */
-  bool expect_current_(const Token::token_type_t) const;
-
-  /**
-   * Small private member function to check the peek token type.
-   *
-   * \param tok The expected token type of the peek token.
-   * \return true if the input is equal the peek token, otherwise false.
-   */
-  bool expect_peek_(const Token::token_type_t) const;
-
-  /**
-   * Small private member function to check the existence of a newline.
-   *
-   * This function is used to call next_token_() an additional time if there is
-   * a newline. This should enable the Parser to also work when there are no
-   * newlines in the cofig file. But this has not been tested yet.
-   */
-  void check_newline_();
-
+  /**@{*/
   /**
    * Small private member function to parse the values for autoindex.
    *
@@ -190,6 +179,36 @@ private:
    * \return The parsed method.
    */
   method_e parse_http_method_();
+  /**@}*/
+
+  /** \name Check Token And Syntax
+   * Private member functions for checking tokens and syntax.
+   */
+  /**@{*/
+  /**
+   * Small private member function to check the current token type.
+   *
+   * \param tok The expected token type of the current token.
+   * \return true if the input is equal the current token, otherwise false.
+   */
+  bool expect_current_(const Token::token_type_t) const;
+
+  /**
+   * Small private member function to check the peek token type.
+   *
+   * \param tok The expected token type of the peek token.
+   * \return true if the input is equal the peek token, otherwise false.
+   */
+  bool expect_peek_(const Token::token_type_t) const;
+
+  /**
+   * Small private member function to check the existence of a newline.
+   *
+   * This function is used to call next_token_() an additional time if there is
+   * a newline. This should enable the Parser to also work when there are no
+   * newlines in the cofig file. But this has not been tested yet.
+   */
+  void check_newline_();
 
   /**
    * Private member function to check the correct syntax of the config file.
@@ -211,6 +230,7 @@ private:
    * input message along with the current token to understand whats wrong.
    */
   void print_syntax_error_(const std::string msg = "");
+  /**@}*/
 
   /**
    * Private member attribute of the parser.

@@ -87,7 +87,7 @@ bool ends_with(const std::string &str, const std::string &extension) {
   return std::equal(extension.rbegin(), extension.rend(), str.rbegin());
 }
 
-bool HTTPResponse::check_cgi() {
+bool HTTPResponse::check_cgi_() {
   std::string endpoint;
   std::string uri_stem;
 
@@ -230,7 +230,7 @@ ISocket::status HTTPResponse::delete_method_() {
 }
 
 ISocket::status HTTPResponse::post_method_(HTTPRequest &req) {
-  if (check_cgi()) {
+  if (check_cgi_()) {
     return call_cgi_(req);
   }
   std::string filename = root_ + uri_;

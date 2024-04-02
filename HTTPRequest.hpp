@@ -39,6 +39,7 @@ public:
    * Copy assignment operator of the HTTPRequest class.
    *
    * \param other Const reference to a HTTPRequest instance.
+   * \return Reference to a HTTPRequest instance.
    */
   HTTPRequest &operator=(const HTTPRequest &other);
 

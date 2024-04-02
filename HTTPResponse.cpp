@@ -164,7 +164,6 @@ std::string HTTPResponse::get_mime_type_() {
   try {
     ret = mime_map_.at(extension);
   } catch (std::out_of_range &e) {
-    // default for unknown types
     ret = "application/octet-stream";
   }
   return ret;
@@ -189,7 +188,6 @@ void HTTPResponse::read_file_() {
 ISocket::status HTTPResponse::get_method_(HTTPRequest &req) {
   uri_ = req.parsed_header_.at("URI");
   uint8_t mask = check_uri_();
-  // std::ifstream file;
   switch (mask) {
   case CGI:
     return call_cgi_(req);
@@ -302,7 +300,7 @@ ISocket::status HTTPResponse::prepare_for_send(HTTPRequest &req) {
   }
 }
 
-bool HTTPResponse::check_cgi_timeout() {
+bool HTTPResponse::check_cgi_timeout_() {
   return std::difftime(std::time(NULL), cgi_timestamp_) > CGI_TIMEOUT;
 }
 
@@ -327,8 +325,8 @@ ISocket::status HTTPResponse::call_cgi_(HTTPRequest &req) {
 }
 
 ISocket::status HTTPResponse::check_child_status() {
-  if (check_cgi_timeout()) {
-    return kill_child();
+  if (check_cgi_timeout_()) {
+    return kill_child_();
   }
   int stat_loc = 0;
   pid_t pid_check = waitpid(cgi_pid_, &stat_loc, WNOHANG);
@@ -357,7 +355,7 @@ ISocket::status HTTPResponse::check_child_status() {
   }
 }
 
-ISocket::status HTTPResponse::kill_child() {
+ISocket::status HTTPResponse::kill_child_() {
   if (child_pipe_ > 0) {
     close(child_pipe_);
     child_pipe_ = -1;
@@ -378,6 +376,7 @@ ISocket::status HTTPResponse::kill_child() {
 void HTTPResponse::read_child_pipe_() {
   LOG_DEBUG("child exited. trying to read the pipe");
   char buffer[BUFFER_SIZE + 1] = {0};
+  /* FIX: check if this is blocking or not? */
   while (read(child_pipe_, buffer, BUFFER_SIZE) > 0) {
     body_ += buffer;
     std::memset(buffer, 0, sizeof(buffer));
@@ -478,9 +477,16 @@ const std::string list_dir_head =
     "<th>Name</th> <th>Last Modified</th>"
     "<th>Size</th> <th>Type</th>  </tr> </thead> <tbody>";
 
+/**
+ * Helper struct for creating the list dir entries and sorting them.
+ *
+ * This struct is defined for being used within the creation of the list dir
+ * functions. It contains the name of the file and a check if it is a directory
+ * or not.
+ */
 struct FileInfo {
-  std::string name;
-  bool is_dir;
+  std::string name; /**< Name of the file. */
+  bool is_dir;      /**< True if it is a directory, otherwise false. */
 };
 
 static inline FileInfo create_list_dir_entry(const std::string &root,

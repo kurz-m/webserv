@@ -77,7 +77,7 @@ typedef struct ServerBlock {
   ServerBlock(const HttpBlock &http);
 
   /**
-   * Helper function to find a RouteBlock within a server.
+   * Public helper function to find a RouteBlock within a server.
    *
    * The find() function is used for finding a RouteBlock within a server by
    * comparing the input uri against the RouteBlock::path variable within each
@@ -89,7 +89,7 @@ typedef struct ServerBlock {
   const RouteBlock *find(const std::string &uri) const;
 
   /**
-   * A vector of RouteBlocks.
+   * Public vector of RouteBlocks.
    *
    * Each server can have multiple routes which will be stored within the routes
    * member attribute of the ServerBlock struct.
@@ -97,14 +97,14 @@ typedef struct ServerBlock {
   std::vector<RouteBlock> routes;
 
   /**
-   * A public variable of the ServerBlock.
+   * Public variable of the ServerBlock.
    *
    * Allow configurations which http methods are allowed on the specified URI.
    */
   int allow;
 
   /**
-   * A public variable of the ServerBlock.
+   * Public variable of the ServerBlock.
    *
    * Autoindex specifies if the URI allows directory listing. This will be
    * decided base on the interaction with other settings.
@@ -112,7 +112,7 @@ typedef struct ServerBlock {
   int autoindex;
 
   /**
-   * A public variable of the ServerBlock.
+   * Public variable of the ServerBlock.
    *
    * Client max body size specifies the maximum size of the body a request can
    * send to the webserver.
@@ -120,7 +120,7 @@ typedef struct ServerBlock {
   size_t client_max_body_size;
 
   /**
-   * A public variable of the ServerBlock.
+   * Public variable of the ServerBlock.
    *
    * Default type specifies the type that is being returned to the client within
    * the response when nothing other is specified.
@@ -128,14 +128,14 @@ typedef struct ServerBlock {
   std::string default_type;
 
   /**
-   * A public variable of the ServerBlock.
+   * Public variable of the ServerBlock.
    *
    * Index specifies the index.html page for the given route.
    */
   std::string index;
 
   /**
-   * A public variable of the ServerBlock.
+   * Public variable of the ServerBlock.
    *
    * Keepalive timeout specifies the time a connection to a client is kept open
    * before it is being closed. This applies by default as stated in HTTP/1.1
@@ -145,7 +145,7 @@ typedef struct ServerBlock {
   int keepalive_timeout;
 
   /**
-   * A public variable of the ServerBlock.
+   * Public variable of the ServerBlock.
    *
    * Listen specified the port number the server should listen on.
    * The ports 0 - 1023 are reserved system ports.
@@ -153,7 +153,7 @@ typedef struct ServerBlock {
   std::string listen;
 
   /**
-   * A public variable of the ServerBlock.
+   * Public variable of the ServerBlock.
    *
    * Root specifies the webroot which will be prepended to the URI in order to
    * find resources of the webserver.
@@ -161,7 +161,7 @@ typedef struct ServerBlock {
   std::string root;
 
   /**
-   * A public variable of the ServerBlock.
+   * Public variable of the ServerBlock.
    *
    * Server name is the name given to the specific ServerBlock.
    */
@@ -185,7 +185,7 @@ typedef struct HttpBlock {
   HttpBlock();
 
   /**
-   * A vector of ServerBlocks.
+   * Public vector of ServerBlocks.
    *
    * A http block can have multiple servers which will be stored within the
    * servers member attribute of the HttpBlock struct.
@@ -193,7 +193,7 @@ typedef struct HttpBlock {
   std::vector<ServerBlock> servers;
 
   /**
-   * A public variable of the HttpBlock.
+   * Public variable of the HttpBlock.
    *
    * Client max body size specifies the maximum size of the body a request can
    * send to the webserver.
@@ -201,7 +201,7 @@ typedef struct HttpBlock {
   int client_max_body_size;
 
   /**
-   * A public variable of the HttpBlock.
+   * Public variable of the HttpBlock.
    *
    * Default type specifies the type that is being returned to the client within
    * the response when nothing other is specified.
@@ -209,7 +209,7 @@ typedef struct HttpBlock {
   std::string default_type;
 
   /**
-   * A public variable of the HttpBlock.
+   * Public variable of the HttpBlock.
    *
    * Keepalive timeout specifies the time a connection to a client is kept open
    * before it is being closed. This applies by default as stated in HTTP/1.1
@@ -219,7 +219,7 @@ typedef struct HttpBlock {
   int keepalive_timeout;
 
   /**
-   * A public variable of the HttpBlock.
+   * Public variable of the HttpBlock.
    *
    * Root specifies the webroot which will be prepended to the URI in order to
    * find resources of the webserver.

@@ -53,13 +53,14 @@ public:
   ~SocketListen();
 
   /**
-   * Main entry point for accepting new client connections.
+   * Public member function for accepting new client connections.
    *
-   * If a listening socket gets a POLLIN revent, handle() tries to establish a
-   * new connection and adds it directly to the pollfd_list of the server as
-   * well as into the key: fd, value: ISocket map. Its status can only be
-   * ISocket::READY_RECV because its sole purpose is to establish new client
-   * connections.
+   * This public member function serves as the main entry point for accepting
+   * new client connections. If a listening socket gets a POLLIN revent,
+   * handle() tries to establish a new connection and adds it directly to the
+   * pollfd_list of the server as well as into the key: fd, value: ISocket map.
+   * Its status can only be ISocket::READY_RECV because its sole purpose is to
+   * establish new client connections.
    */
   ISocket::status handle(std::map<int, ISocket> &sock_map,
                          std::list<pollfd_t> &poll_list);
@@ -67,15 +68,15 @@ public:
   /**
    * Private member function to check the timeout of the SocketListen.
    *
-   * This function always returns false because there is no timeout for the
-   * listening sockets.
+   * This private member function always returns false because there is no
+   * timeout for the listening sockets.
    *
    * \return Always false.
    */
   bool check_timeout_() const;
 
   /**
-   * Creates a new SocketListen to the ISocket interface.
+   * Public member function to create a new SocketListen.
    *
    * The clone function is used to allocate memory for a new SocketListen
    * instance which will be added into the socket map of the server.

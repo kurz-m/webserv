@@ -49,11 +49,12 @@ public:
   ~HTTPRequest();
 
   /**
-   * Main interface for handling an incoming request from a client.
+   * Public member function for handling an incoming request from a client.
    *
-   * This function is used to parse the header of an incoming request from a
-   * client into the parsed header variable. It also determines if the
-   * connection is set to close or keep-alive.
+   * This function is the main interface for the HTTPRequest class and is used
+   * to parse the header of an incoming request from a client into the parsed
+   * header variable. It also determines if the connection is set to close or
+   * keep-alive.
    *
    * \return ISocket::URECV if header or body is not fully received or
    * ISocket::PREPARE_SEND if both body and header are fully received and

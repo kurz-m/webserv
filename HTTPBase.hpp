@@ -78,7 +78,7 @@ public:
 
 protected:
   /**
-   * Buffer to store data within the request and response.
+   * Protected member attribute to store data within the request and response.
    *
    * This buffer serves different purpose with respect to the request and
    * response class. Within the HTTPRequest class, it is used to store the bytes
@@ -88,27 +88,27 @@ protected:
   std::string buffer_;
 
   /**
-   * Private member attribute that stores the body from the response or request,
-   * respectively.
+   * Protected member attribute that stores the body from the response or
+   * request, respectively.
    */
   std::string body_;
 
   /**
-   * Private member attribute that stores the header received from the request
+   * Protected member attribute that stores the header received from the request
    * or created in the response, respectively.
    */
   std::string header_;
 
   /**
-   * Private member attribute that stores the status code of the
+   * Protected member attribute that stores the status code of the
    * request/response.
    */
   int status_code_;
 
   /**
-   * Const reference to a ServerBlock from the configuration file.
+   * Protected member attribute for a ServerBlock from the configuration file.
    *
-   * This private member is a const reference to the ServerBlock parsed during
+   * This protected member is a const reference to the ServerBlock parsed during
    * startup of the server. It holds all necessary settings.
    *
    * \sa ServerBlock
@@ -116,7 +116,7 @@ protected:
   const ServerBlock &config_;
 
   /**
-   * Const static member attribute to hold necessary status codes.
+   * Protected member attribute to hold necessary status codes.
    *
    * This map contains all necessary status codes for HTTP/1.1 that we
    * implemented in the webserver. It takes an int as key and returns the
@@ -125,7 +125,7 @@ protected:
   const static std::map<int, std::string> status_map_;
 
   /**
-   * Const static member attribute to hold necessary media types.
+   * Protected const static member attribute to hold necessary media types.
    *
    * This map contains all necessary media types for HTTP/1.1 that we
    * implemented in the webserver. It takes an int as key and returns the
@@ -134,7 +134,7 @@ protected:
   const static std::map<std::string, std::string> mime_map_;
 
   /**
-   * Private member attribute to declare the max buffer for recv.
+   * Protected member attribute to declare the max buffer for recv.
    *
    * Currently, this is set to 128KB but can be changed if necessary.
    */

@@ -101,7 +101,10 @@ public:
   ~ISocket();
 
   /**
-   * Interface function for SocketConnect and SocketListen.
+   * Public member function for SocketConnect and SocketListen.
+   *
+   * This public member function serves as an interface for the
+   * SocketConnect::handle() and SocketListen::handle().
    *
    * \sa SocketConnect::handle()
    * \sa SocketListen::handle()
@@ -110,7 +113,10 @@ public:
                 std::list<pollfd_t> &poll_list);
 
   /**
-   * Interface function for SocketConnect and SocketListen.
+   * Public member function for SocketConnect SocketListen.
+   *
+   * This public member function serves as an Interface function for
+   * SocketConnect and SocketListen.
    *
    * \sa SocketConnect::check_timeout_()
    * \sa SocketListen::check_timeout_()
@@ -119,7 +125,7 @@ public:
 
 private:
   /**
-   * Pointer to a base Socket instance.
+   * Private member attribute to a base Socket instance.
    *
    * This private member attribute is a pointer to a base Socket instance which
    * makes it possible to either hold a SocketConnect or SocketListen instance.

@@ -32,11 +32,11 @@ public:
   ~Lexer();
 
   /**
-   * Main public interface to the Lexer which returns the next Token.
+   * Public member function which returns the next Token.
    *
-   * next_token() is the main interface other functions can work with when using
-   * the Lexer. It contains all the logic for creating tokens and calls the
-   * internal functions from the Lexer class.
+   * next_token() is the main public interface other functions can work with
+   * when using the Lexer. It contains all the logic for creating tokens and
+   * calls the internal functions from the Lexer class.
    *
    * \return A newly created Token.
    */
@@ -61,7 +61,7 @@ private:
   Lexer &operator=(const Lexer &);
 
   /**
-   * Function for reading the next character of the input.
+   * Private member function for reading the next character of the input.
    */
   inline void read_char_() {
     if (read_position_ >= input_.size()) {
@@ -73,8 +73,10 @@ private:
     ++read_position_;
   }
 
-  inline Token new_token_(const Token::token_type_t tok_type,
-                                   const char &ch) {
+  /**
+   * Private member function for creating a new Token.
+   */
+  inline Token new_token_(const Token::token_type_t tok_type, const char &ch) {
     return (Token){
         .type = tok_type,
         .literal = std::string(1, ch),
@@ -82,7 +84,7 @@ private:
   }
 
   /**
-   * Function to skip spaces within the input.
+   * Private function to skip spaces within the input.
    *
    * This private member function runs as long as it encounters spaces. Spaces
    * are specified by the different tab values and whitespaces.
@@ -94,10 +96,10 @@ private:
   }
 
   /**
-   * Function to check if the input parameter is a letter.
+   * Private function to check if the input parameter is a letter.
    *
-   * This function is designed to check if the input parameter is either an
-   * alphabetical value or '.', '/', '_', '-', respectively.
+   * This private function is designed to check if the input parameter is either
+   * an alphabetical value or '.', '/', '_', '-', respectively.
    *
    * \param ch Const reference to a character.
    * \\return true or false.
@@ -107,57 +109,58 @@ private:
   }
 
   /**
-   * Function for reading a full keyword.
+   * Private function for reading a full keyword.
    *
-   * This function is called within the default case of next_token() to read a
-   * full identifier from the config file which can be then checked if it is a
-   * keyword within the look up table for keywords from Token.
+   * This private function is called within the default case of next_token() to
+   * read a full identifier from the config file which can be then checked if it
+   * is a keyword within the look up table for keywords from Token.
    *
    * \return The string literal read from the config file.
    */
   std::string read_ident_();
 
   /**
-   * Function for reading a number.
+   * Private function for reading a number.
    *
-   * This function is called within the default case of next_token() if the
-   * first char is a digit to read a number from the config file.
+   * This private function is called within the default case of next_token() if
+   * the first char is a digit to read a number from the config file.
    *
    * \return The number as string literal read from the config file.
    */
   std::string read_number_();
 
   /**
-   * Function for reading a comment.
+   * Private function for reading a comment.
    *
-   * This function is called when the char is a '#'. It then continues until it
-   * encounters a newline '\n'. This is useful for commenting out whole lines by
-   * adding '#' to the front of the line.
+   * This private function is called when the char is a '#'. It then continues
+   * until it encounters a newline '\n'. This is useful for commenting out whole
+   * lines by adding '#' to the front of the line.
    *
    * \return The line as string literal read from the config file.
    */
   std::string read_comment_();
 
   /**
-   * A private member attribute holding the input from the config file.
+   * Private member attribute holding the input from the config file.
    */
   std::string input_;
 
   /**
-   * A private member attribute holdingthe current position on the input string.
+   * Private member attribute holdingthe current position on the input string.
    */
   size_t position_;
 
   /**
-   * One position ahead of the current position on the input string.
+   * Private member attribute displaying the position to read next.
    *
    * This private member attribute serves as peek to the next character and
-   * decide what to do based on it.
+   * decide what to do based on it. Furthermore, it is used by the read_char,
+   * to read the next character.
    */
   size_t read_position_;
 
   /**
-   * A private member attribute for the Lexer.
+   * Private member attribute for the Lexer.
    *
    * When read_char_() is being called, ch_ then gets the character value read
    * from the read position of the input string 'input_.at(read_position_)'.

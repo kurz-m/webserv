@@ -106,7 +106,7 @@ protected:
   const ServerBlock &config_;
 
   /**
-   * Reference to the pollfd_t in the pollfd_t list of the Server.
+   * Protected reference to the pollfd_t in the pollfd_t list of the Server.
    *
    * This reference is used to directly manipulate the pollfd_t struct that is
    * defining the current Socket, e.g. setting the event flags we want etc.
@@ -115,21 +115,21 @@ protected:
   pollfd_t &pollfd_;
 
   /**
-   * Current status of the Socket.
+   * Protected member attribute of the Socket.
    *
-   * This status is important because it enables the webserver to decide what
-   * kind of action it has to take. For more details see the enum in the
-   * ISocket.
+   * The current status of the Socket is important because it enables the
+   * webserver to decide what kind of action it has to take. For more details
+   * see the enum in the ISocket.
    *
    * \sa ISocket::status
    */
   ISocket::status status_;
 
   /**
-   * Protected function to check for poll error.
+   * Protected member function to check for poll error.
    *
-   * This function is used for checking for occuring poll errors in the revents
-   * field of the pollfd_t struct.
+   * This protected member function is used for checking for occuring poll
+   * errors in the revents field of the pollfd_t struct.
    */
   void check_poll_err_();
 

@@ -67,11 +67,12 @@ private:
   Parser &operator=(const Parser &);
 
   /**
-   * Wrapper function for Lexer::next_token().
+   * Private member function for getting the next Token.
    *
-   * This private member function calls the Lexer::next_token() function twice
-   * in order to fill the current token and also the peek token. It is the main
-   * function to move through the tokens created by the Lexer.
+   * This private member function serves as a wrapper for Lexer::next_token()
+   * and calls it twice in order to fill the current token and also the peek
+   * token. It is the main function to move through the tokens created by the
+   * Lexer.
    */
   void next_token_();
 
@@ -82,10 +83,10 @@ private:
   /**
    * Private member function to parse a ServerBlock.
    *
-   * This function is used to parse all possible setting for a server of the
-   * webserv. It is possible that this function is called multiple times,
-   * because there can be more than 1 server within the http block of the config
-   * file.
+   * This private member function is used to parse all possible setting for a
+   * server of the webserv. It is possible that this function is called multiple
+   * times, because there can be more than 1 server within the http block of the
+   * config file.
    *
    * \sa ServerBlock
    *
@@ -96,10 +97,11 @@ private:
   /**
    * Private member function to parse a RouteBlock.
    *
-   * This function is used to parse all possible setting for a route of a
-   * specific server. It is possible that this function is called multiple
-   * times, because there can be multiple routes within a single server. The
-   * parse routeblock function is always called within parsing a ServerBlock.
+   * This private member function is used to parse all possible setting for a
+   * route of a specific server. It is possible that this function is called
+   * multiple times, because there can be multiple routes within a single
+   * server. The parse routeblock function is always called within parsing a
+   * ServerBlock.
    *
    * \sa RouteBlock
    *
@@ -115,8 +117,8 @@ private:
   /**
    * Private member function to parse a single setting in a http block.
    *
-   * This function enables the Parser to parse a single setting that can be
-   * specified on the level of an http block.
+   * This private member function enables the Parser to parse a single setting
+   * that can be specified on the level of an http block.
    *
    * \param http Reference to an HttpBlock.
    */
@@ -125,8 +127,8 @@ private:
   /**
    * Private member function to parse a single setting in a server block.
    *
-   * This function enables the Parser to parse a single setting that can be
-   * specified on the level of an server block.
+   * This private member function enables the Parser to parse a single setting
+   * that can be specified on the level of an server block.
    *
    * \param server Reference to an ServerBlock.
    */
@@ -135,8 +137,8 @@ private:
   /**
    * Private member function to parse a single setting in a route block.
    *
-   * This function enables the Parser to parse a single setting that can be
-   * specified on the level of an route block.
+   * This private member function enables the Parser to parse a single setting
+   * that can be specified on the level of an route block.
    *
    * \param route Reference to an RouteBlock.
    */
@@ -150,8 +152,9 @@ private:
   /**
    * Small private member function to parse the values for autoindex.
    *
-   * This function checks the value that is being used for the autoindex setting
-   * and can throw an error if there is no valid option for autoindex.
+   * This private member function checks the value that is being used for the
+   * autoindex setting and can throw an error if there is no valid option for
+   * autoindex.
    *
    * \return 1 if current token is Token::TRUE, 0 if Token::FALSE.
    */
@@ -160,10 +163,10 @@ private:
   /**
    * Small private member function to parse integer values.
    *
-   * This function is used to parse integer values from the current token
-   * literal value. It is only called on settings that expect integer values.
-   * THerefore, it can throw an error, if there was an integer expected but it
-   * got something else.
+   * This private member function is used to parse integer values from the
+   * current token literal value. It is only called on settings that expect
+   * integer values. THerefore, it can throw an error, if there was an integer
+   * expected but it got something else.
    *
    * \return The parsed integer value.
    */
@@ -172,9 +175,9 @@ private:
   /**
    * Small private member function to parse the values for the http methods.
    *
-   * This function parses the current token literal with method_to_enum() to get
-   * the value for the http method setting. It can throw an error when
-   * encountering an unknown method.
+   * This private member function parses the current token literal with
+   * method_to_enum() to get the value for the http method setting. It can throw
+   * an error when encountering an unknown method.
    *
    * \return The parsed method.
    */
@@ -208,9 +211,9 @@ private:
   /**
    * Small private member function to check the existence of a newline.
    *
-   * This function is used to call next_token_() an additional time if there is
-   * a newline. This should enable the Parser to also work when there are no
-   * newlines in the cofig file. But this has not been tested yet.
+   * This private member function is used to call next_token_() an additional
+   * time if there is a newline. This should enable the Parser to also work when
+   * there are no newlines in the cofig file. But this has not been tested yet.
    */
   inline void check_newline_() {
     if (expect_peek_(Token::NEWLINE)) {
@@ -223,21 +226,22 @@ private:
   /**
    * Private member function to check the correct syntax of the config file.
    *
-   * This function is called after the parsing is finished to check if all the
-   * necessary settings were given. Furthermore, it could delete single servers
-   * if they had not set any root or listening setting, because those are
-   * mandatory. When erasing a server it uses the LOG_WARNING to write it into
-   * the log file which server got deleted.
+   * This private member function is called after the parsing is finished to
+   * check if all the necessary settings were given. Furthermore, it could
+   * delete single servers if they had not set any root or listening setting,
+   * because those are mandatory. When erasing a server it uses the LOG_WARNING
+   * to write it into the log file which server got deleted.
    */
   void check_correct_syntax_();
 
   /**
    * Private member function to print out error and throw NotFoundError.
    *
-   * This function is called when encountering a syntax error and can be used to
-   * see where the syntax error occured. When used without a message, the syntax
-   * error is related to a missing Token::SEMICOLON, otherwhise it prints the
-   * input message along with the current token to understand whats wrong.
+   * This private member function is called when encountering a syntax error and
+   * can be used to see where the syntax error occured. When used without a
+   * message, the syntax error is related to a missing Token::SEMICOLON,
+   * otherwhise it prints the input message along with the current token to
+   * understand whats wrong.
    */
   void print_syntax_error_(const std::string msg = "");
   /**@}*/

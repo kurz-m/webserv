@@ -16,7 +16,6 @@
  */
 class SocketConnect : public Socket {
 public:
-
   /**
    * Derived Error class which will be thrown if send or recv fails.
    */
@@ -65,10 +64,11 @@ public:
   ~SocketConnect();
 
   /**
-   * Main entry point for handling traffic between server and client.
+   * Public member function for handling traffic between server and client.
    *
-   * This function is used like a small statemachine which calls the appropriate
-   * function with respect to the status_ of the SocketConnect.
+   * This function is used as the main entry point. It works like a small
+   * statemachine which calls the appropriate function with respect to the
+   * status_ of the SocketConnect.
    *
    * \throws std::runtime_error unexpected SocketConnect::status_ after
    * HTTPResponse::prepare_for_send().
@@ -81,7 +81,7 @@ public:
                          std::list<pollfd_t> &poll_list);
 
   /**
-   * Creates a new SocketConnect to the ISocket interface.
+   * Public member function for creating a new SocketConnect.
    *
    * The clone function is used to allocate memory for a new SocketConnect
    * instance which will be added into the socket map of the server.

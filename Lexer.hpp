@@ -63,7 +63,7 @@ private:
   /**
    * Function for reading the next character of the input.
    */
-  __always_inline void read_char_() {
+  inline void read_char_() {
     if (read_position_ >= input_.size()) {
       ch_ = 0;
     } else {
@@ -73,7 +73,7 @@ private:
     ++read_position_;
   }
 
-  __always_inline Token new_token_(const Token::token_type_t tok_type,
+  inline Token new_token_(const Token::token_type_t tok_type,
                                    const char &ch) {
     return (Token){
         .type = tok_type,
@@ -87,7 +87,7 @@ private:
    * This private member function runs as long as it encounters spaces. Spaces
    * are specified by the different tab values and whitespaces.
    */
-  __always_inline void skip_whitespace_() {
+  inline void skip_whitespace_() {
     while (ch_ == 32 || (ch_ > 8 && ch_ < 10) || (ch_ > 10 && ch_ < 14)) {
       read_char_();
     }
@@ -102,7 +102,7 @@ private:
    * \param ch Const reference to a character.
    * \\return true or false.
    */
-  __always_inline bool is_letter_(const char &ch) {
+  inline bool is_letter_(const char &ch) {
     return std::isalpha(ch) || ch == '.' || ch == '/' || ch == '_' || ch == '-';
   }
 

@@ -19,7 +19,7 @@ enum method_e {
 };
 
 /**
- * Function to convert a methond (std::string) to an enum.
+ * Public function to convert a methond (std::string) to an enum.
  *
  * This function is used as a helper function for converting the
  * given std::string to the method_e enum.
@@ -30,7 +30,7 @@ enum method_e {
 method_e method_to_enum(std::string &method);
 
 /**
- * Helper function to print the enum as a string.
+ * Public helper function to print the enum as a string.
  *
  * The purpose of the function is only to print the given enum.
  *

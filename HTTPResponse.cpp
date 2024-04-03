@@ -464,6 +464,13 @@ void HTTPResponse::execute_(HTTPRequest &req) {
   execve(exec.c_str(), argv, env);
 }
 
+/**
+ * Constant std::string for having the html file for listing directories.
+ *
+ * This variable is for creating the html page when autoindex in on and no index
+ * page is provided. It is the start of the list-dir.html which will be filled
+ * up later with the files and folders from the requested directory.
+ */
 const std::string list_dir_head =
     "<!DOCTYPE html> <html lang=\"en\"> <head> <meta charset=\"UTF-8\">"
     "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.5\">"
@@ -489,9 +496,22 @@ struct FileInfo {
   bool is_dir;      /**< True if it is a directory, otherwise false. */
 };
 
+/**
+ * Static function for creating a single entry for list dir.
+ *
+ * This function is used to create a single entry for the listing of a
+ * directory. It creates the appropriate string and also determines if the
+ * checked file is file or a directory.
+ *
+ * \param root Const reference to the webroot.
+ * \param uri Const reference to the requested URI.
+ * \param path Const reference to the path.
+ *
+ * \return FileInfo struct.
+ */
 static FileInfo create_list_dir_entry(const std::string &root,
-                                             const std::string &uri,
-                                             const std::string &path) {
+                                      const std::string &uri,
+                                      const std::string &path) {
   FileInfo file;
   std::string full_path = root + uri + "/" + path;
   std::string link_href = uri + "/" + path;
@@ -524,6 +544,9 @@ static FileInfo create_list_dir_entry(const std::string &root,
   return file;
 }
 
+/**
+ * Local helper function for sorting the dir listing folders first.
+ */
 bool compare_file(const FileInfo &a, const FileInfo &b) {
   if (a.is_dir && b.is_dir) {
     return a.name < b.name;

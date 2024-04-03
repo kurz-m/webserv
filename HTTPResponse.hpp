@@ -75,6 +75,18 @@ public:
   ISocket::status check_child_status();
 
 private:
+  /**
+   * Private member function to create the response header.
+   *
+   * make_header() is always called before the response is being send to the
+   * client. It will be filled with the respective elementes specified for
+   * HTTP/1.1 in RFC 9110. The bare minimum it has to contain is the response
+   * status line (e.g. HTTP/1.1 200 OK) + Content-Type + Content-Length. All
+   * other options within the header are optional.
+   *
+   * \param extra Reference to a std::vector<std::string> holding extra header
+   * fields. It defaults to an empty vector.
+   */
   void make_header_(
       const std::vector<std::string> &extra = std::vector<std::string>());
 
@@ -133,9 +145,50 @@ private:
    * Private member functions for helping handling the different requests.
    */
   /**@{*/
+
+  /**
+   * Private member function that reads a requested file.
+   *
+   * This private member function is used for reading a requested file in binary
+   * representation to make it a generic function. If the file is not found, it
+   * sets the status code to 404 (Not found), assigns the corresponding status
+   * page and returns. Otherwise, it streams the buffer into the body of the
+   * response and sets the status code to 200 (OK).
+   */
   void read_file_();
+
+  /**
+   * Private member function to extract the media type from the URI.
+   *
+   * This private member function is used for extracting the correct media type
+   * from the requested file. It makes sure to remove any unnecessary query
+   * strings and defaults to application/octet-stream if nothing else was found.
+   *
+   * \return Returns the found media type as string or
+   * "application/octet-stream"
+   */
   std::string get_mime_type_();
+
+  /**
+   * Private member function to check the requested file.
+   *
+   * This private member function is used for checking the requested file from
+   * the client. It removes all unnecessary query strings and returns an
+   * uri_state enum corresponding to what file/request URI it is.
+   *
+   * \return To the file and request corresponding uri_state.
+   */
   uint8_t check_uri_();
+
+  /**
+   * Private member function to check a CGI request.
+   *
+   * This private member function is used for checking of the requested call to
+   * CGI can be correctly handled by the server by checking for the correct file
+   * ending. Currently supported CGI calls are .py and .php.
+   *
+   * \return true or false
+   */
   bool check_cgi_();
   /**@}*/
 
@@ -231,14 +284,50 @@ private:
   template <typename T> uint8_t check_list_dir_(const T &curr_conf);
   /**@}*/
 
+  /**
+   * Private member attribute for the current status code of the response.
+   */
   ISocket::status status_;
+
+  /**
+   * Private member attribute for the root of the server specified in the config
+   * file.
+   */
   std::string root_;
+
+  /**
+   * Private member attribute for the request URI.
+   */
   std::string uri_;
+
+  /**
+   * Private member attribute for the child PID for a CGI call.
+   */
   pid_t cgi_pid_;
+
+  /**
+   * Privat member attribute for the read end of the CGI child pipe.
+   */
   int child_pipe_;
+
+  /**
+   * Private member attribute for checking CGI timeout.
+   */
   std::time_t cgi_timestamp_;
+
+  /**
+   * Private member attribute for killed child PIDs.
+   */
   std::vector<pid_t> killed_childs_;
+
+  /**
+   * Private member attribute for the response media type.
+   */
   std::string mime_type_;
+
+  /**
+   * Private member attribute defining the connection timeout to the client.
+   */
   static const int timeout_ = 10;
 };
 

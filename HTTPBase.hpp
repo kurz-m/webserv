@@ -54,19 +54,19 @@ public:
   virtual ~HTTPBase();
 
   /**
-   * Small helper function to clear the member attributes.
+   * Public member function to clear the member attributes.
    *
-   * The buffer_, body_, header_, and status_code_ before handling a new
-   * request. This is necessery due to the keep-alive connection type of
-   * HTTP/1.1
+   * This public member function clears the buffer_, body_, header_, and
+   * status_code_ before handling a new request. This is necessery due to the
+   * keep-alive connection type of HTTP/1.1
    */
   void reset();
 
   /**
-   * Function to create the respective status html page as response body.
+   * Public member function to create the respective status html page.
    *
-   * Given the status code of the response, create_status_html creates a
-   * std::string with the corresponding status html page.
+   * This public member function is used to create the correct status html page
+   * as std::string for the given status code of the response.
    *
    * \param status_code The status code of the response.
    * \param message Message to be inserted into the response page. Defaults to
@@ -88,19 +88,20 @@ protected:
   std::string buffer_;
 
   /**
-   * Private member that stores the body from the response or request,
+   * Private member attribute that stores the body from the response or request,
    * respectively.
    */
   std::string body_;
 
   /**
-   * Private member that stores the header received from the request or created
-   * in the response, respectively.
+   * Private member attribute that stores the header received from the request
+   * or created in the response, respectively.
    */
   std::string header_;
 
   /**
-   * Private member that stores the status code of the request/response.
+   * Private member attribute that stores the status code of the
+   * request/response.
    */
   int status_code_;
 

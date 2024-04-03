@@ -1,0 +1,29 @@
+NAME := build
+BIN := webserv
+.DEFAULT_GOAL := all
+
+ifeq ($(LOG_LEVEL),)
+	LOG_LEVEL=4
+endif
+
+all: $(NAME)
+
+$(NAME):
+	cmake -S . -B build -DLOG_LEVEL=$(LOG_LEVEL)
+	cmake --build build
+
+release:
+	cmake -S . -B build -DLOG_LEVEL=$(LOG_LEVEL) -DCMAKE_BUILD_TYPE=Release
+	cmake --build build
+
+debug:
+	cmake -S . -B build -DLOG_LEVEL=$(LOG_LEVEL) -DCMAKE_BUILD_TYPE=Debug
+	cmake --build build
+
+clean:
+	make clean -C build
+	rm -rf $(NAME)
+
+re: clean
+
+.PHONY: re clean flcean build release debug

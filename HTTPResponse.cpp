@@ -489,7 +489,7 @@ struct FileInfo {
   bool is_dir;      /**< True if it is a directory, otherwise false. */
 };
 
-static inline FileInfo create_list_dir_entry(const std::string &root,
+static FileInfo create_list_dir_entry(const std::string &root,
                                              const std::string &uri,
                                              const std::string &path) {
   FileInfo file;
@@ -524,7 +524,7 @@ static inline FileInfo create_list_dir_entry(const std::string &root,
   return file;
 }
 
-inline bool compare_file(const FileInfo &a, const FileInfo &b) {
+bool compare_file(const FileInfo &a, const FileInfo &b) {
   if (a.is_dir && b.is_dir) {
     return a.name < b.name;
   } else {

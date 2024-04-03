@@ -77,10 +77,6 @@ public:
 private:
   void make_header_(
       const std::vector<std::string> &extra = std::vector<std::string>());
-  void read_file_();
-  std::string get_mime_type_();
-  uint8_t check_uri_();
-  bool check_cgi_();
 
   /** \name HTTP Methods
    * Private member functions for specific http methods.
@@ -131,6 +127,16 @@ private:
    * \return true if allowed, otherwise false.
    */
   template <typename T> bool check_method_(const T &curr_conf, method_e method);
+  /**@}*/
+
+  /** \name HTTP method helper functions
+   * Private member functions for helping handling the different requests.
+   */
+  /**@{*/
+  void read_file_();
+  std::string get_mime_type_();
+  uint8_t check_uri_();
+  bool check_cgi_();
   /**@}*/
 
   /** \name CGI Functions

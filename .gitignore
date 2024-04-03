@@ -50,3 +50,4 @@ helo/
 *.log
 
 doxygen/
+build/

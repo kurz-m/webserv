@@ -37,17 +37,9 @@ Parser &Parser::operator=(const Parser &rhs) {
 
 Parser::~Parser() {}
 
-inline void Parser::next_token_() {
+void Parser::next_token_() {
   current_token_ = peek_token_;
   peek_token_ = lexer_.next_token();
-}
-
-inline void Parser::check_newline_() {
-  if (expect_peek_(Token::NEWLINE)) {
-    ++line_count_;
-    next_token_();
-  }
-  next_token_();
 }
 
 HttpBlock &Parser::parse_config() {
@@ -252,15 +244,7 @@ void Parser::parse_route_settings_(RouteBlock &route) {
   }
 }
 
-inline bool Parser::expect_current_(const Token::token_type_t tok) const {
-  return current_token_.type == tok;
-}
-
-inline bool Parser::expect_peek_(const Token::token_type_t tok) const {
-  return peek_token_.type == tok;
-}
-
-inline int Parser::parse_auto_index_() {
+int Parser::parse_auto_index_() {
   if (expect_current_(Token::TRUE)) {
     return 1;
   } else if (expect_current_(Token::FALSE)) {
@@ -270,7 +254,7 @@ inline int Parser::parse_auto_index_() {
   return 0;
 }
 
-inline int Parser::parse_int_value_() {
+int Parser::parse_int_value_() {
   std::istringstream stream(current_token_.literal);
   int tmp;
   stream >> tmp;
@@ -280,7 +264,7 @@ inline int Parser::parse_int_value_() {
   return tmp;
 }
 
-inline method_e Parser::parse_http_method_() {
+method_e Parser::parse_http_method_() {
   method_e method = method_to_enum(current_token_.literal);
   if (method == UNKNOWN) {
     print_syntax_error_("No valid 'http method' provided");
@@ -288,7 +272,7 @@ inline method_e Parser::parse_http_method_() {
   return method;
 }
 
-inline void Parser::check_correct_syntax_() {
+void Parser::check_correct_syntax_() {
   if (block_depth_ != 0) {
     print_syntax_error_("Missing closing block. Expected Token::RBRACE");
   }
@@ -303,7 +287,7 @@ inline void Parser::check_correct_syntax_() {
   }
 }
 
-inline void Parser::print_syntax_error_(const std::string msg) {
+void Parser::print_syntax_error_(const std::string msg) {
   std::ostringstream oss;
   oss << "Syntax error in line " << line_count_ << ". ";
   if (msg.size() == 0) {

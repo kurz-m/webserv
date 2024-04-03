@@ -70,39 +70,12 @@ Token Lexer::next_token() {
   return tok;
 }
 
-inline std::string Lexer::read_comment_() {
+std::string Lexer::read_comment_() {
   size_t position = position_;
   while (input_[read_position_] != '\n') {
     read_char_();
   }
   return input_.substr(position, read_position_ - position);
-}
-
-void Lexer::read_char_() {
-  if (read_position_ >= input_.size()) {
-    ch_ = 0;
-  } else {
-    ch_ = input_.at(read_position_);
-  }
-  position_ = read_position_;
-  ++read_position_;
-}
-
-Token Lexer::new_token_(Token::token_type_t tok_type, const char &ch) {
-  return (Token){
-      .type = tok_type,
-      .literal = std::string(1, ch),
-  };
-}
-
-void Lexer::skip_whitespace_() {
-  while (ch_ == 32 || (ch_ > 8 && ch_ < 10) || (ch_ > 10 && ch_ < 14)) {
-    read_char_();
-  }
-}
-
-bool Lexer::is_letter_(const char &ch) {
-  return std::isalpha(ch) || ch == '.' || ch == '/' || ch == '_' || ch == '-';
 }
 
 std::string Lexer::read_ident_() {

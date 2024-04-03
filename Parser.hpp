@@ -191,7 +191,9 @@ private:
    * \param tok The expected token type of the current token.
    * \return true if the input is equal the current token, otherwise false.
    */
-  bool expect_current_(const Token::token_type_t) const;
+  __always_inline bool expect_current_(const Token::token_type_t tok) const {
+    return current_token_.type == tok;
+  }
 
   /**
    * Small private member function to check the peek token type.
@@ -199,7 +201,9 @@ private:
    * \param tok The expected token type of the peek token.
    * \return true if the input is equal the peek token, otherwise false.
    */
-  bool expect_peek_(const Token::token_type_t) const;
+  __always_inline bool expect_peek_(const Token::token_type_t tok) const {
+    return peek_token_.type == tok;
+  }
 
   /**
    * Small private member function to check the existence of a newline.
@@ -208,7 +212,13 @@ private:
    * a newline. This should enable the Parser to also work when there are no
    * newlines in the cofig file. But this has not been tested yet.
    */
-  void check_newline_();
+  __always_inline void check_newline_() {
+    if (expect_peek_(Token::NEWLINE)) {
+      ++line_count_;
+      next_token_();
+    }
+    next_token_();
+  }
 
   /**
    * Private member function to check the correct syntax of the config file.

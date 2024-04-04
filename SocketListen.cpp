@@ -38,7 +38,7 @@ ISocket::status SocketListen::handle(std::map<int, ISocket> &sock_map,
   if (pollfd_.revents & POLLIN) {
     try {
       LOG_INFO("I am trying to establish a new connecion");
-      int sockfd = accept(pollfd_.fd, &sockaddr_, &socklen_);
+      int sockfd = accept(pollfd_.fd, NULL, NULL);
       if (sockfd < 0) {
         LOG_WARNING("accept: " + std::string(strerror(errno)));
         return ISocket::READY_RECV;

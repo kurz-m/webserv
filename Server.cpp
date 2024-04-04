@@ -72,7 +72,7 @@ void Server::create_listen_socket_(const ServerBlock &config) {
     break;
   }
 
-  // freeaddrinfo(servinfo);
+  freeaddrinfo(servinfo);
 
   if (sock_map_.size() < 1) {
     throw std::runtime_error("could not bind and listen to any port!");

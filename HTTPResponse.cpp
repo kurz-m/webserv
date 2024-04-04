@@ -363,7 +363,8 @@ ISocket::status HTTPResponse::kill_child_() {
   kill(cgi_pid_, SIGKILL);
   pid_t pid = waitpid(cgi_pid_, NULL, WNOHANG);
   if (pid == 0) {
-    killed_childs_.push_back(cgi_pid_); // await these childs in the destructor.
+    /* await these childs in the destructor. */
+    killed_childs_.push_back(cgi_pid_);
   }
   cgi_pid_ = 0;
   status_code_ = 500;
@@ -434,7 +435,6 @@ void HTTPResponse::execute_(HTTPRequest &req) {
   }
 
   tmp_env.push_back("CONTENT_TYPE=text/html");
-  //  req_.parsed_header_.at("Content-Type"));
   tmp_env.push_back("SCRIPT_NAME=" + uri_);
   if (req.method_ == GET) {
     tmp_env.push_back("REQUEST_METHOD=GET");

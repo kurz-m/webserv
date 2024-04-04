@@ -31,7 +31,7 @@ public:
    *
    * \param config Const reference to a HttpBlock.
    */
-  Server(const HttpBlock &config);
+  Server(HttpBlock &config);
 
   /**
    * Destructor of the Server class.
@@ -117,14 +117,14 @@ private:
   std::map<int, ISocket> sock_map_;
 
   /**
-   * Private const reference to a HttpBlock from the configuration file.
+   * Private reference to a HttpBlock from the configuration file.
    *
-   * This private member is a const reference to the HttpBlock parsed during
+   * This private member is a reference to the HttpBlock parsed during
    * startup of the server. It holds all necessary server and route settings..
    *
    * \sa HttpBlock
    */
-  const HttpBlock &config_;
+  HttpBlock &config_;
 
   /**
    * Private member attribute of the Server.

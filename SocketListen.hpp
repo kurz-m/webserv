@@ -93,7 +93,8 @@ private:
    * information regarding the address of the service provider. This includes
    * the protocol family for the socket, length of socket address etc.
    */
-  addrinfo_t servinfo_;
+  struct sockaddr sockaddr_;
+  socklen_t socklen_;
 
   friend class Server;
 };

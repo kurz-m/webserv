@@ -11,15 +11,22 @@
 
 SocketListen::SocketListen(pollfd_t &pollfd, const ServerBlock &config,
                            const addrinfo_t &info)
-    : Socket(pollfd, config), servinfo_(info) {}
+    : Socket(pollfd, config) {
+      sockaddr_ = *info.ai_addr;
+      socklen_ = info.ai_addrlen;
+    }
 
 SocketListen::SocketListen(const SocketListen &cpy)
-    : Socket(cpy), servinfo_(cpy.servinfo_) {}
+    : Socket(cpy) {
+      sockaddr_ = cpy.sockaddr_;
+      socklen_ = cpy.socklen_;
+    }
 
 SocketListen &SocketListen::operator=(const SocketListen &other) {
   if (this != &other) {
     Socket::operator=(other);
-    servinfo_ = other.servinfo_;
+      sockaddr_ = other.sockaddr_;
+      socklen_ = other.socklen_;
   }
   return *this;
 }
@@ -31,7 +38,7 @@ ISocket::status SocketListen::handle(std::map<int, ISocket> &sock_map,
   if (pollfd_.revents & POLLIN) {
     try {
       LOG_INFO("I am trying to establish a new connecion");
-      int sockfd = accept(pollfd_.fd, servinfo_.ai_addr, &servinfo_.ai_addrlen);
+      int sockfd = accept(pollfd_.fd, &sockaddr_, &socklen_);
       if (sockfd < 0) {
         LOG_WARNING("accept: " + std::string(strerror(errno)));
         return ISocket::READY_RECV;

@@ -28,6 +28,10 @@ function init() {
           } else {
             response.text().then(body => {
               document.body.innerHTML = body;
+              const link = document.createElement('a');
+              link.href = response.url;
+              link.text = response.url;
+              document.body.appendChild(link);
             });
           }
         })

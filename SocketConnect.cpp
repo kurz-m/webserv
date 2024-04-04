@@ -36,12 +36,11 @@ ISocket::status SocketConnect::handle(std::map<int, ISocket> &sock_map,
   switch (status_) {
   case ISocket::PREPARE_SEND:
     status_ = response_.prepare_for_send(request_);
+    /* NOTE: Can only be one of the following 2 statuses */
     if (status_ == ISocket::READY_SEND) {
       handle(sock_map, poll_list);
     } else if (status_ == ISocket::WAITCGI) {
       pollfd_.events = 0;
-    } else { // error
-      throw std::runtime_error("Unexpected status_ after prepare_for_send()!");
     }
     break;
   case ISocket::WAITCGI:

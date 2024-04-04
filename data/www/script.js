@@ -1,3 +1,13 @@
+async function displayFileContentsAsync(response) {
+  try {
+    const response = await fetch('https://api.github.com/repos/github/gitignore/contents/Node.gitignore');
+    const text = await response.text();
+    console.log(text);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
 function init() {
   const button = document.getElementById('sendButton');
   const uploadButton = document.getElementById('selectFile');
@@ -23,10 +33,21 @@ function init() {
           body: rawData
         })
         .then(response => {
-          if (response.status == 201) {
-            location.replace(serverUrl);
-          }
-          console.log(response);
+          document.body.innerHTML = response.text();
+        //   const link = document.createElement('a');
+        //   if (response.status == 201) {
+        //     document.getElementById('status').innerText = response.statusText;
+        //     link.href = serverUrl;
+        //   } else if (response.status == 200) {
+        //     link.href = response.url;
+        //   } else 
+        //   link.text = "click me!";
+        //   document.body.appendChild(link);
+        //   console.log(response);
+        //   // location.replace(response.url);
+        //   document.getElementById('status').innerText = response.statusText;
+        // }).then(htmlContent => {
+        //   document.body.innerHTML = htmlContent;
         })
         .catch(error => console.error('Error: ', error));
       };

@@ -12,6 +12,7 @@ from typing import Generator, Any, List
 def get_webserv_backend() -> Generator[subprocess.Popen[bytes], Any, Any]:
     path = Path(__file__).parent.parent / "webserv"
     webserv_process = subprocess.Popen([str(path)])
+    time.sleep(1)
     yield webserv_process
     webserv_process.send_signal(signal.SIGINT)
     webserv_process.wait()

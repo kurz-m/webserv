@@ -111,10 +111,10 @@ void SocketConnect::send_response_() {
     pollfd_.events = POLLOUT;
   } else {
     std::ostringstream oss;
-    oss << pollfd_.fd;
+    oss << pollfd_.fd << ". Statuscode: " << response_.status_code_;
     LOG_DEBUG("Client FD: " + oss.str() + " did send the full message");
     if (request_.keep_alive_) {
-      LOG_DEBUG("Client FD: " + oss.str() + " keep-alive is true");
+      LOG_DEBUG("keep-alive is true");
       request_ = HTTPRequest(request_.config_);
       response_ = HTTPResponse(response_.config_);
       status_ = ISocket::READY_RECV;

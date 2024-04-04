@@ -67,6 +67,9 @@ endif
 ########                         COMPILING                      ################
 ################################################################################
 
+multi:
+	$(MAKE) -j12 all
+
 all: $(NAME) | $(LOG_DIR) ## Default target for compiling webserv
 
 $(NAME): $(OBJS) ## Rule for linking the object files to the webserv binary
@@ -75,7 +78,7 @@ $(NAME): $(OBJS) ## Rule for linking the object files to the webserv binary
 
 $(OBJ_DIR)/%.o: %.cpp | $(OBJ_DIR) ## Rule for compiling the object files
 	@$(LOG) "Compiling $(notdir $@)"
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+	@$(CXX) $(CXXFLAGS) -c $< -o $@
 
 $(OBJ_DIR): ## Create the object directory
 	@$(LOG) "Creating object directory."
@@ -104,11 +107,11 @@ fclean: clean ## Cleans the object files and binaries
 		$(LOG) "No library to clean."; \
 	fi
 
-re: fclean all
+re: fclean multi
 
 -include $(OBJS:$(OBJ_DIR)/%.o=$(OBJ_DIR)/%.d)
 
-.PHONY: all fclean clean re debug
+.PHONY: all multi fclean clean re debug
 
 ################################################################################
 ########                        HELP TARGET                     ################

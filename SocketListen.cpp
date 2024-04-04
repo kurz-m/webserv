@@ -9,24 +9,15 @@
 #include "SocketListen.hpp"
 #include "Token.hpp"
 
-SocketListen::SocketListen(pollfd_t &pollfd, const ServerBlock &config,
-                           const addrinfo_t &info)
-    : Socket(pollfd, config) {
-      sockaddr_ = *info.ai_addr;
-      socklen_ = info.ai_addrlen;
-    }
+SocketListen::SocketListen(pollfd_t &pollfd, const ServerBlock &config)
+    : Socket(pollfd, config) {}
 
 SocketListen::SocketListen(const SocketListen &cpy)
-    : Socket(cpy) {
-      sockaddr_ = cpy.sockaddr_;
-      socklen_ = cpy.socklen_;
-    }
+    : Socket(cpy) {}
 
 SocketListen &SocketListen::operator=(const SocketListen &other) {
   if (this != &other) {
     Socket::operator=(other);
-      sockaddr_ = other.sockaddr_;
-      socklen_ = other.socklen_;
   }
   return *this;
 }
@@ -48,7 +39,7 @@ ISocket::status SocketListen::handle(std::map<int, ISocket> &sock_map,
           (pollfd_t){.fd = sockfd, .events = POLLIN, .revents = 0};
       poll_list.push_back(pollfd);
       sock_map.insert(
-          std::make_pair(sockfd, ISocket(poll_list.back(), config_)));
+          std::make_pair(sockfd, ISocket(poll_list.back(), config_, DEFAULT_TIMEOUT)));
       std::ostringstream oss;
       oss << "accepted client fd: " << sockfd;
       LOG_INFO(oss.str());

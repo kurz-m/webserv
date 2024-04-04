@@ -55,9 +55,8 @@ public:
    * \param pollfd Reference to its corresponding pollfd element in the
    * pollfd_list of the server.
    * \param config Const reference to a ServerBlock configuration.
-   * \param info Const reference to a addrinfo_t struct.
    */
-  ISocket(pollfd &pollfd, const ServerBlock &config, const addrinfo_t &info);
+  ISocket(pollfd &pollfd, const ServerBlock &config);
 
   /**
    * Parameterized constructor for the ISocket class.
@@ -73,7 +72,7 @@ public:
    * \param timeout Defines the connection timeout of the socket.
    */
   ISocket(pollfd_t &pollfd, const ServerBlock &config,
-          int timeout = DEFAULT_TIMEOUT);
+          int timeout);
 
   /**
    * Copy constructor for the ISocket class.

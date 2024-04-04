@@ -25,10 +25,8 @@ public:
    * \param pollfd Reference to its corresponding pollfd element in the
    * pollfd_list of the server.
    * \param config Const reference to a ServerBlock configuration.
-   * \param info Const reference to a addrinfo_t struct.
    */
-  SocketListen(pollfd &pollfd, const ServerBlock &config,
-               const addrinfo_t &info);
+  SocketListen(pollfd &pollfd, const ServerBlock &config);
 
   /**
    * Copy constructor for the SocketListen class.
@@ -86,16 +84,6 @@ public:
   SocketListen *clone() const;
 
 private:
-  /**
-   * Private member attribute addrinfo_t struct.
-   *
-   * This private member attribute holds a addrinfo_t struct containing the
-   * information regarding the address of the service provider. This includes
-   * the protocol family for the socket, length of socket address etc.
-   */
-  struct sockaddr sockaddr_;
-  socklen_t socklen_;
-
   friend class Server;
 };
 

@@ -23,9 +23,13 @@ function init() {
           body: rawData
         })
         .then(response => {
-          response.text().then(body => {
-            document.body.innerHTML = body;
-          });
+          if (response.status == 200) {
+            location.replace(response.url);
+          } else {
+            response.text().then(body => {
+              document.body.innerHTML = body;
+            });
+          }
         })
         .catch(error => console.error('Error: ', error));
       };

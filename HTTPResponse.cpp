@@ -388,13 +388,23 @@ void HTTPResponse::read_child_pipe_() {
 void HTTPResponse::create_pipe_(HTTPRequest &req) {
   int pipe_fd[2];
   int pipe_fd2[2];
+  size_t tw = req.body_.size();
+  ;
   std::string ret = "";
 
-  if (pipe(pipe_fd) < 0 || pipe(pipe_fd2) < 0)
-    throw std::runtime_error(std::strerror(errno));
+  if (pipe(pipe_fd) < 0) {
+    return;
+  }
+  if (pipe(pipe_fd2) < 0) {
+    goto leave_first;
+  }
+  if ((child_pipe_ = dup(pipe_fd[0])) < 0) {
+    goto leave_second;
+  }
   cgi_pid_ = fork();
-  if (cgi_pid_ == -1)
-    throw std::runtime_error(std::strerror(errno));
+  if (cgi_pid_ == -1) {
+    goto leave_second;
+  }
   if (cgi_pid_ == 0) {
     LOG_DEBUG("child executing ... ");
     if (dup2(pipe_fd[1], STDOUT_FILENO) < 0 ||
@@ -406,17 +416,18 @@ void HTTPResponse::create_pipe_(HTTPRequest &req) {
     close(pipe_fd2[1]);
     execute_(req);
     std::exit(0);
-  } else {
-    close(pipe_fd2[0]);
-    close(pipe_fd[1]);
-    fcntl(pipe_fd2[1], F_SETFL, O_NONBLOCK);
-    size_t to_write = req.body_.size();
-    while ((to_write -=
-            write(pipe_fd2[1], req.body_.c_str(), req.body_.size())) > 0)
-      ;
-    close(pipe_fd2[1]);
-    child_pipe_ = pipe_fd[0];
   }
+  fcntl(pipe_fd2[1], F_SETFL, O_NONBLOCK);
+  while ((tw -= write(pipe_fd2[1], req.body_.c_str(), req.body_.size())) > 0)
+    ;
+
+leave_second:
+  close(pipe_fd2[0]);
+  close(pipe_fd2[1]);
+
+leave_first:
+  close(pipe_fd[0]);
+  close(pipe_fd[1]);
 }
 
 // https://www.ibm.com/docs/en/netcoolomnibus/8.1?topic=scripts-environment-variables-in-cgi-script

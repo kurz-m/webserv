@@ -120,7 +120,7 @@ void SocketConnect::send_response_() {
       status_ = ISocket::READY_RECV;
       pollfd_.events = POLLIN;
     } else {
-      LOG_DEBUG("Client FD: " + oss.str() + " keep-alive is false");
+      LOG_INFO("Client FD: " + oss.str() + " keep-alive is false");
       status_ = ISocket::CLOSED;
     }
   }

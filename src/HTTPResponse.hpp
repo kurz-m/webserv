@@ -6,7 +6,7 @@
 #include "Socket.hpp"
 
 #define BUFFER_SIZE 1024
-#define CGI_TIMEOUT 25
+#define CGI_TIMEOUT 10
 
 /**
  * Class for handling the http response to a client.

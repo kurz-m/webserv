@@ -19,7 +19,7 @@ public:
   /**
    * Derived Error class which will be thrown if send or recv fails.
    */
-  class SendRecvError : public std::exception {
+  class SendError : public std::exception {
   public:
     const char *what() const throw();
   };

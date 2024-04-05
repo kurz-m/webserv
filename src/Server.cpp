@@ -25,6 +25,7 @@ void Server::startup() {
       create_listen_socket_(*it);
       ++it;
     } catch (const std::exception &) {
+      LOG_WARNING("server got erased: " + it->server_name);
       it = config_.servers.erase(it);
     }
   }
@@ -53,12 +54,12 @@ void Server::create_listen_socket_(const ServerBlock &config) {
   for (p = servinfo; p != NULL; p = p->ai_next) {
     int sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
     if (sockfd == -1) {
-      std::cerr << "server: socket: " << std::strerror(errno) << std::endl;
+      LOG_ERROR(std::string("socket() failed. ") + std::strerror(errno));
       continue;
     }
     int yes = 1;
     if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) {
-      std::cerr << "server: setsockopt: " << std::strerror(errno) << std::endl;
+      LOG_ERROR(std::string("Setsockopt() failed: ") + std::strerror(errno));
       continue;
     }
     if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1) {

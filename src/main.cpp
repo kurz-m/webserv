@@ -41,7 +41,6 @@ int main(int argc, char **argv) {
   std::ifstream file(config_path);
   if (!file.is_open()) {
     LOG_ERROR("could not open config file!");
-    std::cerr << "could not open config file!" << std::endl;
     return 1;
   }
   try {
@@ -55,7 +54,7 @@ int main(int argc, char **argv) {
     server.run();
   } catch (std::exception &e) {
     if (g_signal == 0) {
-      std::cerr << e.what() << std::endl;
+      LOG_WARNING(e.what());
       return 1;
     }
   }

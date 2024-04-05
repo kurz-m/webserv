@@ -62,7 +62,14 @@ ISocket::status SocketConnect::handle(std::map<int, ISocket> &sock_map,
   case ISocket::READY_SEND:
   case ISocket::USEND:
     if (pollfd_.revents & POLLOUT) {
-      send_response_();
+      try {
+        send_response_();
+      } catch (std::exception &e) {
+        std::ostringstream oss;
+        oss << "Got an error on Sock FD: " << pollfd_.fd << " ";
+        LOG_ERROR(oss.str() + e.what());
+        return ISocket::CLOSED;
+      }
     } else if (check_timeout_()) {
       return ISocket::CLOSED;
     }
@@ -101,7 +108,7 @@ void SocketConnect::send_response_() {
   ssize_t num_bytes =
       send(pollfd_.fd, response_.buffer_.c_str(), response_.buffer_.size(), 0);
   if (num_bytes < 0) {
-    throw SendRecvError();
+    throw SendError();
   }
   if (static_cast<size_t>(num_bytes) < response_.buffer_.size()) {
     LOG_DEBUG("server: " + config_.server_name +
@@ -144,8 +151,8 @@ void SocketConnect::check_recv_() {
   }
 }
 
-const char *SocketConnect::SendRecvError::what() const throw() {
-  return "Send or Recv returned -1!";
+const char *SocketConnect::SendError::what() const throw() {
+  return "Send returned -1!";
 }
 
 SocketConnect *SocketConnect::clone() const { return new SocketConnect(*this); }

@@ -559,8 +559,7 @@ static FileInfo create_list_dir_entry(const std::string &root,
   oss << "<tr><td><a href=\"" << link_href << "\">" << path << "</a></td><td>";
   struct stat sb;
   if (stat(full_path.c_str(), &sb) < 0) {
-    std::cerr << "something wrong here" << std::endl;
-    // TODO: Handle failure of the stat. What does that mean?
+    LOG_WARNING("Failed stat() within create_list_dir_entry");
   }
   strftime(m_time, sizeof(m_time), "%y-%b-%d %H:%M:%S",
            std::localtime(&(sb.st_mtime)));

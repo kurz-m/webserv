@@ -77,9 +77,7 @@ void Server::create_listen_socket_(const ServerBlock &config) {
       close(sockfd);
       continue;
     }
-#ifdef __APPLE__
     fcntl(sockfd, F_SETFL, O_NONBLOCK | FD_CLOEXEC);
-#endif /* __APPLE__ */
     pollfd_t pollfd = (pollfd_t){.fd = sockfd, .events = POLLIN, .revents = 0};
     poll_list_.push_back(pollfd);
     sock_map_.insert(
@@ -123,7 +121,7 @@ void Server::event_handler_() {
     if (check == ISocket::CLOSED) {
       std::ostringstream oss;
       oss << "client: " << it->fd << " closed.";
-      LOG_DEBUG(oss.str());
+      LOG_INFO(oss.str());
       close(it->fd);
       sock_map_.erase(it->fd);
       it = poll_list_.erase(it);

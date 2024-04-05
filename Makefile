@@ -18,8 +18,8 @@ TEST := printf "[$(BO)$(M)ⓘ TEST$(X)] %s\n"
 ################################################################################
 
 OBJ_DIR := obj-cache
-INC_DIRS := .
-SRC_DIRS := .
+INC_DIRS := src
+SRC_DIRS := src
 LOG_DIR := logs
 
 # Tell the Makefile where headers and source files are
@@ -30,8 +30,9 @@ vpath %.cpp $(SRC_DIRS)
 ###############                  SOURCE FILES                     ##############
 ################################################################################
 
-SRCS := $(wildcard *.cpp)
-OBJS := $(addprefix $(OBJ_DIR)/, $(SRCS:%.cpp=%.o))
+SRCS := $(wildcard $(SRC_DIRS)/*.cpp)
+OBJ_SRCS := $(notdir $(SRCS))
+OBJS := $(addprefix $(OBJ_DIR)/, $(OBJ_SRCS:%.cpp=%.o))
 
 ################################################################################
 ########                           FLAGS                        ################

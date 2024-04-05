@@ -2,7 +2,7 @@
 
 RouteBlock::RouteBlock(const ServerBlock &server)
     : path(), allow(server.allow), autoindex(server.autoindex),
-      index(server.index) {}
+      index(server.index), redir() {}
 
 ServerBlock::ServerBlock(const HttpBlock &http)
     : routes(), allow(0), autoindex(0),

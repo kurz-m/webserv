@@ -44,6 +44,7 @@ public:
     ROOT = (1 << 18),         /**< Token for server root folder. */
     SERVER_NAME = (1 << 19),  /**< Token for server name. */
     INDEX = (1 << 20),        /**< Token for the index.html filename. */
+    REDIR = (1 << 21),        /**< Token for redirection. */
 
     TRUE = (1 << 24),  /**< Token for specifying auto indexing. */
     FALSE = (1 << 25), /**< Token for specifying auto indexing. */
@@ -56,10 +57,9 @@ public:
 
     HTTP_SETTING = 0x00051800,   /**< Token for possible http settings. */
     SERVER_SETTING = 0x001F1F00, /**< Token for possible server settings. */
-    ROUTE_SETTING = 0x00100700,  /**< Token for possible route settings. */
+    ROUTE_SETTING = 0x00300700,  /**< Token for possible route settings. */
     RUN_PARSING = 0x0300000C,    /**< Token for the parsing loop conditiong. */
   };
-
   /**
    * Public member to hold the Token type.
    *

@@ -233,6 +233,9 @@ void Parser::parse_route_settings_(RouteBlock &route) {
     case Token::INDEX:
       route.index = current_token_.literal;
       break;
+    case Token::REDIR:
+      route.redir = current_token_.literal;
+      break;
     default:
       print_syntax_error_(
           "Wrong syntax. Found no valid setting for route block");

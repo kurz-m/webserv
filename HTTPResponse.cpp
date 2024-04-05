@@ -229,15 +229,36 @@ ISocket::status HTTPResponse::delete_method_() {
   return ISocket::READY_SEND;
 }
 
+ISocket::status HTTPResponse::put_method_(HTTPRequest &req) {
+  std::string filename = root_ + uri_;
+  if (access((filename).c_str(), F_OK) == 0) {
+    status_code_ = 200;
+  } else {
+    status_code_ = 201;
+  }
+  std::ofstream file(filename.c_str(), std::ios::trunc | std::ios::binary);
+  if (!file.is_open()) {
+    status_code_ = 500;
+  } else {
+    file.write(req.body_.c_str(), req.body_.size());
+  }
+  body_.assign(create_status_html(status_code_));
+  mime_type_ = "text/html";
+  make_header_();
+  return ISocket::READY_SEND;
+}
+
 ISocket::status HTTPResponse::post_method_(HTTPRequest &req) {
   if (check_cgi_()) {
     return call_cgi_(req);
   }
-  std::string filename = root_ + uri_;
+  std::vector<std::string> extra;
+  std::string endpoint =
+      uri_.substr(uri_.rfind('/') + 1, uri_.rfind('?') - (uri_.rfind('/') + 1));
+  std::string filename = root_ + "/upload/" + endpoint;
   if (access((filename).c_str(), F_OK) == 0) {
     status_code_ = 303;
-    std::vector<std::string> extra;
-    extra.push_back("Location: " + uri_);
+    extra.push_back("Location: /upload/" + endpoint);
     body_.assign(create_status_html(status_code_));
     mime_type_ = "text/html";
     make_header_(extra);
@@ -248,11 +269,11 @@ ISocket::status HTTPResponse::post_method_(HTTPRequest &req) {
     } else {
       status_code_ = 201;
       file.write(req.body_.c_str(), req.body_.size());
-      // file << req.body_;
+      extra.push_back("Location: /upload/" + endpoint);
     }
     body_.assign(create_status_html(status_code_));
     mime_type_ = "text/html";
-    make_header_();
+    make_header_(extra);
   }
   return ISocket::READY_SEND;
 }
@@ -283,6 +304,8 @@ ISocket::status HTTPResponse::prepare_for_send(HTTPRequest &req) {
     return get_method_(req);
   case POST:
     return post_method_(req);
+  case PUT:
+    return put_method_(req);
   case DELETE:
     return delete_method_();
   case FORBIDDEN:

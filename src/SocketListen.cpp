@@ -45,7 +45,7 @@ ISocket::status SocketListen::handle(std::map<int, ISocket> &sock_map,
       LOG_INFO(oss.str());
       fcntl(sockfd, F_SETFL, O_NONBLOCK | FD_CLOEXEC);
     } catch (const std::exception &e) {
-      std::cerr << "accept failed: " << e.what() << '\n';
+      LOG_ERROR(std::string("Accept failed: ") + e.what());
     }
   }
   return ISocket::READY_RECV;

@@ -25,13 +25,17 @@ function init() {
         .then(response => {
           if (response.status == 200) {
             location.replace(response.url);
-          } else {
+          } else if (response.status == 201) {
             response.text().then(body => {
               document.body.innerHTML = body;
               const link = document.createElement('a');
               link.href = response.url;
               link.text = response.url;
               document.body.appendChild(link);
+            });
+          } else {
+            response.text().then(body => {
+              document.body.innerHTML = body;
             });
           }
         })

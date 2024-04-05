@@ -65,6 +65,13 @@ typedef struct RouteBlock {
    * Index specifies the index.html page for the given route.
    */
   std::string index;
+
+  /**
+   * A public variable of the RouteBlock.
+   *
+   * Redir specifies if a specific URI should redirect to a given website.
+   */
+  std::string redir;
 } RouteBlock;
 
 /**

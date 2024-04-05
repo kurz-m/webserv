@@ -15,6 +15,7 @@ const std::map<std::string, Token::token_type_t> Token::create_keywords() {
   loc_map.insert(std::make_pair("root", ROOT));
   loc_map.insert(std::make_pair("autoindex", AUTOINDEX));
   loc_map.insert(std::make_pair("allow", ALLOW));
+  loc_map.insert(std::make_pair("redir", REDIR));
   loc_map.insert(std::make_pair("deny", DENY));
   loc_map.insert(std::make_pair("on", TRUE));
   loc_map.insert(std::make_pair("off", FALSE));
@@ -42,6 +43,7 @@ const std::map<Token::token_type_t, std::string> Token::create_reverse() {
   loc_map.insert(std::make_pair(ROOT, "ROOT"));
   loc_map.insert(std::make_pair(AUTOINDEX, "AUTOINDEX"));
   loc_map.insert(std::make_pair(ALLOW, "ALLOW"));
+  loc_map.insert(std::make_pair(REDIR, "REDIR"));
   loc_map.insert(std::make_pair(DENY, "DENY"));
   loc_map.insert(std::make_pair(TRUE, "ON"));
   loc_map.insert(std::make_pair(FALSE, "OFF"));

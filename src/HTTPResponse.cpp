@@ -96,7 +96,8 @@ bool HTTPResponse::check_cgi_() {
       uri_.substr(uri_.rfind('/') + 1, uri_.rfind('?') - (uri_.rfind('/') + 1));
 
   if (uri_stem.find("/cgi-bin") != std::string::npos &&
-      (ends_with(endpoint, ".py") || ends_with(endpoint, ".php"))) {
+      (ends_with(endpoint, ".py") || ends_with(endpoint, ".php") ||
+       ends_with(endpoint, ".sh"))) {
     return true;
   }
   return false;
@@ -113,7 +114,8 @@ uint8_t HTTPResponse::check_uri_() {
       uri_.substr(uri_.rfind('/') + 1, uri_.rfind('?') - (uri_.rfind('/') + 1));
 
   if (uri_stem.find("/cgi-bin") != std::string::npos &&
-      (ends_with(endpoint, ".py") || ends_with(endpoint, ".php"))) {
+      (ends_with(endpoint, ".py") || ends_with(endpoint, ".php") ||
+       ends_with(endpoint, ".sh"))) {
     return CGI;
   }
   if (stat((root_ + uri_).c_str(), &sb) < 0) {

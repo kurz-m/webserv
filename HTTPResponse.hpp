@@ -131,6 +131,15 @@ private:
   ISocket::status delete_method_();
 
   /**
+   * Private member function for handling a PUT request.
+   *
+   * This function handles incoming PUT requests from a client. 
+   *
+   * \return ISocket::READY_SEND.
+   */
+  ISocket::status put_method_(HTTPRequest &req);
+
+  /**
    * Private member function for checking the allowed methods.
    *
    * This private member function is used for checking if the requested http

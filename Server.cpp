@@ -2,10 +2,10 @@
 #include <csignal>
 #include <cstdio>
 #include <cstring>
+#include <fcntl.h>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
-#include <fcntl.h>
 
 #include "EventLogger.hpp"
 #include "Server.hpp"
@@ -14,14 +14,22 @@
 
 extern sig_atomic_t g_signal;
 
-Server::Server(const HttpBlock &config) : config_(config) {}
+Server::Server(HttpBlock &config) : config_(config) {}
 
 Server::~Server() {}
 
 void Server::startup() {
-  std::vector<ServerBlock>::const_iterator it;
-  for (it = config_.servers.begin(); it != config_.servers.end(); ++it) {
-    create_listen_socket_(*it);
+  std::vector<ServerBlock>::iterator it;
+  for (it = config_.servers.begin(); it != config_.servers.end();) {
+    try {
+      create_listen_socket_(*it);
+      ++it;
+    } catch (const std::exception &) {
+      it = config_.servers.erase(it);
+    }
+  }
+  if (config_.servers.empty()) {
+    throw std::runtime_error("could not create a single server");
   }
 }
 
@@ -38,8 +46,8 @@ void Server::create_listen_socket_(const ServerBlock &config) {
   // bind to all interfaces on port
   if ((status = getaddrinfo(NULL, config.listen.c_str(), &hints, &servinfo)) !=
       0) {
-    throw std::runtime_error(std::string("server: getaddrinfo: ") +
-                             std::strerror(errno));
+    LOG_ERROR(std::string("server: getaddrinfo: ") + std::strerror(errno));
+    throw std::exception();
   }
 
   for (p = servinfo; p != NULL; p = p->ai_next) {
@@ -54,13 +62,18 @@ void Server::create_listen_socket_(const ServerBlock &config) {
       continue;
     }
     if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
-      std::cerr << "server: bind: " << std::strerror(errno) << std::endl;
+      std::ostringstream oss;
+      oss << sockfd;
+      LOG_ERROR("Sock FD: " + oss.str() +
+                " failed to bind. Error: " + std::strerror(errno));
       close(sockfd);
       continue;
     }
     if (listen(sockfd, 10)) {
-      perror("server: listen");
-      std::cerr << "server: listen: " << std::strerror(errno) << std::endl;
+      std::ostringstream oss;
+      oss << sockfd;
+      LOG_ERROR("Sock FD: " + oss.str() +
+                " call to listen failed. Error: " + std::strerror(errno));
       close(sockfd);
       continue;
     }
@@ -75,7 +88,8 @@ void Server::create_listen_socket_(const ServerBlock &config) {
   freeaddrinfo(servinfo);
 
   if (sock_map_.size() < 1) {
-    throw std::runtime_error("could not bind and listen to any port!");
+    LOG_ERROR("could not bind and listen to any port!");
+    throw std::exception();
   }
 }
 
@@ -87,8 +101,8 @@ int Server::do_poll_() {
   }
   int num_events = poll(&pollfds[0], pollfds.size(), poll_timeout_);
   if (num_events < 0) {
-    perror("server: poll");
-    throw std::runtime_error(std::string(std::strerror(errno)));
+    LOG_ERROR(std::string("poll() failed. Error: ") + std::strerror(errno));
+    return 0;
   }
   if (num_events > 0) {
     int i = 0;
@@ -103,12 +117,11 @@ int Server::do_poll_() {
 void Server::event_handler_() {
   std::list<pollfd_t>::iterator it;
   for (it = poll_list_.begin(); it != poll_list_.end();) {
-    ISocket::status check =
-        sock_map_.at(it->fd).handle(sock_map_, poll_list_);
+    ISocket::status check = sock_map_.at(it->fd).handle(sock_map_, poll_list_);
     if (check == ISocket::CLOSED) {
       std::ostringstream oss;
       oss << "client: " << it->fd << " closed.";
-      LOG_DEBUG(oss.str());
+      LOG_INFO(oss.str());
       close(it->fd);
       sock_map_.erase(it->fd);
       it = poll_list_.erase(it);

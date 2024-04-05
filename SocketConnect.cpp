@@ -36,12 +36,11 @@ ISocket::status SocketConnect::handle(std::map<int, ISocket> &sock_map,
   switch (status_) {
   case ISocket::PREPARE_SEND:
     status_ = response_.prepare_for_send(request_);
+    /* NOTE: Can only be one of the following 2 statuses */
     if (status_ == ISocket::READY_SEND) {
       handle(sock_map, poll_list);
     } else if (status_ == ISocket::WAITCGI) {
       pollfd_.events = 0;
-    } else { // error
-      throw std::runtime_error("Unexpected status_ after prepare_for_send()!");
     }
     break;
   case ISocket::WAITCGI:
@@ -112,16 +111,16 @@ void SocketConnect::send_response_() {
     pollfd_.events = POLLOUT;
   } else {
     std::ostringstream oss;
-    oss << pollfd_.fd;
+    oss << pollfd_.fd << ". Statuscode: " << response_.status_code_;
     LOG_DEBUG("Client FD: " + oss.str() + " did send the full message");
     if (request_.keep_alive_) {
-      LOG_DEBUG("Client FD: " + oss.str() + " keep-alive is true");
+      LOG_DEBUG("keep-alive is true");
       request_ = HTTPRequest(request_.config_);
       response_ = HTTPResponse(response_.config_);
       status_ = ISocket::READY_RECV;
       pollfd_.events = POLLIN;
     } else {
-      LOG_DEBUG("Client FD: " + oss.str() + " keep-alive is false");
+      LOG_INFO("Client FD: " + oss.str() + " keep-alive is false");
       status_ = ISocket::CLOSED;
     }
   }

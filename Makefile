@@ -69,7 +69,7 @@ endif
 ################################################################################
 
 multi:
-	$(MAKE) -j12 all
+	@$(MAKE) -j12 all
 
 all: $(NAME) | $(LOG_DIR) ## Default target for compiling webserv
 

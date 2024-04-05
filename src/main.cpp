@@ -19,7 +19,7 @@ void print_usage() {
 static void signal_handler(int signo) { g_signal = signo; }
 
 static void setup_signal_handler() {
-  struct sigaction act;
+  struct sigaction act = {};
 
   sigemptyset(&act.sa_mask);
   act.sa_handler = signal_handler;

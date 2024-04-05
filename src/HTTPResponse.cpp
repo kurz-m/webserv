@@ -614,5 +614,6 @@ std::string HTTPResponse::create_list_dir_() {
     oss << it->name;
   }
   oss << "</tbody></table></body></html>";
+  closedir(dir);
   return oss.str();
 }

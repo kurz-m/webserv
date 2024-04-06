@@ -4,9 +4,10 @@
 #include "HTTP.hpp"
 
 method_e method_to_enum(std::string &method) {
-  const std::string method_arr[4] = {"GET", "POST", "PUT", "DELETE"};
+  const std::string method_arr[8] = {"GET",  "POST",    "PUT",    "DELETE",
+                                     "HEAD", "CONNECT", "OPTION", "TRACE"};
 
-  for (size_t i = 0; i < 4; ++i) {
+  for (size_t i = 0; i < 8; ++i) {
     if (method == method_arr[i]) {
       return static_cast<method_e>(1 << i);
     }

@@ -133,7 +133,7 @@ private:
   /**
    * Private member function for handling a PUT request.
    *
-   * This function handles incoming PUT requests from a client. 
+   * This function handles incoming PUT requests from a client.
    *
    * \return ISocket::READY_SEND.
    */
@@ -145,9 +145,10 @@ private:
    * This private member function is used for checking if the requested http
    * method is allowed on the specified route.
    *
-   * \return true if allowed, otherwise false.
+   * \return The method that is allowed, FORBIDDEN, or the unimplemented method.
    */
-  template <typename T> bool check_method_(const T &curr_conf, method_e method);
+  template <typename T>
+  method_e check_method_(const T &curr_conf, method_e method);
   /**@}*/
 
   /** \name HTTP method helper functions

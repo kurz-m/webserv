@@ -8,6 +8,10 @@
 #include "Settings.hpp"
 #include "Socket.hpp"
 
+#define DCRLF "\r\n\r\n"
+#define CRLF "\r\n"
+#define CR "\r"
+
 /**
  * A base class for HTTPRequest and HTTPResponse.
  *

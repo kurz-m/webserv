@@ -34,7 +34,7 @@ HTTPRequest &HTTPRequest::operator=(const HTTPRequest &other) {
 
 ISocket::status HTTPRequest::parse_header() {
   if (!header_parsed_) {
-    size_t end_of_header_pos = buffer_.find("\r\n\r\n");
+    size_t end_of_header_pos = buffer_.find(DCRLF);
     if (end_of_header_pos == std::string::npos) {
       LOG_DEBUG("server: " + config_.server_name + ": header incomplete");
       return ISocket::URECV;

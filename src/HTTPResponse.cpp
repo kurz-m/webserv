@@ -76,11 +76,6 @@ uint8_t HTTPResponse::check_list_dir_(const T &curr_conf) {
   }
 }
 
-template <typename T>
-bool HTTPResponse::check_method_(const T &curr_conf, method_e method) {
-  return (method & curr_conf.allow) ? true : false;
-}
-
 bool ends_with(const std::string &str, const std::string &extension) {
   if (extension.size() > str.size())
     return false;
@@ -286,6 +281,19 @@ ISocket::status HTTPResponse::post_method_(HTTPRequest &req) {
   return ISocket::READY_SEND;
 }
 
+template <typename T>
+method_e HTTPResponse::check_method_(const T &curr_conf, method_e method) {
+  switch (method) {
+  case GET:
+  case POST:
+  case PUT:
+  case DELETE:
+    return (method & curr_conf.allow) ? method : FORBIDDEN;
+  default:
+    return method;
+  }
+}
+
 ISocket::status HTTPResponse::prepare_for_send(HTTPRequest &req) {
   size_t body_size = req.tbr_ - req.header_.length();
   if (body_size > config_.client_max_body_size) {
@@ -298,14 +306,11 @@ ISocket::status HTTPResponse::prepare_for_send(HTTPRequest &req) {
   uri_ = req.parsed_header_.at("URI");
   LOG_INFO("Request Method: " + print_method(req.method_));
   const RouteBlock *route = config_.find(uri_);
+  method_e method = req.method_;
   if (route) {
-    if (!check_method_(*route, req.method_)) {
-      req.method_ = FORBIDDEN;
-    }
+    method = check_method_(*route, req.method_);
   } else {
-    if (!check_method_(config_, req.method_)) {
-      req.method_ = FORBIDDEN;
-    }
+    method = check_method_(config_, req.method_);
   }
   if (!route->redir.empty()) {
     std::vector<std::string> extra;
@@ -316,7 +321,7 @@ ISocket::status HTTPResponse::prepare_for_send(HTTPRequest &req) {
     make_header_(extra);
     return ISocket::READY_SEND;
   }
-  switch (req.method_) {
+  switch (method) {
   case GET:
     return get_method_(req);
   case POST:

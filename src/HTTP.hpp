@@ -10,12 +10,16 @@
  * implemented in this specific webserver.
  */
 enum method_e {
-  GET = (1 << 0),       /**< Represents the http get method*/
-  POST = (1 << 1),      /**< Represents the http post method*/
-  PUT = (1 << 2),       /**< Represents the http put method*/
-  DELETE = (1 << 3),    /**< Represents the http delete method*/
-  UNKNOWN = (1 << 4),   /**< Represents an unknow http method*/
-  FORBIDDEN = (1 << 5), /**< Represents forbidden method in current location*/
+  GET = (1 << 0),       /**< Represents the http get method. */
+  POST = (1 << 1),      /**< Represents the http post method. */
+  PUT = (1 << 2),       /**< Represents the http put method. */
+  DELETE = (1 << 3),    /**< Represents the http delete method. */
+  HEAD = (1 << 4),      /**< Represents the http head method. */
+  CONNECT = (1 << 5),   /**< Represents the http connect method. */
+  OPTION = (1 << 6),   /**< Represents the http option method. */
+  TRACE = (1 << 7),   /**< Represents the http trace method. */
+  UNKNOWN = (1 << 8),   /**< Represents an unknown http method. */
+  FORBIDDEN = (1 << 9), /**< Represents forbidden method in current location. */
 };
 
 /**

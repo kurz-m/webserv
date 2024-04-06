@@ -51,20 +51,21 @@ void Server::create_listen_socket_(const ServerBlock &config) {
   }
 
   for (p = servinfo; p != NULL; p = p->ai_next) {
+    status = 0;
     int sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
     if (sockfd == -1) {
-      status |= 1;
+      status = 1;
       LOG_ERROR(std::string("socket() failed. ") + std::strerror(errno));
       continue;
     }
     int yes = 1;
     if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) {
-      status |= 1;
+      status = 1;
       LOG_ERROR(std::string("Setsockopt() failed: ") + std::strerror(errno));
       continue;
     }
     if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
-      status |= 1;
+      status = 1;
       std::ostringstream oss;
       oss << sockfd;
       LOG_ERROR("Sock FD: " + oss.str() +
@@ -73,7 +74,7 @@ void Server::create_listen_socket_(const ServerBlock &config) {
       continue;
     }
     if (listen(sockfd, 10)) {
-      status |= 1;
+      status = 1;
       std::ostringstream oss;
       oss << sockfd;
       LOG_ERROR("Sock FD: " + oss.str() +

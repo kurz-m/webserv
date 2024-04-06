@@ -29,24 +29,23 @@ void Server::startup() {
       it = config_.servers.erase(it);
     }
   }
-  if (config_.servers.empty()) {
+  if (config_.servers.empty() || sock_map_.empty()) {
     throw std::runtime_error("could not create a single server");
   }
 }
 
 void Server::create_listen_socket_(const ServerBlock &config) {
-  int status;
-  addrinfo_t hints = {}; // make sure for the hints to be empty!
+  int status = 0;
+  addrinfo_t hints = {};
   addrinfo_t *servinfo;
   addrinfo_t *p;
 
-  hints.ai_family = AF_UNSPEC;     // IPv4 and IPv6
-  hints.ai_socktype = SOCK_STREAM; // TCP not UDP
-  hints.ai_flags = AI_PASSIVE;     // Fill in my IP for me
+  hints.ai_family = AF_UNSPEC;     /**< IPv4 and IPv6. */
+  hints.ai_socktype = SOCK_STREAM; /**< TCP not UDP. */
+  hints.ai_flags = AI_PASSIVE;     /**< Fill in my IP for us. */
 
   // bind to all interfaces on port
-  if ((status = getaddrinfo(NULL, config.listen.c_str(), &hints, &servinfo)) !=
-      0) {
+  if (getaddrinfo(NULL, config.listen.c_str(), &hints, &servinfo) != 0) {
     LOG_ERROR(std::string("server: getaddrinfo: ") + std::strerror(errno));
     throw std::exception();
   }
@@ -54,15 +53,18 @@ void Server::create_listen_socket_(const ServerBlock &config) {
   for (p = servinfo; p != NULL; p = p->ai_next) {
     int sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
     if (sockfd == -1) {
+      status |= 1;
       LOG_ERROR(std::string("socket() failed. ") + std::strerror(errno));
       continue;
     }
     int yes = 1;
     if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) {
+      status |= 1;
       LOG_ERROR(std::string("Setsockopt() failed: ") + std::strerror(errno));
       continue;
     }
     if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
+      status |= 1;
       std::ostringstream oss;
       oss << sockfd;
       LOG_ERROR("Sock FD: " + oss.str() +
@@ -71,6 +73,7 @@ void Server::create_listen_socket_(const ServerBlock &config) {
       continue;
     }
     if (listen(sockfd, 10)) {
+      status |= 1;
       std::ostringstream oss;
       oss << sockfd;
       LOG_ERROR("Sock FD: " + oss.str() +
@@ -87,9 +90,7 @@ void Server::create_listen_socket_(const ServerBlock &config) {
   }
 
   freeaddrinfo(servinfo);
-
-  if (sock_map_.size() < 1) {
-    LOG_ERROR("could not bind and listen to any port!");
+  if (status == 1) {
     throw std::exception();
   }
 }

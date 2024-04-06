@@ -71,8 +71,8 @@ def test_post(get_webserv_backend) -> None:
     assert res.status_code == 201
     res = requests.get(res.url)
     assert res.status_code == 200
-    assert res.headers['Content-Type'] == 'image/jpeg'
+    assert res.headers['Content-Type'] == 'image/png'
     assert int(res.headers['Content-Length']) == 749879
-    res = requests.delete("http://localhost:3490/testimage.png")
+    res = requests.delete(res.url)
     assert res.status_code == 200
 

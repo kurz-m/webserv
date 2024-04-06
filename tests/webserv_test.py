@@ -65,14 +65,14 @@ def test_forbidden_function(get_webserv_backend) -> None:
   
 
 def test_post(get_webserv_backend) -> None:
-    with open("tests/assets/testimg.jpg", mode="rb") as f:
+    with open("tests/assets/testimage.png", mode="rb") as f:
         data = f.read()
-    res = requests.post("http://localhost:3490/testimg.jpg", data)
+    res = requests.post("http://localhost:3490/testimage.png", data)
     assert res.status_code == 201
-    res = requests.get("http://localhost:3490/testimg.jpg")
+    res = requests.get(res.url)
     assert res.status_code == 200
     assert res.headers['Content-Type'] == 'image/jpeg'
     assert int(res.headers['Content-Length']) == 749879
-    res = requests.delete("http://localhost:3490/testimg.jpg")
+    res = requests.delete("http://localhost:3490/testimage.png")
     assert res.status_code == 200
 

@@ -89,9 +89,6 @@ private:
    * This private member function creates a listening socket with respect to the
    * specified configurations in the config file.
    *
-   * FIX: multiple calls to getaddrinfo. Maybe try to move it into main and call
-   * freeaddrinfo after shuding down.
-   *
    * \param config Const reference to a ServerBlock.
    */
   void create_listen_socket_(const ServerBlock &config);

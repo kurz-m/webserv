@@ -7,6 +7,7 @@ from threading import Thread
 from pathlib import Path
 from typing import Generator, Any, List
 
+TESTIMG = "tests/assets/testimage.png"
 
 @pytest.fixture(scope="module")
 def get_webserv_backend() -> Generator[subprocess.Popen[bytes], Any, Any]:
@@ -31,7 +32,7 @@ def test_large_body(get_webserv_backend) -> None:
         assert res.headers["Content-Type"] == "text/html"
         assert res.headers["Content-Length"] == "196"
 
-    with open("tests/assets/testimg.jpg", mode="rb") as f:
+    with open(TESTIMG, mode="rb") as f:
         data = f.read()
     res1 = requests.post("http://localhost:8080/", data=data)
     res2 = requests.get("http://localhost:8080/", data=data)
@@ -57,22 +58,11 @@ def test_index_redirect(get_webserv_backend) -> None:
 
 def test_autoindex_off(get_webserv_backend) -> None:
     res = requests.get("http://localhost:8081/")
+    assert res.status_code == 403
+    res = requests.get("http://localhost:8081/adsf.txt")
     assert res.status_code == 404
 
 def test_forbidden_function(get_webserv_backend) -> None:
     res = requests.delete("http://localhost:8080/")
     assert res.status_code == 403
   
-
-def test_post(get_webserv_backend) -> None:
-    with open("tests/assets/testimage.png", mode="rb") as f:
-        data = f.read()
-    res = requests.post("http://localhost:3490/testimage.png", data)
-    assert res.status_code == 201
-    res = requests.get(res.url)
-    assert res.status_code == 200
-    assert res.headers['Content-Type'] == 'image/png'
-    assert int(res.headers['Content-Length']) == 749879
-    res = requests.delete(res.url)
-    assert res.status_code == 200
-

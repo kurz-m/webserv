@@ -105,7 +105,8 @@ private:
    * \\return true or false.
    */
   inline bool is_letter_(const char &ch) {
-    return std::isalpha(ch) || ch == '.' || ch == '/' || ch == '_' || ch == '-';
+    return std::isalpha(ch) || ch == '.' || ch == '/' || ch == '_' ||
+           ch == '-' || ch == ':';
   }
 
   /**

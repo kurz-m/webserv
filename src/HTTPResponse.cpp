@@ -307,6 +307,15 @@ ISocket::status HTTPResponse::prepare_for_send(HTTPRequest &req) {
       req.method_ = FORBIDDEN;
     }
   }
+  if (!route->redir.empty()) {
+    std::vector<std::string> extra;
+    status_code_ = 303;
+    extra.push_back("Location: " + route->redir);
+    body_.assign(create_status_html(status_code_));
+    mime_type_ = "text/html";
+    make_header_(extra);
+    return ISocket::READY_SEND;
+  }
   switch (req.method_) {
   case GET:
     return get_method_(req);

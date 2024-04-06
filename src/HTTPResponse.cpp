@@ -136,16 +136,22 @@ uint8_t HTTPResponse::check_uri_() {
 
 void HTTPResponse::make_header_(const std::vector<std::string> &extra /*=
                         std::vector<std::string>()*/) {
+  std::time_t now = std::time(NULL);
+  std::tm *tm = std::gmtime(&now);
+  char buffer[80] = {0};
+  std::strftime(buffer, sizeof(buffer), "%a, %d %b %Y %H:%M:%S GMT", tm);
   std::ostringstream oss;
   oss << proto_ << " " << status_code_ << " " << status_map_.at(status_code_)
-      << "\r\n";
-  oss << "Content-Type: " << mime_type_ << "\r\n";
-  oss << "Content-Length: " << body_.length() << "\r\n";
+      << CRLF;
+  oss << "Date: " << buffer << CRLF;
+  oss << "Server: Webserver/0.1 (C++)" << CRLF;
+  oss << "Content-Type: " << mime_type_ << CRLF;
+  oss << "Content-Length: " << body_.length() << CRLF;
   std::vector<std::string>::const_iterator it;
   for (it = extra.begin(); it != extra.end(); ++it) {
-    oss << *it << "\r\n";
+    oss << *it << CRLF;
   }
-  oss << "\r\n";
+  oss << CRLF;
   buffer_ = oss.str();
   buffer_ += body_;
 }

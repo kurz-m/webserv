@@ -7,7 +7,7 @@
 #include "SocketConnect.hpp"
 
 SocketConnect::SocketConnect(pollfd_t &pollfd, const ServerBlock &config,
-                             int timeout /*  = DEFAULT_TIMEOUT */)
+                             int timeout)
     : Socket(pollfd, config), request_(config), response_(config),
       timeout_(timeout), timestamp_(std::time(NULL)) {}
 

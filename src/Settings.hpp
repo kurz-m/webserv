@@ -7,6 +7,8 @@
 
 #include "Token.hpp"
 
+#define DEFAULT_TIMEOUT 25
+
 struct HttpBlock;
 struct ServerBlock;
 

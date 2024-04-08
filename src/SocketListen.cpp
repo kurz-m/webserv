@@ -12,8 +12,7 @@
 SocketListen::SocketListen(pollfd_t &pollfd, const ServerBlock &config)
     : Socket(pollfd, config) {}
 
-SocketListen::SocketListen(const SocketListen &cpy)
-    : Socket(cpy) {}
+SocketListen::SocketListen(const SocketListen &cpy) : Socket(cpy) {}
 
 SocketListen &SocketListen::operator=(const SocketListen &other) {
   if (this != &other) {
@@ -39,7 +38,8 @@ ISocket::status SocketListen::handle(std::map<int, ISocket> &sock_map,
           (pollfd_t){.fd = sockfd, .events = POLLIN, .revents = 0};
       poll_list.push_back(pollfd);
       sock_map.insert(
-          std::make_pair(sockfd, ISocket(poll_list.back(), config_, DEFAULT_TIMEOUT)));
+          std::make_pair(sockfd, ISocket(poll_list.back(), config_,
+                                         config_.keepalive_timeout)));
       std::ostringstream oss;
       oss << "accepted client fd: " << sockfd;
       LOG_INFO(oss.str());

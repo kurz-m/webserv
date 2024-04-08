@@ -18,6 +18,7 @@ TEST := printf "[$(BO)$(M)ⓘ TEST$(X)] %s\n"
 ################################################################################
 
 OBJ_DIR := obj-cache
+DEP_DIR := $(OBJ_DIR)/.deps
 INC_DIRS := src
 SRC_DIRS := src
 LOG_DIR := logs
@@ -33,12 +34,14 @@ vpath %.cpp $(SRC_DIRS)
 SRCS := $(wildcard $(SRC_DIRS)/*.cpp)
 OBJ_SRCS := $(notdir $(SRCS))
 OBJS := $(addprefix $(OBJ_DIR)/, $(OBJ_SRCS:%.cpp=%.o))
+DEPS := $(addprefix $(DEP_DIR)/, $(OBJ_SRCS:%.cpp=%.d))
 
 ################################################################################
 ########                           FLAGS                        ################
 ################################################################################
 
-CXXFLAGS ?= -Wextra -Wall -Werror -std=c++98 -MMD -MP $(addprefix -I, $(INC_DIRS))
+CXXFLAGS ?= -Wextra -Wall -Werror -std=c++98 $(addprefix -I, $(INC_DIRS))
+DEPFLAGS ?= -MT $@ -MMD -MP -MF $(DEP_DIR)/$(notdir $(@:.o=.d))
 LDFLAGS :=
 LOG_LEVEL := $(LOG_LEVEL)
 
@@ -77,20 +80,21 @@ $(NAME): $(OBJS) ## Rule for linking the object files to the webserv binary
 	@$(LOG) "Linking object files to $@"
 	@$(CXX) $^ $(LDFLAGS) -o $@
 
-$(OBJ_DIR)/%.o: %.cpp | $(OBJ_DIR) ## Rule for compiling the object files
+$(OBJ_DIR)/%.o: %.cpp | $(OBJ_DIR) $(DEP_DIR) ## Rule for compiling the object files
 	@$(LOG) "Compiling $(notdir $@)"
-	@$(CXX) $(CXXFLAGS) -c $< -o $@
+	@$(CXX) $(CXXFLAGS) $(DEPFLAGS) -c $< -o $@
 
 $(OBJ_DIR): ## Create the object directory
 	@$(LOG) "Creating object directory."
 	@mkdir -p $@
 
+$(DEP_DIR): ## Create the dependency directory
+	@$(LOG) "Creating dependency directory."
+	@mkdir -p $@
+
 $(LOG_DIR): ## Create the log directory (logs)
 	@$(LOG) "Creating log directory."
 	@mkdir -p $@
-
-debug: CXXFLAGS += -g
-debug: fclean all
 
 clean: ## Cleans the object files from obj-cache
 	@if [ -d "$(OBJ_DIR)" ]; then \
@@ -110,7 +114,7 @@ fclean: clean ## Cleans the object files and binaries
 
 re: fclean multi
 
--include $(OBJS:$(OBJ_DIR)/%.o=$(OBJ_DIR)/%.d)
+-include $(DEPS)
 
 .PHONY: all multi fclean clean re debug
 

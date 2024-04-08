@@ -69,10 +69,12 @@ public:
    * checks if the child timed out and if kill it. Otherwise, it handles the
    * data accordingly.
    *
+   * \param req Const reference to a HTTPRequest instance.
+   *
    * \return ISocket::WAITCGI if still waiting for the child, otherwise
    * ISocket::READY_SEND for sending the response.
    */
-  ISocket::status check_child_status();
+  ISocket::status check_child_status(const HTTPRequest &req);
 
 private:
   /**
@@ -84,10 +86,12 @@ private:
    * status line (e.g. HTTP/1.1 200 OK) + Content-Type + Content-Length. All
    * other options within the header are optional.
    *
+   * \param req Const reference to a HTTORequest instance.
    * \param extra Reference to a std::vector<std::string> holding extra header
    * fields. It defaults to an empty vector.
    */
   void make_header_(
+      const HTTPRequest &req,
       const std::vector<std::string> &extra = std::vector<std::string>());
 
   /** \name HTTP Methods
@@ -126,15 +130,17 @@ private:
    * 404 status page if the file was not found or 200 if file successfully
    * deleted.
    *
+   * \param req Const reference to a HTTPRequest instance.
    * \return ISocket::READY_SEND.
    */
-  ISocket::status delete_method_();
+  ISocket::status delete_method_(const HTTPRequest &req);
 
   /**
    * Private member function for handling a PUT request.
    *
    * This function handles incoming PUT requests from a client.
    *
+   * \param req Const reference to a HTTPRequest instance.
    * \return ISocket::READY_SEND.
    */
   ISocket::status put_method_(HTTPRequest &req);
@@ -253,9 +259,10 @@ private:
    * This private member function is used for killing the child after it timed
    * out.
    *
+   * \param req Const reference to a HTTPRequest instance.
    * \return ISocket::READY_SEND after killing the child.
    */
-  ISocket::status kill_child_();
+  ISocket::status kill_child_(const HTTPRequest &req);
 
   /**
    * Private member function to check the timeout of the CGI child.

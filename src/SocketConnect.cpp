@@ -44,7 +44,7 @@ ISocket::status SocketConnect::handle(std::map<int, ISocket> &sock_map,
     }
     break;
   case ISocket::WAITCGI:
-    status_ = response_.check_child_status();
+    status_ = response_.check_child_status(request_);
     if (status_ == ISocket::READY_SEND) {
       pollfd_.events = POLLOUT;
     } else if (status_ == ISocket::WAITCGI) {

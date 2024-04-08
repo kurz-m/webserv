@@ -38,8 +38,7 @@ public:
    * \param config Const reference to a ServerBlock configuration.
    * \param timeout Defines the connection timeout of the socket.
    */
-  SocketConnect(pollfd_t &pollfd, const ServerBlock &config,
-                int timeout = DEFAULT_TIMEOUT);
+  SocketConnect(pollfd_t &pollfd, const ServerBlock &config, int timeout);
 
   /**
    * Copy constructor for the SocketConnect class.
@@ -162,7 +161,7 @@ private:
    *
    * This private member attribute is being used to specify the timeout of the
    * connection between the server and the client. It is either set within the
-   * config file or falls back to the DEFAULT_TIMEOUT value.
+   * config file or falls back to the default value set in the Settings.
    */
   int timeout_;
 

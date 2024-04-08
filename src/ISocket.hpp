@@ -8,8 +8,6 @@
 typedef struct addrinfo addrinfo_t;
 typedef struct pollfd pollfd_t;
 
-#define DEFAULT_TIMEOUT 15
-
 class Socket;
 
 /**

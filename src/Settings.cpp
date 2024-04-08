@@ -13,7 +13,7 @@ ServerBlock::ServerBlock(const HttpBlock &http)
 
 HttpBlock::HttpBlock()
     : client_max_body_size(1024), default_type("text/html"),
-      keepalive_timeout(10), root("./data/www") {}
+      keepalive_timeout(DEFAULT_TIMEOUT), root("./data/www") {}
 
 const RouteBlock *ServerBlock::find(const std::string &uri) const {
   const RouteBlock *ret = NULL;

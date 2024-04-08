@@ -129,8 +129,9 @@ uint8_t HTTPResponse::check_uri_() {
   return FAIL;
 }
 
-void HTTPResponse::make_header_(const std::vector<std::string> &extra /*=
-                        std::vector<std::string>()*/) {
+void HTTPResponse::make_header_(
+    const HTTPRequest &req,
+    const std::vector<std::string> &extra /*= std::vector<std::string>()*/) {
   std::time_t now = std::time(NULL);
   std::tm *tm = std::gmtime(&now);
   char buffer[80] = {0};
@@ -142,6 +143,9 @@ void HTTPResponse::make_header_(const std::vector<std::string> &extra /*=
   oss << "Server: Webserver/0.1 (C++)" << CRLF;
   oss << "Content-Type: " << mime_type_ << CRLF;
   oss << "Content-Length: " << body_.length() << CRLF;
+  if (req.keep_alive_ == false) {
+    oss << "Connection: close" << CRLF;
+  }
   std::vector<std::string>::const_iterator it;
   for (it = extra.begin(); it != extra.end(); ++it) {
     oss << *it << CRLF;
@@ -215,11 +219,11 @@ ISocket::status HTTPResponse::get_method_(HTTPRequest &req) {
     break;
   }
   // LOG_DEBUG("Body: " + body_);
-  make_header_();
+  make_header_(req);
   return ISocket::READY_SEND;
 }
 
-ISocket::status HTTPResponse::delete_method_() {
+ISocket::status HTTPResponse::delete_method_(const HTTPRequest &req) {
   if (remove((root_ + uri_).c_str())) {
     status_code_ = 404;
     body_.assign(create_status_html(status_code_, "Requested File not found!"));
@@ -228,7 +232,7 @@ ISocket::status HTTPResponse::delete_method_() {
     body_.assign(create_status_html(status_code_, "File deleted"));
   }
   mime_type_ = "text/html";
-  make_header_();
+  make_header_(req);
   return ISocket::READY_SEND;
 }
 
@@ -247,7 +251,7 @@ ISocket::status HTTPResponse::put_method_(HTTPRequest &req) {
   }
   body_.assign(create_status_html(status_code_));
   mime_type_ = "text/html";
-  make_header_();
+  make_header_(req);
   return ISocket::READY_SEND;
 }
 
@@ -264,7 +268,7 @@ ISocket::status HTTPResponse::post_method_(HTTPRequest &req) {
     extra.push_back("Location: /upload/" + endpoint);
     body_.assign(create_status_html(status_code_));
     mime_type_ = "text/html";
-    make_header_(extra);
+    make_header_(req, extra);
   } else {
     std::ofstream file(filename.c_str());
     if (!file.is_open()) {
@@ -276,7 +280,7 @@ ISocket::status HTTPResponse::post_method_(HTTPRequest &req) {
     }
     body_.assign(create_status_html(status_code_));
     mime_type_ = "text/html";
-    make_header_(extra);
+    make_header_(req, extra);
   }
   return ISocket::READY_SEND;
 }
@@ -300,7 +304,7 @@ ISocket::status HTTPResponse::prepare_for_send(HTTPRequest &req) {
     status_code_ = 413;
     body_.assign(create_status_html(status_code_));
     mime_type_ = "text/html";
-    make_header_();
+    make_header_(req);
     return ISocket::READY_SEND;
   }
   uri_ = req.parsed_header_.at("URI");
@@ -318,7 +322,7 @@ ISocket::status HTTPResponse::prepare_for_send(HTTPRequest &req) {
     extra.push_back("Location: " + route->redir);
     body_.assign(create_status_html(status_code_));
     mime_type_ = "text/html";
-    make_header_(extra);
+    make_header_(req, extra);
     return ISocket::READY_SEND;
   }
   switch (method) {
@@ -329,18 +333,18 @@ ISocket::status HTTPResponse::prepare_for_send(HTTPRequest &req) {
   case PUT:
     return put_method_(req);
   case DELETE:
-    return delete_method_();
+    return delete_method_(req);
   case FORBIDDEN:
     status_code_ = 403;
     body_.assign(create_status_html(status_code_));
     mime_type_ = "text/html";
-    make_header_();
+    make_header_(req);
     return ISocket::READY_SEND;
   default:
     status_code_ = 501;
     body_.assign(create_status_html(status_code_));
     mime_type_ = "text/html";
-    make_header_();
+    make_header_(req);
     return ISocket::READY_SEND;
   }
 }
@@ -355,23 +359,23 @@ ISocket::status HTTPResponse::call_cgi_(HTTPRequest &req) {
     status_code_ = 404;
     body_.assign(create_status_html(status_code_));
     mime_type_ = "text/html";
-    make_header_();
+    make_header_(req);
     return ISocket::READY_SEND;
   } else if (access((root_ + exec).c_str(), X_OK) != 0) {
     status_code_ = 403;
     body_.assign(create_status_html(status_code_));
     mime_type_ = "text/html";
-    make_header_();
+    make_header_(req);
     return ISocket::READY_SEND;
   }
   create_pipe_(req);
   cgi_timestamp_ = std::time(NULL);
-  return check_child_status();
+  return check_child_status(req);
 }
 
-ISocket::status HTTPResponse::check_child_status() {
+ISocket::status HTTPResponse::check_child_status(const HTTPRequest &req) {
   if (check_cgi_timeout_()) {
-    return kill_child_();
+    return kill_child_(req);
   }
   int stat_loc = 0;
   pid_t pid_check = waitpid(cgi_pid_, &stat_loc, WNOHANG);
@@ -381,7 +385,7 @@ ISocket::status HTTPResponse::check_child_status() {
     status_code_ = 500;
     body_.assign(create_status_html(status_code_));
     mime_type_ = "text/html";
-    make_header_();
+    make_header_(req);
     return ISocket::READY_SEND;
   } else {
     if (WIFEXITED(stat_loc)) {
@@ -389,18 +393,18 @@ ISocket::status HTTPResponse::check_child_status() {
       read_child_pipe_();
       mime_type_ = "text/html";
       LOG_DEBUG(buffer_);
-      make_header_();
+      make_header_(req);
     } else {
       status_code_ = 500;
       body_.assign(create_status_html(status_code_));
       mime_type_ = "text/html";
-      make_header_();
+      make_header_(req);
     }
     return ISocket::READY_SEND;
   }
 }
 
-ISocket::status HTTPResponse::kill_child_() {
+ISocket::status HTTPResponse::kill_child_(const HTTPRequest &req) {
   if (child_pipe_ > 0) {
     close(child_pipe_);
     child_pipe_ = -1;
@@ -415,7 +419,7 @@ ISocket::status HTTPResponse::kill_child_() {
   status_code_ = 500;
   body_ = create_status_html(500);
   mime_type_ = "text/html";
-  make_header_();
+  make_header_(req);
   return ISocket::READY_SEND;
 }
 
